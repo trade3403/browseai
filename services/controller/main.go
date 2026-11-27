@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -68,7 +70,41 @@ func newServer(addr string) *http.Server {
 }
 
 func main() {
+	if len(os.Args) > 1 {
+		if os.Args[1] != "account" || !adminDSNValid(os.Getenv("BROWSEAI_ADMIN_DSN")) {
+			log.Fatal("account command requires explicit browseai_admin TLS DSN")
+		}
+		db, err := sql.Open("postgres", os.Getenv("BROWSEAI_ADMIN_DSN"))
+		if err != nil {
+			log.Fatal("invalid operator database configuration")
+		}
+		defer db.Close()
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if err := accountCommand(ctx, db, os.Args[2:], os.Stdin, os.Stdout); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
 	server := newServer(os.Getenv("LISTEN_ADDR"))
-	log.Printf("BrowseAI mock controller listening on %s", server.Addr)
+	mode := os.Getenv("BROWSEAI_MODE")
+	switch mode {
+	case "", "mock":
+		mode = "mock"
+	case "authenticated":
+		db, err := openAuthRuntime(context.Background(), server, os.Getenv("BROWSEAI_AUTH_DSN"), os.Getenv("BROWSEAI_ORIGIN"))
+		if err != nil {
+			log.Fatal("authenticated startup failed: ", err)
+		}
+		defer db.Close()
+		appDB, err := openProjectRuntime(context.Background(), server, db, os.Getenv("BROWSEAI_APP_DSN"), os.Getenv("BROWSEAI_ORIGIN"))
+		if err != nil {
+			log.Fatal("project startup failed: ", err)
+		}
+		defer appDB.Close()
+	default:
+		log.Fatal("invalid BROWSEAI_MODE")
+	}
+	log.Printf("BrowseAI %s controller listening on %s", mode, server.Addr)
 	log.Fatal(server.ListenAndServe())
 }

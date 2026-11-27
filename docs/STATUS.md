@@ -72,3 +72,59 @@ PR #1，上一轮证据 SHA 8b55da9691810d3c6263689a871ecb4fc799510e，运行 ht
 
 ## 用户批准开发阶段视觉门槛调整（2026-11-27）
 证据 SHA df3cbf54f4b3a937fd7038854dc9fee3894d3d46；PR CI https://github.com/trade3403/browseai/actions/runs/45932386067 与 push CI https://github.com/trade3403/browseai/actions/runs/45932380662 均完成失败，按当时 1% 规则历史结果仍为失败。外壳 11.7364%，header12.6808%、sidebar10.1835%、workspace_toolbar13.5814%、right_panel13.3654%、footer10.1641%，边界1.453125px，五项非视觉检查及两项诊断通过。此前 NEED_HUMAN 记录：https://github.com/trade3403/browseai/pull/1#issuecomment-7208830351。用户明确批准“同意将开发阶段UI视觉误差标准调整为15%，保留最终视觉验收要求，重新运行CI，通过后继续下一阶段开发。” 现 V0.1–V0.9 采用 development 门槛 15%，V1.0 最终 release 门槛仍 1%，整体与各核心区域均适用；2px 边界、0.1 色差、原图 SHA、排除区域、所有功能门禁均不变。测试同时输出两个门槛独立判定，CI 手动支持 release 且 v1.* tag 强制 release；不进行实际发布。此提交仅更新验收政策、实际执行代码与文档，不改 UI 或伪造历史结果。新 CI 尚未实测；全部通过后才开始 V0.2，最终视觉未完成项必须保留至严格发布验收。
+
+## V0.1 开发门禁通过，启动 V0.2（2026-11-27）
+已验收 SHA 7c36fdcdd275d2765625731a01bc418823d7bbd6；PR CI https://github.com/trade3403/browseai/actions/runs/45937506693 和 push CI https://github.com/trade3403/browseai/actions/runs/45937499945 均 success，七项 job 全部成功。VISUAL_ACCEPTANCE: developmentPassed=true, releasePassed=false，外壳11.7364%、最大核心区域13.5814%、边界1.453125px。V0.1 开发验收完成，最终1%视觉债务保留。V0.1 PR #1 未合并。V0.2 叠加分支 feat/v0.2-task-control 从已验收 SHA 创建，独立草稿 PR 指向 V0.1 分支，未经授权不合并。首批实现 JSON Schema 2020-12 config/tasks/progress/result、模拟样本、离线跨文档校验、负样本测试及 schema 必需 CI job。tasks/result 字段为首次具体化约定；尚未实现服务端接入、真实 Git 可达性/CI 验证、handoff 验证、多租户认证、PostgreSQL、任务 CRUD、状态机及全局租约，V0.2 尚未完成，新 CI 待验证。
+
+## V0.2 第二批：任务状态机核心
+证据 SHA bd0379c60665c2fa67bbd5c913fac0c3f15ea852，PR CI https://github.com/trade3403/browseai/actions/runs/45939000172 与 push CI https://github.com/trade3403/browseai/actions/runs/45938986923 均 success，8 项必需检查通过（含 schema）。本批加入 Go 纯领域状态机 task_state.go 与单元测试：revision 乐观并发、人工发送确认、匹配 SHA 的 CI 证据、最终用户确认、修复次数上限、暂停/离线对账恢复、交接验证和不可恢复终态。内部 evidence 仅为已验证事实的输入契约，不能直接信任 HTTP 请求；没有自动发送网页操作。当前尚无数据库原子写入、真实证据适配器、认证或 API 接入，不视为生产完成。保留 V0.2 数据库迁移/认证/任务 CRUD/全局租约及持久化测试待办。新 CI 待验证。
+
+## V0.2 第二批格式修复（2026-11-27）
+证据 SHA 6efc061fdc57cf2c60fdf13c325c552e1bdf9e2e，PR CI https://github.com/trade3403/browseai/actions/runs/45940439291、push CI https://github.com/trade3403/browseai/actions/runs/45940434727 均失败。PR 中 schema/compose/functional/web/visual-desktop/windows-foundation 六项通过；backend 在 gofmt 格式检查失败（job 140313264639），gate 随之失败；Linux 后续 vet/race/coverage 尚未执行。读取源码发现 taskAction 常量组整体多一空格对齐，本次仅修正对齐，不改变状态机逻辑，并使 CI 格式门禁失败时打印文件列表和 gofmt diff，保留强制失败。容器无法解析 GitHub raw 域名，未运行完整本地仓库测试，修复待新 CI 验证。尚不进入数据库开发。
+
+## V0.2 第三批 PostgreSQL 基础（2026-11-27）
+证据 SHA 1363546ece837f7cb2665c7fd8f137dfcb27cd71，PR CI https://github.com/trade3403/browseai/actions/runs/45941890846、push CI https://github.com/trade3403/browseai/actions/runs/45941885624 均 success，8 项检查通过。任务状态机核心通过当前阶段 CI。新增 PostgreSQL 16 初始 up/down migration、身份/租户/会话/项目/任务/阶段/全局 repo ID+branch 租约表、复合外键、任务状态约束、RLS 默认拒绝及独立应用角色权限。新增真实 PostgreSQL service CI，测试双租户读写隔离、CAS revision、跨租户 FK、并发租约唯一性及 fencing token、迁移回滚/重建，纳入 gate。当前容器没有 psql/postgres/docker，未本地运行数据库测试；新 CI 待验证。尚未接入 Go 数据库驱动、认证、事务级任务 CRUD/租约续期及真实运行配置，现有 Compose 仍为 mock；不能视为 V0.2 已完成。下批依据 CI 结果推进。
+
+### 数据库批次工作流配置修复
+SHA fa04258af5d42a975f3f61c15cc6db49b1e54ce4 push CI https://github.com/trade3403/browseai/actions/runs/45943338934 已失败，API 返回 0 jobs，未执行数据库测试。check-suite 详细错误接口无法访问；静态检查发现 job.services.postgres.ports 动态端口引用错误地位于 job env，改至实际 psql 步骤 env（允许 job context），其余测试与门槛不变。此为工作流配置修复，待新 CI 证实，尚不开始下一批。
+
+静态复查另发现回滚断言中的 SQL 双引号被多余转义，修正为独立 remaining 变量并显式 ON_ERROR_STOP；不修改测试预期，待新 CI。
+
+## V0.2 第四批：会话认证及最小权限数据库接口
+证据 SHA eba29ec693e9d057ea9424ec653ebd947a58d642；PR CI https://github.com/trade3403/browseai/actions/runs/45943420860 与 push CI https://github.com/trade3403/browseai/actions/runs/45943415212 均 success，九项必需检查全部通过，数据库迁移、隔离及全局租约约束通过真实 PostgreSQL 测试。新增 0002_auth up/down，独立 browseai_auth 角色只能调用受控会话函数，无直接身份或项目表权限；8 小时会话、32 字节随机令牌、SHA-256 摘要、会话撤销、禁用及过期检查。Go 增加 sessionService 和 database/sql 参数化 adapter，以及领域单测；真实 PostgreSQL 测试检查双租户身份、权限、过期、撤销和回滚。当前容器无法连接 Go proxy，未引入未验证依赖，尚未配置 PostgreSQL Go driver/连接池 bootstrap、Argon2id/OIDC 真实身份验证、登录 HTTP 接口、Cookie/CSRF、限流或项目任务 CRUD；issueVerified 仅允许认证成功后的可信调用，不对 HTTP 暴露；运行仍 mock。新 CI 待验证，不进入下一批。
+
+## V0.2 第五批：登录 HTTP 层及依赖验证
+证据 SHA 65f4eb0ea95103af309d2b13a0df32e4744fba85，PR CI https://github.com/trade3403/browseai/actions/runs/45944860120 与 push CI https://github.com/trade3403/browseai/actions/runs/45944855613 均 success，九项必需检查通过。新增独立 authHTTP handler，可信 credentialVerifier 注入，登录/退出/me、严格 HTTPS Origin、Secure HttpOnly SameSite Strict cookie、令牌轮换、请求大小限制、每来源及全局限流和并发 KDF 槽位；使用合成凭证的 httptest。尚未挂载至默认 mock routes。当前容器实查 Go 1.23.2、无缓存依赖，proxy.golang.org DNS 失败，无法直接获取可信 go.sum。新增独立 dependency-probe 模块及 CI job，使用 Go 官方代理和 sumdb 验证候选 lib/pq v1.10.9、x/crypto v0.36.0 及传递依赖，输出 go.sum 供下一批接入；候选版本需在生产发布前进行安全升级/审计。不是正式运行依赖。真实 Argon2id verifier、凭证查询、SQL driver、连接池、生产路由、任务 CRUD 和事务级租约尚待实现；本批不视为完整登录上线。限流为单进程基础，后续需多实例及可信代理策略。新 CI 待验证。
+
+## V0.2 第六批：真实 Argon2id 与 PostgreSQL 登录接入
+证据 SHA a7592f3b7c3f1c1c1b6633ae39fd3f5cca5e313f，PR CI https://github.com/trade3403/browseai/actions/runs/45946338279 与 push CI https://github.com/trade3403/browseai/actions/runs/45946333829 均 success，10 项检查全部通过。依赖校验 job 140331786350 通过官方 sumdb，读取真实 go.sum 日志并写入 controller，固定 lib/pq v1.10.9、x/crypto v0.36.0、x/sys v0.31.0；发布前仍需安全审计及升级。新增 0003 credential migration、Argon2id 固定参数及随机盐/恒时比较/未知账号 dummy KDF、真实 SQL verifier、认证独立运行模式与数据库权限/就绪检查。Docker 构建包含实际 Go 源码与锁定依赖。新增真实 PostgreSQL 两账号登录/me/撤销/禁用与错误密码测试；CI 使用一次性测试密码及非 TLS 测试 DSN，实际运行强制 verify-full 与 loopback/TLS 代理。当前仅认证 API 接入，默认 Compose 和视觉仍 mock；用户开通工具、登录页面、项目任务 CRUD、事务级租约、密码变更及重新启用时的彻底撤销、生产部署等未完成。本批新增代码未在本地执行完整测试，新 CI 待验证。V0.2 不视为完成。
+
+### 第六批 CI 工作流修复（2026-11-27）
+证据 SHA 40dc5611c0d33134844a52dfc28c8b5ac10a97db；push CI https://github.com/trade3403/browseai/actions/runs/45947817007 已结束失败，API 返回 0 jobs，未执行 Go/数据库/前端等测试。直接读取该 SHA 的 ci.yml 确认编辑时 JavaScript replace 的特殊替换符导致测试正则尾部美元符号与单引号被展开为原工作流后缀，造成命令截断及重复 job 块。恢复唯一完整 workflow，使用完整的 go test -mod=readonly -run '^TestPostgresAuthIntegration$' -count=1 -v 命令，保留所有 9 个必需子 job 及 gate、go mod verify 和只读 vet。提交前核对 job/trigger 名称唯一性及完整测试命令；未运行真实 Runner，待新 CI。尚不进入 CRUD 开发。
+
+## V0.2 第七批：项目 CRUD 与独立应用连接池
+证据 SHA ca8a8ed36ae9965cd652b4da37df9cb6ebeed980；PR CI https://github.com/trade3403/browseai/actions/runs/45949212776 与 push CI https://github.com/trade3403/browseai/actions/runs/45949206219 均 success，10 项通过，真实 TestPostgresAuthIntegration 通过，原单测覆盖率 77.0%。本批新增项目 GET/POST/PATCH/DELETE、事务内 RLS tenant context 与显式 tenant 条件、UUID、100 条游标分页、revision 冲突、存在任务时禁止删除、只允许更名（仓库/分支身份不可直接修改）、安全 Origin 与认证身份校验、独立 browseai_app 数据库连接池及真实双租户 API 测试。真实 GitHub 仓库 ID 暂为用户配置，不能当作授权或已验证身份，V0.3 才对账授权；不派发任务。整体后端覆盖率门槛仍 >=75%，从仅单测的 backend job 移至必需 database job 的完整单测+真实数据库集成+race 测试，backend 继续执行 gofmt/vet/race/build。新代码未本地跑完整依赖/数据库，待 CI 验证。默认 Compose 保留 mock；任务 CRUD、持久化状态机、租约操作与用户开通仍待完成。未进入 V0.3。
+
+## V0.2 第八批：任务 CRUD 与状态机事务持久化
+证据 SHA 2b2b53d5c2ddacfb82cbbbe75c7ada8b227990a6，PR CI https://github.com/trade3403/browseai/actions/runs/45950859034 与 push CI https://github.com/trade3403/browseai/actions/runs/45950852815 均 success，10 项检查通过。新增任务列表/详情/创建/更名/安全草稿删除 API，创建事务写入 stages；事务内 RLS 和显式租户过滤，行锁+revision 状态转换 CAS；公开 pause/stop，其他 evidence 只允许可信内部 service 提供，禁止 HTTP 伪造 CI 结果或自动恢复派发。仅未修改的 QUEUED 草稿可删除，已变更或停止任务保留历史。真实双租户 API 测试及两个同 revision 并发 stop 测试。未实现 HTTP resume/approve（需可信对账/确认适配器）、创建幂等键、stage 指令/依赖持久化、审计/outbox、租约续期/释放及 fencing 执行，待后续批次；默认 Compose 仍 mock。整体覆盖率及 CI 门禁不变，本次未在本地运行完整依赖/数据库测试，新 CI 待验收。
+
+## V0.2 第九批：事务级全局分支租约
+证据 SHA 3c9d98e7734a02ac2c7f86c65199043e263729a1；PR CI https://github.com/trade3403/browseai/actions/runs/45952447631 与 push CI https://github.com/trade3403/browseai/actions/runs/45952442058 均 success，10 项检查通过。新增内部 leaseStore：任务行锁及 revision 检查、repo stable ID+branch 全局抢占、DB 时钟 60 秒有效期、续期、过期禁止续期/派发、fencing token、仅非派发状态且可信对账后释放，过期不自动抢占；ready/prepare/confirm_sent/repair 持久化转换同事务检查有效 fence。真实 PostgreSQL 双租户竞争、不同分支并行、过期/旧 token 拒绝及释放后递增测试。verifiedBranch 只是未来可信 GitHub 适配器输入契约，V0.3 才完成真实授权，当前没有公开租约 API 或网页派发；外部 GitHub 写入 fencing、完整调度/恢复、幂等键/outbox、审计仍待后续实现。未本地执行完整数据库测试，待新 CI。V0.2 未宣称完成。
+
+## V0.2 第十批：变更幂等与事务审计
+证据 SHA 300bbee71407899c170774cddcdfa9c878b0a36e，PR CI https://github.com/trade3403/browseai/actions/runs/45954023205 与 push CI https://github.com/trade3403/browseai/actions/runs/45954016760 均 success，事务级租约批次已通过。新增 0004 migration：租户+用户范围幂等键、只追加 audit_logs 与 events、RLS 隔离；项目/任务全部现有变更接口要求 Idempotency-Key，作用域绑定认证用户，动作/对象/revision/规范化参数哈希，同键同内容重放已提交结果，同键异内容 409，数据库行、幂等结果、审计和事件同事务提交，失败回滚。内部任务状态转换亦记录审计与事件，不暴露 evidence。真实数据库并发重复创建、跨租户相同键、重放更新删除、回滚、审计不可删除测试；迁移回滚/重建加入既有必需 job。事件仅为持久记录基础，消费者、派发 outbox 重试/唯一 dispatch key、清理保留策略及账号生命周期审计尚未完成。项目/任务 API 的安全恢复/审批、完整阶段定义及账户开通仍待收尾；不进入 V0.3。当前提交未本地实际运行 PostgreSQL CI，待新 CI 验证。
+
+## V0.2 第十一批：账号生命周期及永久会话撤销
+证据 SHA b2c729ca0cfcfc54c33709bd1860dc04745e2bf2；PR CI https://github.com/trade3403/browseai/actions/runs/45954517830 与 push CI https://github.com/trade3403/browseai/actions/runs/45954510019 均 success，10 项检查通过。新增 0005 migration、独立 browseai_admin 运维角色及 account CLI（创建一用户一工作区、禁用、启用、密码重置），密码通过 stdin 而非命令行参数，生产 DSN 要求 verify-full，账号审计不记录密码。用户密码/启停及租户启停触发永久 session 撤销，真实 HTTP 登录的 Argon2id 验证结果在签发时再次锁定并校验密码哈希，拒绝密码重置期间的旧证明；签发锁定身份记录。测试真实 PostgreSQL 账号生命周期、重复创建回滚、角色隔离、旧密码与旧会话失效、审计。默认 Compose 仍 mock；管理员 UI/配额属 V0.7，浏览器控制租约即时撤销、GitHub 授权撤销与外部写入协调待相关阶段。此次未本地运行完整数据库测试，待 CI；后续补齐安全恢复/审批边界及阶段定义后综合验收。未进入 V0.3。
+
+### 第十一批 CI 格式修复
+证据 SHA 013c42c10551e98c9bf520553084a56d07fc7dd8；PR CI https://github.com/trade3403/browseai/actions/runs/45955088955 与 push CI https://github.com/trade3403/browseai/actions/runs/45955083980 均 failure。PR 实际 job 日志显示 database 成功，TestPostgresAccountLifecycle PASS，完整 race+PostgreSQL 测试覆盖率 80.6%；其他七个子 job 成功，backend 因 auth_password.go 的 crypto/sha256 与 crypto/subtle 导入排序违反 gofmt 失败，gate 因此失败。按 Runner 的 gofmt -d 结果修正唯一差异，未修改测试、权限或验收阈值。等待新 SHA 的双套 CI，尚不进入安全恢复/审批批次。
+
+## V0.2 第十二批：本地安全恢复与审批意向
+证据 SHA 9ff8796be1c81d32bb9fa73b72d720576c251429，PR CI https://github.com/trade3403/browseai/actions/runs/45955429197 与 push CI https://github.com/trade3403/browseai/actions/runs/45955425057 均 success，10 项通过。新增 0006 task_approvals RLS 只追加记录；POST resume 只恢复首阶段、未派发、无租约、无相关审计记录的 PAUSED/QUEUED 草稿，其他状态必须可信对账；POST approve 在 AWAIT_APPROVAL、当前 revision、有效 fence 下记录用户审批意向，不改变任务状态或发送消息；confirm_sent 内部转换额外要求同 revision/stage/fence/actor 审批且仍需可信人工发送证据。两接口沿用幂等键与原子审计。真实数据库测试跨租户、伪造 evidence、旧审批、恢复拒绝和人工确认边界。审批仅为任务级意向，不是精确指令授权，V0.5 必须绑定实际不可变 dispatch 内容并核验人工发送；V0.3/V0.6 的 Git/CI 对账及外部恢复未实现。本批未本地完整执行，待新 CI。下一批阶段配置及 V0.2 综合验收。
+
+## V0.2 第十三批：阶段计划配置与持久化
+证据 SHA 9f967e495efb33b4fc33fefb02d014cb9766bbb1，push CI https://github.com/trade3403/browseai/actions/runs/45957140199 success；PR CI https://github.com/trade3403/browseai/actions/runs/45957145910 第一次因微软 APT 源 HTTP403 安装失败，原 SHA 第 2 次重跑成功，10 项检查通过，未降低视觉门槛。新增 0007 stage_plan 迁移；创建任务必须提供每阶段 instruction/dependencies/acceptance 及原有 id/weight，校验文本大小、空值、唯一验收项、前置依赖与顺序，拒绝环、未知、自依赖及向后引用。阶段计划随任务创建同事务写入，不允许直接更改已创建计划；GET /api/tasks/{id}/stages 返回 tenant 隔离的有序计划与 configured 标记。ready/prepare/confirm_sent/repair 在行锁事务内验证完整计划和现有有效 fence；历史缺配置记录保留但禁止推进，旧草稿可删除重建。HTTP 创建请求上限128 KiB，其余仍8 KiB。真实 DB 测试持久化/跨租户/旧配置拒绝；单测非法依赖和验收。阶段验收项是用户配置，不是已验证 CI 证据，GitHub 工作流/检查映射及外部授权属于 V0.3；精确指令派发仍属 V0.5。未本地完整执行，待新 CI；下一步 V0.2 综合验收与遗留问题核对。
+
+## V0.2 代码阶段综合验收（2026-11-27）
+证据 SHA 2f80cf2af22483c78e61e4018cea3a6e66b8d85c；PR CI https://github.com/trade3403/browseai/actions/runs/45960638615 与 push CI https://github.com/trade3403/browseai/actions/runs/45960630219 均 completed/success，逐项检查 10+10 jobs。实际 database job 140377364013 七项 TestPostgres* 集成均 PASS，完整语句覆盖率 81.3%；schema 6 tests OK；functional Linux 10 passed、Windows 10 passed；visual-desktop 3 passed，shell 11.7364%、边界 1.453125 px、核心区域均 <=15%，releasePassed=false。详见 docs/V0.2-ACCEPTANCE.md（含遗留边界和技术选型差异）。按路线图 V0.2 代码范围通过；文档提交待自己的双套 CI，不替代证据 SHA。V0.3 尚未开发，下一步从验收通过的分支建立独立草稿 PR；不得未经批准合并/部署。

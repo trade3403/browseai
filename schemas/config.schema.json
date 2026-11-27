@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://browseai.invalid/schemas/config.schema.json",
+  "title": "BrowseAI Git control config",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "protocol_version": {
+      "const": "1.0"
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"
+    },
+    "repository": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+    },
+    "code_branch": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "pattern": "^(?![/-])(?!.*(?:\\.\\.|@\\{|//|\\.lock(?:/|$)))[A-Za-z0-9_./-]+(?<![/.])$"
+    },
+    "control_branch": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^ai-control/[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"
+    },
+    "required_workflows": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "minItems": 1,
+      "maxItems": 30,
+      "uniqueItems": true
+    },
+    "required_jobs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "minItems": 1,
+      "maxItems": 50,
+      "uniqueItems": true
+    },
+    "stages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"
+          },
+          "weight": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000
+          },
+          "acceptance": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "minItems": 1,
+            "maxItems": 50,
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "id",
+          "weight",
+          "acceptance"
+        ]
+      },
+      "minItems": 1,
+      "maxItems": 100
+    },
+    "max_repairs": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 20
+    },
+    "poll_seconds": {
+      "type": "integer",
+      "minimum": 15,
+      "maximum": 3600
+    }
+  },
+  "required": [
+    "protocol_version",
+    "task_id",
+    "repository",
+    "code_branch",
+    "control_branch",
+    "required_workflows",
+    "required_jobs",
+    "stages",
+    "max_repairs",
+    "poll_seconds"
+  ]
+}

@@ -70,3 +70,6 @@ config 由用户审批，执行者不能擅改验收标准。tasks 定义 stage 
 
 ## 7. 多租户扩展（V1.0 必需）
 所有 DB 状态、缓存、事件、指令与 GitHub 授权均以已认证 tenant_id 隔离；任务 ID 全局唯一。Webhook 使用安装 ID 和授权仓库映射，不信任请求提供的 tenant_id。仓库稳定 ID + 分支写租约为全局唯一，跨租户冲突不泄露其他用户信息。用户禁用时撤销派发及远程控制；详见 MULTI-USER.md。
+
+## 8. V0.2 首批可执行协议
+`schemas/{config,tasks,progress,result}.schema.json` 使用 Draft 2020-12，`schemas/examples/` 为非敏感模拟样本。tasks 的 stages 每项包含 id、dependencies、instruction、acceptance；result 包含 revision、stage_id、code_sha、dispatch_id、evidence（kind/url）及 UTC updated_at。离线校验 `tests/schema/validate.py` 限制单文件128 KiB、拒绝重复键、未知字段、非法 URL/分支、跨文档不一致及循环依赖。运行 `python -m pip install -r tests/schema/requirements.txt` 后 `python -m unittest discover -s tests/schema -v`。此为结构和本地一致性验证，不能证明 Git 可达性、CI 成功或人工授权；handoff.md 及生产服务端验证仍待实现。自由文本不执行。

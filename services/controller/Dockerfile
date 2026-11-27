@@ -1,7 +1,9 @@
 FROM golang:1.23-alpine AS build
 WORKDIR /src
-COPY go.mod main.go tenant.go ./
-RUN CGO_ENABLED=0 go build -trimpath -o /controller .
+COPY go.mod go.sum ./
+RUN go mod download && go mod verify
+COPY *.go ./
+RUN CGO_ENABLED=0 go build -mod=readonly -trimpath -o /controller .
 FROM alpine:3.21
 RUN adduser -D -u 10001 app
 COPY --from=build /controller /usr/local/bin/controller
