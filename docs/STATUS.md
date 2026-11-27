@@ -42,3 +42,6 @@ PR #1，上一轮证据 SHA 8b55da9691810d3c6263689a871ecb4fc799510e，运行 ht
 
 ## 第三次真实视觉测量及修订
 证据 SHA 14e879af30deeea89035f6673886dd5a3d237147；PR CI https://github.com/trade3403/browseai/actions/runs/45926036895，push CI https://github.com/trade3403/browseai/actions/runs/45926031996，均完成失败。backend、web、functional、compose、Windows foundation 五项通过。artifact 15166307886：外壳14.2434%（前15.2792%），整图13.2247%，header14.6701%、sidebar14.2697%、workspace_toolbar16.4994%、right_panel15.5251%、footer10.9219%，远程边界1.453125px。已核对截图及DOM几何。修订3：调整卡片高度和标签位置，补右栏状态图标及明确标记的 mock CI 样例（非真实 GitHub 状态），增加 mock/真实边界 E2E 断言，保持视觉门槛及原图不变。新结果待CI。不进入V0.2。
+
+## 第四次真实视觉测量及定向修订
+证据 SHA c2d3ac63cda31bf8d7d11eaaebb9facc614ee58c；PR CI https://github.com/trade3403/browseai/actions/runs/45926699028 与 push CI https://github.com/trade3403/browseai/actions/runs/45926691243 均完成失败。backend/web/functional/compose/windows-foundation 五项通过，视觉与gate失败。artifact 15167150705：外壳13.3510%（前14.2434%），整图12.7449%，header14.2916%、sidebar13.3768%、workspace_toolbar16.0942%、right_panel14.0789%、footer10.4479%，边界1.453125px。实查截图、DOM坐标及采样颜色。修订4：调整工具栏尺寸、进度条基线、面板颜色和底栏分组；为明确标记的本地模拟项目补充阶段、任务及CI细节，仓库链接可打开，CI示例说明可查看，新增跨示例项目隔离断言。所有示例不得视为真实GitHub证据。视觉基准和1%门槛不变，修复效果待新CI验证，不进入V0.2。

@@ -103,3 +103,30 @@
  .wide-progress .track>div{background:linear-gradient(90deg,#4c8bf1,#639cf7)}
  .shell footer{grid-template-columns:21.5% 12.3% 8.2% 17% minmax(0,1fr) auto auto auto;gap:8px}
 }
+
+/* Reference revision 4: align individual controls and safe sample data. */
+.right-panel dd a{color:#77aaf3;text-decoration:underline;display:inline-flex;align-items:center;gap:5px;overflow-wrap:anywhere}
+.commit-chip{display:inline-block;font:inherit;background:#263340;border-radius:6px;padding:0 5px;color:#cad3df}.subtle{color:#a9b6c4;font-size:11px}
+.right-panel h3 .sample-label{border:0;background:transparent;color:#79a9f0;text-decoration:underline;padding:0;margin-left:auto;font-size:12px}
+.right-panel dl dt svg{vertical-align:-2px}.ci-detail{display:flex;align-items:center;justify-content:space-between;gap:4px}.ci-detail svg{color:#52c26d}
+.right-panel .summary b{font-weight:600}.task-details dd{font-size:12px}.task-details dd:nth-of-type(2){font-size:11px;line-height:16px}
+@media(min-width:1401px){
+ .sidebar{background:linear-gradient(165deg,#101923,#0c1620)}
+ .sidebar nav{margin-left:1px;margin-right:0}.sidebar nav button{padding-left:13px;gap:12px}
+ .section-heading{padding-left:4px}.project-list{margin-left:1px}.project-head{gap:8px}
+ .project{padding-left:13px;padding-top:9px;padding-bottom:8px}
+ .project:first-child .project-progress{margin-top:22px}.project:nth-child(2) .project-progress{margin-top:20px}.project:nth-child(3) .project-progress{margin-top:20px}.project:nth-child(n+4) .project-progress{margin-top:17px}
+ .project-progress{margin-left:29px}.project-progress .track{height:9px}
+ .project.selected{background:linear-gradient(115deg,#19366d,#16356a)}
+ .workspace-toolbar strong{margin-right:25px}.tab:first-child button:first-child{min-width:114px}.tab:nth-child(2) button:first-child{min-width:103px}.tab:nth-child(3) button:first-child{min-width:96px}
+ .tabs{gap:6px}.tab.active{background:linear-gradient(145deg,#1851ab,#2461c9)}.toolbar-buttons button{padding-left:9px;padding-right:9px}
+ .remote-status{background:#111318}.remote-status>span{font-size:11.5px}.remote-status>div{gap:6px}.remote-status .live{min-width:80px}
+ .right-panel{background:linear-gradient(145deg,#0e1720,#101923)}.right-panel h3{color:#e1e7ef}.right-panel section{background:linear-gradient(130deg,#16222e,#151e2b)}
+ .right-panel section:nth-of-type(1){height:124px}.right-panel section:nth-of-type(1) dl{row-gap:2px;line-height:17px}
+ .right-panel section:nth-of-type(2) dl{margin-top:5px;row-gap:2px}.ci-state{min-height:42px}
+ .wide-progress .track{height:11px}.right-panel .summary{margin-top:3px}
+ .right-panel .next-actions{padding-left:1px;line-height:25px}.right-panel .task-details{row-gap:8px}
+ .shell footer{grid-template-columns:21.5% 12.3% 8.2% 14% minmax(0,1fr) 165px 110px 126px;gap:8px;background:linear-gradient(90deg,#131d28,#101a25)}
+ .shell footer>span:nth-of-type(6){justify-content:flex-start}.shell footer>span:nth-of-type(7){justify-content:flex-start}
+}
+@media(max-width:900px){.right-panel dd a{max-width:100%;overflow-wrap:anywhere}}

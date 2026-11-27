@@ -49,3 +49,15 @@ test('mock CI is explicitly marked and does not masquerade as GitHub evidence',a
   await expect(page.locator('.ci-state')).toContainText('模拟等待 CI')
   await expect(page.locator('.ci-demo-passed')).toHaveCount(0)
 })
+
+test('reference sample fields stay scoped to the mock project and details are labeled',async({page})=>{
+  await page.goto('/')
+  await expect(page.locator('.project')).toHaveCount(6)
+  await expect(page.getByRole('link',{name:'trade3403/localtunnel'})).toHaveAttribute('href','https://github.com/trade3403/localtunnel')
+  await expect(page.getByText('V0.8（第 8 / 10 阶段，示例）',{exact:false})).toBeVisible()
+  await page.getByRole('button',{name:'查看示例'}).click()
+  await expect(page.locator('.notice')).toContainText('不代表 GitHub 实际结果')
+  await page.locator('.project').filter({hasText:'GlobalChat'}).click()
+  await expect(page.getByText('未连接真实任务计划',{exact:false})).toBeVisible()
+  await expect(page.locator('.ci-demo-passed')).toHaveCount(0)
+})
