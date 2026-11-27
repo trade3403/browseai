@@ -25,3 +25,6 @@ Protected absolute-path PEM loading (PKCS#1 or PKCS#8 RSA) and App JWT identity,
 
 ## Batch 3b
 Key loading explicitly rejects Windows until ACL verification is implemented, rejects leading non-PEM content, and has generated-key tests for both RSA encodings, unsafe paths, permissions and malformed content. Token issuance now returns the same typed retry deadline as read requests on 429, explicit rate-limit 403 and 5xx; no inline retry. The strict scoped token response contract remains unchanged pending live compatibility validation. Privileged binding persistence remains pending.
+
+## Batch 3c
+Internal provisioning service verifies remote App/account/repository before starting an atomic insert transaction. Existing installation ownership cannot be reassigned; disabled records cannot be silently re-enabled; conflicting repository mappings roll back new installation rows. Exact repeats are idempotent. PostgreSQL tests use the isolated CI owner and assert runtime-role denial, cross-tenant rejection and rollback. Production operator role, audited approval and separate CLI entry point remain pending; never supply the schema owner connection to the runtime service. No HTTP route exposes provisioning.
