@@ -13,7 +13,7 @@
     },
     "device_scale_factor": 1,
     "threshold": 0.1,
-    "max_diff_ratio": 0.01,
+    "max_diff_ratio": 0.15,
     "max_boundary_error_css_px": 2,
     "regions": {
       "header": [
@@ -53,6 +53,7 @@
         50
       ]
     },
-    "remote_viewport": "separate mock validation; live content excluded from shell score"
+    "remote_viewport": "separate mock validation; live content excluded from shell score",
+    "release_max_diff_ratio": 0.01
   }
 }

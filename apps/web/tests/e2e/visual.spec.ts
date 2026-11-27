@@ -8,6 +8,16 @@ import {PNG} from 'pngjs'
 const root=path.resolve(process.cwd(),'../..')
 test('authoritative desktop visual baseline',async({page},info)=>{
   const manifest=JSON.parse(await readFile(path.join(root,'design/visual-baseline.json'),'utf8'))
+  const profile=process.env.BROWSEAI_VISUAL_PROFILE ?? 'development'
+  if(profile!=='development'&&profile!=='release')throw new Error('Invalid visual acceptance profile: '+profile)
+  const developmentLimit=manifest.visual_ci.max_diff_ratio as number
+  const releaseLimit=manifest.visual_ci.release_max_diff_ratio as number
+  // User-approved policy. No environment variable may override the numeric limits.
+  expect(developmentLimit).toBe(0.15)
+  expect(releaseLimit).toBe(0.01)
+  expect(manifest.visual_ci.threshold).toBe(0.1)
+  expect(manifest.visual_ci.max_boundary_error_css_px).toBe(2)
+  const activeLimit=profile==='release'?releaseLimit:developmentLimit
   const out=info.outputPath('visual')
   await mkdir(out,{recursive:true})
   await page.goto('/')
@@ -79,10 +89,15 @@ test('authoritative desktop visual baseline',async({page},info)=>{
     const s=getComputedStyle(el)
     return [selector,{family:s.fontFamily,size:s.fontSize,weight:s.fontWeight,lineHeight:s.lineHeight,letterSpacing:s.letterSpacing}]
   })))
-  const report={entireRatio:entire/(a.width*a.height),shellRatio:shellDiff/shellPixels,excluded:remote,scores,boundaryError,geometry,hotspots,typography}
+  const shellRatio=shellDiff/shellPixels
+  const boundaryPassed=boundaryError!==null&&boundaryError<=manifest.visual_ci.max_boundary_error_css_px
+  const passedAt=(limit:number)=>boundaryPassed&&shellRatio<=limit&&Object.entries(scores).every(([name,score])=>name==='remote_viewport'||score.ratio<=limit)
+  const acceptance={profile,activeLimit,developmentLimit,releaseLimit,boundaryPassed,developmentPassed:passedAt(developmentLimit),releasePassed:passedAt(releaseLimit)}
+  const report={entireRatio:entire/(a.width*a.height),shellRatio,excluded:remote,scores,boundaryError,geometry,hotspots,typography,acceptance}
   await writeFile(path.join(out,'report.json'),JSON.stringify(report,null,2))
-  expect.soft(report.shellRatio).toBeLessThanOrEqual(manifest.visual_ci.max_diff_ratio)
-  for(const [name,score] of Object.entries(scores))if(name!=='remote_viewport')expect.soft(score.ratio,name).toBeLessThanOrEqual(manifest.visual_ci.max_diff_ratio)
+  console.log('VISUAL_ACCEPTANCE',JSON.stringify({shellRatio,boundaryError,regions:Object.fromEntries(Object.entries(scores).map(([name,score])=>[name,score.ratio])),...acceptance}))
+  expect.soft(report.shellRatio,profile+' shell').toBeLessThanOrEqual(activeLimit)
+  for(const [name,score] of Object.entries(scores))if(name!=='remote_viewport')expect.soft(score.ratio,profile+' '+name).toBeLessThanOrEqual(activeLimit)
   expect(boundaryError).not.toBeNull()
   expect(boundaryError!).toBeLessThanOrEqual(manifest.visual_ci.max_boundary_error_css_px)
 })

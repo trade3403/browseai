@@ -55,7 +55,7 @@ V0.2 后加入 schema 校验；V0.3 后加入模拟 GitHub 合约测试；V0.4 �
 - 提交阶段 PR，当前 SHA CI 通过后才能宣称 V0.1 完成。
 
 ## 7. 1:1 UI 必需门禁
-V0.1 必须新增 visual-desktop 检查：验证原图 SHA、固定 1536×864/DPR1、截图差异与关键区域统计、差异图归档、功能断言。参考 design/visual-baseline.json；原图缺失不得跳过或假报成功。后续各阶段持续回归。
+V0.1 必须保留 visual-desktop 检查：验证原图 SHA、固定 1536×864/DPR1、截图差异与关键区域统计、差异图归档、功能断言。用户于 2026-11-27 批准 V0.1–V0.9 开发门槛为外壳与每个核心区域 <=15%，V1.0 最终门槛仍为 <=1%，关键边界始终 <=2px，像素色差阈值 0.1 不变。参考 design/visual-baseline.json；原图缺失不得跳过或假报成功。后续各阶段持续回归。最终发布前须在候选提交执行 release profile（手动 workflow_dispatch 选择 release 或 v1.* 标签强制 release），严格视觉门禁与其他所有必需检查及用户验收均通过后方可发布；development 结果不可代替。
 
 ## 8. 多用户和 Windows CI
 遵循 docs/MULTI-USER.md。V0.2 起每项 API 均加入跨租户负向测试；V0.4 验证两租户的浏览器/显示/存储隔离与节点故障恢复；V0.7 共享 UI 及管理员权限；V0.9 Windows runner 构建和运行安装/便携版本，并验证两个 mock 用户的完整链路。V1.0 不允许以单用户预览代替正式多租户验收。
@@ -63,4 +63,4 @@ V0.1 必须新增 visual-desktop 检查：验证原图 SHA、固定 1536×864/DP
 ## 9. 官方 Windows Runner 强制门禁（用户已确认）
 - V0.1 新增 windows-foundation：GitHub-hosted windows-latest 实际执行 Go 测试、编译 Windows EXE、启动并检查 HTTP 接口、编译共用 Vue UI、Windows Chromium 功能测试。此阶段不冒充 Electron 客户端验收。
 - V0.7 Electron 开发完成起增加独立 windows-desktop 门禁：Windows 实际构建、启动真实 Electron、测试独立窗口/托盘/连接/权限/断网恢复，并在 1536×864 固定环境截图比较。V0.9 生成 NSIS x64 安装版和便携版，测试安装、启动、卸载和签名状态，产物归档；V1.0 前补 Windows 10/11 真机验证。所有 Windows job 必须为官方标准规格 windows-latest，不使用付费大型 Runner 或私有自建 Runner，除非用户另行批准。
-- Linux 工作流固定 ubuntu-24.04，因 Playwright 1.50.1 不支持 ubuntu-latest 当前映射的 26.04。升级 Playwright/Runner 时需重新验证视觉基准；不得用改变阈值或跳过检查解决。
+- Linux 工作流固定 ubuntu-24.04，因 Playwright 1.50.1 不支持 ubuntu-latest 当前映射的 26.04。升级 Playwright/Runner 时需重新验证视觉基准；不得未经批准改变阈值或跳过检查解决。

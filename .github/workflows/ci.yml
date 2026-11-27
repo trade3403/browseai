@@ -4,7 +4,15 @@ on:
     branches: [main]
   push:
     branches: [main, 'feat/**']
+    tags: ['v1.*']
   workflow_dispatch:
+    inputs:
+      visual_profile:
+        description: 'Development (15%) or final release (1%) visual acceptance'
+        required: true
+        type: choice
+        default: development
+        options: [development, release]
 permissions:
   contents: read
 concurrency:
@@ -98,6 +106,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Compare desktop UI with user reference
         working-directory: apps/web
+        env:
+          BROWSEAI_VISUAL_PROFILE: ${{ (github.ref_type == 'tag' && 'release') || inputs.visual_profile || 'development' }}
         run: npm run visual
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
