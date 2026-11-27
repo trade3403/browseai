@@ -78,6 +78,7 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_admin NOLOGIN NOSUPERUSER NOBYPASSRLS'
           psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_github_operator NOLOGIN NOSUPERUSER NOBYPASSRLS'
           psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_webhook NOLOGIN NOSUPERUSER NOBYPASSRLS'
+          psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_monitor NOLOGIN NOSUPERUSER NOBYPASSRLS'
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0001_initial.up.sql
           psql -X -v ON_ERROR_STOP=1 -f tests/database/fixtures.sql
           psql -X -v ON_ERROR_STOP=1 -f tests/database/isolation.sql
@@ -92,6 +93,9 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0008_github_bindings.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0009_github_operator.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0010_github_deliveries.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0011_github_monitors.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f tests/database/github_monitors.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0011_github_monitors.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0010_github_deliveries.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0009_github_operator.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0008_github_bindings.down.sql
@@ -118,6 +122,8 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0008_github_bindings.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0009_github_operator.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0010_github_deliveries.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0011_github_monitors.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f tests/database/github_monitors.sql
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_admin LOGIN PASSWORD 'ci-admin-only'"
           export BROWSEAI_TEST_ADMIN_DSN="postgres://browseai_admin:ci-admin-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_auth LOGIN PASSWORD 'ci-auth-only'"
