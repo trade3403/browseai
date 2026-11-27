@@ -77,10 +77,10 @@ func newGitHubRemoteExecutor(endpoint string, roots *x509.CertPool, clientCert t
 				return nil
 			},
 		},
-		TLSHandshakeTimeout: 10 * time.Second,
+		TLSHandshakeTimeout:    10 * time.Second,
 		MaxResponseHeaderBytes: 16384,
-		DisableKeepAlives: true,
-		DisableCompression: true,
+		DisableKeepAlives:      true,
+		DisableCompression:     true,
 	}
 	client := &http.Client{
 		Transport: transport, Timeout: githubSupervisorTimeout,

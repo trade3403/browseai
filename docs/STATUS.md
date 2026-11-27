@@ -232,3 +232,7 @@ Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified pus
 
 ### V0.3 6c-3b-1 已验收；6c-3b-2a 待 CI
 实际提交 0d057f1fdf2b51a95710c37687b94a9cd12c28f4，Push 46052133637、PR 46052140191 均 completed/success，20/20。新增远程执行客户端 TLS 1.3、证书固定、随机请求及节点签名报告核验。真实节点服务、隔离运行及生产凭据仍未完成，禁止自动推进。新 CI 待验收。
+
+
+### V0.3 6c-3b-2a 格式修复
+提交 d26a9d75f5feda0dc6305ca5feaa740aaa755600 Push 46054798856、PR 46054811307 各 8/10；backend 在 gofmt 检查发现 github_remote_executor.go 三处 HTTP Transport 字段对齐错误，gate 随之失败。按实际两套日志修正格式，不修改功能、测试或验收门槛。新 CI 待验收。
