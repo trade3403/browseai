@@ -70,6 +70,15 @@ func TestPostgresGitHubProvisioning(t *testing.T) {
 	}
 	operator := open(operatorDSN)
 	s := githubProvisioner{operator, a}
+	if err := githubOperatorReady(ctx, operator); err != nil {
+		t.Fatal("operator readiness rejected", err)
+	}
+	if err := githubOperatorReady(ctx, runtimeDB); err == nil {
+		t.Fatal("runtime accepted as operator")
+	}
+	if err := githubOperatorReady(ctx, owner); err == nil {
+		t.Fatal("owner accepted as operator")
+	}
 	reject := func(s githubProvisioner, approval githubInstallationApproval) {
 		t.Helper()
 		if err := s.provision(ctx, approval, now); err == nil {

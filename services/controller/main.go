@@ -71,6 +71,31 @@ func newServer(addr string) *http.Server {
 
 func main() {
 	if len(os.Args) > 1 {
+		if os.Args[1] == "github-bind" {
+			dsn := os.Getenv("BROWSEAI_GITHUB_OPERATOR_DSN")
+			if !githubOperatorDSNValid(dsn) {
+				log.Fatal("GitHub binding requires explicit operator TLS DSN")
+			}
+			key, err := loadGitHubAppKey(os.Getenv("BROWSEAI_GITHUB_KEY_FILE"))
+			if err != nil {
+				log.Fatal("GitHub key unavailable")
+			}
+			app, err := newGitHubApp(os.Getenv("BROWSEAI_GITHUB_APP_ISSUER"), key, nil)
+			if err != nil {
+				log.Fatal("GitHub App configuration invalid")
+			}
+			db, err := sql.Open("postgres", dsn)
+			if err != nil {
+				log.Fatal("GitHub operator database unavailable")
+			}
+			defer db.Close()
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			defer cancel()
+			if err := githubOperatorCommand(ctx, db, app, os.Args[2:], os.Stdin, os.Stdout, time.Now()); err != nil {
+				log.Fatal("GitHub binding rejected")
+			}
+			return
+		}
 		if os.Args[1] != "account" || !adminDSNValid(os.Getenv("BROWSEAI_ADMIN_DSN")) {
 			log.Fatal("account command requires explicit browseai_admin TLS DSN")
 		}
