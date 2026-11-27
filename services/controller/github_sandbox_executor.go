@@ -30,11 +30,13 @@ type githubSandboxPlan struct {
 // This adapter is deliberately not wired into a production command. The
 // trusted runtime, image provenance and host isolation need separate approval.
 type githubSandboxExecutor struct {
-	plan githubSandboxPlan
-	run  func(context.Context, string, []string) error
+	plan   githubSandboxPlan
+	policy githubSandboxBuildPolicy
+	proof  githubSandboxBuildProof
+	run    func(context.Context, string, []string) error
 }
 
-func newGitHubSandboxExecutor(plan githubSandboxPlan, run func(context.Context, string, []string) error) (*githubSandboxExecutor, error) {
+func newGitHubSandboxExecutor(plan githubSandboxPlan, policy githubSandboxBuildPolicy, proof githubSandboxBuildProof, run func(context.Context, string, []string) error) (*githubSandboxExecutor, error) {
 	if run == nil || !githubWorkflowDigestValid(plan.request.imageDigest) ||
 		!githubWorkflowDigestValid(plan.request.harnessDigest) ||
 		!taskSHA.MatchString(plan.request.statement.Execution.ExecutedSHA) ||
@@ -52,7 +54,13 @@ func newGitHubSandboxExecutor(plan githubSandboxPlan, run func(context.Context, 
 	plan.jobs = append([]githubIsolatedJob(nil), plan.jobs...)
 	plan.request.statement.Execution.Jobs = append([]int64(nil), plan.request.statement.Execution.Jobs...)
 	plan.request.statement.Execution.Required = append([]string(nil), plan.request.statement.Execution.Required...)
-	return &githubSandboxExecutor{plan, run}, nil
+	if err := verifyGitHubSandboxBuild(plan, policy, proof, time.Now()); err != nil {
+		return nil, err
+	}
+	policy.builderKey = append([]byte(nil), policy.builderKey...)
+	proof.signature = append([]byte(nil), proof.signature...)
+	proof.receipt.Jobs = append([]githubRemoteJob(nil), proof.receipt.Jobs...)
+	return &githubSandboxExecutor{plan, policy, proof, run}, nil
 }
 
 func githubSandboxImageValid(image, digest string) bool {
@@ -72,7 +80,7 @@ func (s *githubSandboxExecutor) execute(ctx context.Context, req githubIsolatedR
 		return fail()
 	}
 	actual, err := githubSandboxRequestBytes(req)
-	if err != nil || !bytes.Equal(expected, actual) {
+	if err != nil || !bytes.Equal(expected, actual) || verifyGitHubSandboxBuild(s.plan, s.policy, s.proof, time.Now()) != nil {
 		return fail()
 	}
 	var nonce [16]byte
@@ -106,7 +114,7 @@ func githubSandboxArgs(image, name string) []string {
 		"--read-only", "--user=65532:65532", "--cap-drop=ALL",
 		"--security-opt=no-new-privileges", "--pids-limit=128",
 		"--memory=1g", "--memory-swap=1g", "--cpus=2",
-		"--ipc=none", "--log-driver=none",
+		"--ipc=none", "--log-driver=none", "--no-healthcheck",
 		"--tmpfs=/tmp:rw,noexec,nosuid,nodev,size=128m",
 		"--entrypoint=/opt/browseai/trusted-test", image,
 	}
