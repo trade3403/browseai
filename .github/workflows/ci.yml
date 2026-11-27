@@ -42,7 +42,7 @@ jobs:
           node-version: '22'
       - name: Install dependencies
         run: |
-          if test -f package-lock.json; then npm ci; else npm install --no-audit --no-fund; fi
+          npm ci --no-audit --no-fund
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test:ci
@@ -67,7 +67,7 @@ jobs:
       - name: Install browser and dependencies
         working-directory: apps/web
         run: |
-          if test -f package-lock.json; then npm ci; else npm install --no-audit --no-fund; fi
+          npm ci --no-audit --no-fund
           npx playwright install --with-deps chromium
       - name: Run mock browser tests
         working-directory: apps/web
@@ -94,7 +94,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y fonts-noto-cjk
-          if test -f package-lock.json; then npm ci; else npm install --no-audit --no-fund; fi
+          npm ci --no-audit --no-fund
           npx playwright install --with-deps chromium
       - name: Compare desktop UI with user reference
         working-directory: apps/web
@@ -163,7 +163,7 @@ jobs:
       - name: Install shared UI dependencies
         working-directory: apps/web
         run: |
-          if (Test-Path package-lock.json) { npm ci } else { npm install --no-audit --no-fund }
+          npm ci --no-audit --no-fund
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Build shared UI on Windows
         working-directory: apps/web

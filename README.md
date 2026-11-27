@@ -18,7 +18,7 @@
 
 状态：V0.1 开发中；尚未通过 CI。V1.0 必须支持多用户独立 ChatGPT 登录环境、统一 Windows/Web UI、单机及分布式节点。
 
-用户提供的 1536×864 原图为唯一桌面视觉基准，原图待上传至 design/screens/browseai-desktop.webp。未通过视觉 CI 不得宣称 V0.1 完成。
+用户提供的 1536×864 原图为唯一桌面视觉基准，[原图已入库](design/screens/browseai-desktop.webp)。未通过视觉 CI 不得宣称 V0.1 完成。
 
 ## V0.1 本地模拟预览
 `docker compose -f deploy/compose.yml up --build`，访问 http://127.0.0.1:8088。当前仅模拟项目和远程占位，不用于生产或真实账户登录。

@@ -5,7 +5,7 @@
   "format": "webp",
   "size_bytes": 103632,
   "sha256": "cbbcf34029c6fff16e8ac2449da923a80e83eff8cb980bb531dcd32de3a59c05",
-  "status": "PENDING_REFERENCE_UPLOAD",
+  "status": "REFERENCE_UPLOADED",
   "visual_ci": {
     "viewport": {
       "width": 1536,
