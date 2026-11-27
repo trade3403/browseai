@@ -95,6 +95,8 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0010_github_deliveries.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0011_github_monitors.up.sql
           psql -X -v ON_ERROR_STOP=1 -f tests/database/github_monitors.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0012_github_monitor_repository.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0012_github_monitor_repository.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0011_github_monitors.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0010_github_deliveries.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0009_github_operator.down.sql
@@ -124,6 +126,7 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0010_github_deliveries.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0011_github_monitors.up.sql
           psql -X -v ON_ERROR_STOP=1 -f tests/database/github_monitors.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0012_github_monitor_repository.up.sql
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_admin LOGIN PASSWORD 'ci-admin-only'"
           export BROWSEAI_TEST_ADMIN_DSN="postgres://browseai_admin:ci-admin-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_auth LOGIN PASSWORD 'ci-auth-only'"
@@ -135,6 +138,8 @@ jobs:
           export BROWSEAI_TEST_GITHUB_OPERATOR_DSN="postgres://browseai_github_operator:ci-github-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_webhook LOGIN PASSWORD 'ci-webhook-only'"
           export BROWSEAI_TEST_WEBHOOK_DSN="postgres://browseai_webhook:ci-webhook-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
+          psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_monitor LOGIN PASSWORD 'ci-monitor-only'"
+          export BROWSEAI_TEST_MONITOR_DSN="postgres://browseai_monitor:ci-monitor-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           cd services/controller
           go test -mod=readonly -race -coverprofile=coverage.out -count=1 -v ./...
           go tool cover -func=coverage.out | tee coverage-summary.txt
