@@ -81,6 +81,7 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_monitor NOLOGIN NOSUPERUSER NOBYPASSRLS'
           psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_verifier_operator NOLOGIN NOSUPERUSER NOBYPASSRLS'
           psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_verifier_reader NOLOGIN NOSUPERUSER NOBYPASSRLS'
+          psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_evidence_writer NOLOGIN NOSUPERUSER NOBYPASSRLS'
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0001_initial.up.sql
           psql -X -v ON_ERROR_STOP=1 -f tests/database/fixtures.sql
           psql -X -v ON_ERROR_STOP=1 -f tests/database/isolation.sql
@@ -104,6 +105,8 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f tests/database/github_verifier_keys.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0015_github_ci_evidence.up.sql
           psql -X -v ON_ERROR_STOP=1 -f tests/database/github_ci_evidence.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0016_github_evidence_writer.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0016_github_evidence_writer.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0015_github_ci_evidence.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0014_github_verifier_keys.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0013_github_monitor_coordination.down.sql
@@ -144,6 +147,7 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f tests/database/github_verifier_keys.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0015_github_ci_evidence.up.sql
           psql -X -v ON_ERROR_STOP=1 -f tests/database/github_ci_evidence.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0016_github_evidence_writer.up.sql
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_admin LOGIN PASSWORD 'ci-admin-only'"
           export BROWSEAI_TEST_ADMIN_DSN="postgres://browseai_admin:ci-admin-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_auth LOGIN PASSWORD 'ci-auth-only'"
@@ -161,6 +165,8 @@ jobs:
           export BROWSEAI_TEST_VERIFIER_READER_DSN="postgres://browseai_verifier_reader:ci-verifier-reader-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_verifier_operator LOGIN PASSWORD 'ci-verifier-operator-only'"
           export BROWSEAI_TEST_VERIFIER_OPERATOR_DSN="postgres://browseai_verifier_operator:ci-verifier-operator-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
+          psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_evidence_writer LOGIN PASSWORD 'ci-evidence-writer-only'"
+          export BROWSEAI_TEST_EVIDENCE_WRITER_DSN="postgres://browseai_evidence_writer:ci-evidence-writer-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           cd services/controller
           go test -mod=readonly -race -coverprofile=coverage.out -count=1 -v ./...
           go tool cover -func=coverage.out | tee coverage-summary.txt

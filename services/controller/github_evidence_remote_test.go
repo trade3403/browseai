@@ -297,6 +297,53 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 		if _, err := s.verifyTaskPush(ctx, a, task, p.push, digest, badProof, clock); err == nil {
 			t.Fatal("unregistered signer accepted")
 		}
+		writerDSN := os.Getenv("BROWSEAI_TEST_EVIDENCE_WRITER_DSN")
+		if writerDSN == "" {
+			t.Fatal("missing evidence writer configuration")
+		}
+		writerDB := open(writerDSN)
+		w := githubEvidenceWriter{writerDB, s}
+		if _, err := owner.ExecContext(ctx, "INSERT INTO browseai.projects(id,tenant_id,name,repository_id,repository,code_branch) VALUES($1,$2,'proof fixture',$3,$4,$5)", task.projectID, b.tenantID, b.repositoryID, b.fullName, p.push.branch); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := owner.ExecContext(ctx, "INSERT INTO browseai.tasks(id,tenant_id,project_id,name,state,stage_count,code_sha,revision) VALUES($1,$2,$3,'proof fixture','WAIT_CI',1,$4,$5)", task.taskID, b.tenantID, task.projectID, p.push.sha, task.revision); err != nil {
+			t.Fatal(err)
+		}
+		for _, db := range []*sql.DB{owner, operator, reader} {
+			if _, err := (githubEvidenceWriter{db, s}).writePush(ctx, a, task, p.push, digest, taskPush, clock); err == nil {
+				t.Fatal("wrong writer role accepted")
+			}
+		}
+		if _, err := reader.ExecContext(ctx, "SELECT browseai.insert_github_ci_evidence($1,$2,$3)", verified.statement, verified.signature, verified.observed); err == nil {
+			t.Fatal("reader could call writer")
+		}
+		if _, err := writerDB.ExecContext(ctx, "SELECT * FROM browseai.github_ci_evidence"); err == nil {
+			t.Fatal("writer could read ledger")
+		}
+		if _, err := w.writePush(ctx, a, task, p.push, digest, registeredPush, clock); err == nil {
+			t.Fatal("legacy proof persisted")
+		}
+		if _, err := w.writePush(ctx, a, task, p.push, digest, taskPush, clock); err != nil {
+			t.Fatal("verified push persistence failed", err)
+		}
+		if _, err := w.writePush(ctx, a, task, p.push, digest, taskPush, clock); err == nil {
+			t.Fatal("duplicate persistence accepted")
+		}
+		mode = ""
+		if _, err := w.writePR(ctx, a, task, p, digest, taskPR, clock); err != nil {
+			t.Fatal("verified PR persistence failed", err)
+		}
+		var count int
+		if err := owner.QueryRowContext(ctx, "SELECT count(*) FROM browseai.github_ci_evidence WHERE task_id=$1 AND task_revision=$2 AND head_sha=$3 AND evidence_digest=sha256(statement||signature)", task.taskID, task.revision, p.push.sha).Scan(&count); err != nil || count != 2 {
+			t.Fatal("unexpected persisted evidence", count, err)
+		}
+		if _, err := owner.ExecContext(ctx, "UPDATE browseai.tasks SET revision=revision+1 WHERE id=$1", task.taskID); err != nil {
+			t.Fatal(err)
+		}
+		mode = "push"
+		if _, err := w.insert(ctx, verified, now); err == nil {
+			t.Fatal("stale task proof persisted")
+		}
 		if _, err := operator.ExecContext(ctx, "SELECT browseai.revoke_github_verifier($1,$2,$3,$4,gen_random_uuid())", b.tenantID, b.installationID, b.repositoryID, keyID); err != nil {
 			t.Fatal(err)
 		}
