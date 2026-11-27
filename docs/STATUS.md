@@ -137,3 +137,6 @@ V0.2 最终文档证据 SHA a1aea68e21deee039b6d1ab06dc77eb8fa2ecbe2，PR CI htt
 
 ## V0.3 第二批验收与窗口交接
 证据 SHA 7aa1bb593231125d4000b881bc70f7698489dac3，PR CI https://github.com/trade3403/browseai/actions/runs/45965865818 和 push CI https://github.com/trade3403/browseai/actions/runs/45965857888 均 success，PR 10 项成功，实际 database job 覆盖率 80.9%，四项 GitHub 相关测试 PASS；visual developmentPassed=true，releasePassed=false。交接详见 docs/HANDOFF-V0.3.md。本文档提交待自身 CI，暂停新增功能，下一窗口从第三批继续。
+
+## V0.3 third batch — initial security primitives
+Previous HEAD 26c0915b186f3ce4b99d0cce824786497c8c5ed4 verified: push https://github.com/trade3403/browseai/actions/runs/45967086759 and PR https://github.com/trade3403/browseai/actions/runs/45967093399 both success. Added internal protected PEM loader and remote App/installation/account/repository verification with synthetic contract tests. New commit CI pending; third batch not yet accepted. Remaining: privileged provisioning, key loader tests, token response compatibility and retry, integration tests. No live App credentials.
