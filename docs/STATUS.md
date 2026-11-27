@@ -116,3 +116,6 @@ SHA fa04258af5d42a975f3f61c15cc6db49b1e54ce4 push CI https://github.com/trade340
 
 ## V0.2 第十一批：账号生命周期及永久会话撤销
 证据 SHA b2c729ca0cfcfc54c33709bd1860dc04745e2bf2；PR CI https://github.com/trade3403/browseai/actions/runs/45954517830 与 push CI https://github.com/trade3403/browseai/actions/runs/45954510019 均 success，10 项检查通过。新增 0005 migration、独立 browseai_admin 运维角色及 account CLI（创建一用户一工作区、禁用、启用、密码重置），密码通过 stdin 而非命令行参数，生产 DSN 要求 verify-full，账号审计不记录密码。用户密码/启停及租户启停触发永久 session 撤销，真实 HTTP 登录的 Argon2id 验证结果在签发时再次锁定并校验密码哈希，拒绝密码重置期间的旧证明；签发锁定身份记录。测试真实 PostgreSQL 账号生命周期、重复创建回滚、角色隔离、旧密码与旧会话失效、审计。默认 Compose 仍 mock；管理员 UI/配额属 V0.7，浏览器控制租约即时撤销、GitHub 授权撤销与外部写入协调待相关阶段。此次未本地运行完整数据库测试，待 CI；后续补齐安全恢复/审批边界及阶段定义后综合验收。未进入 V0.3。
+
+### 第十一批 CI 格式修复
+证据 SHA 013c42c10551e98c9bf520553084a56d07fc7dd8；PR CI https://github.com/trade3403/browseai/actions/runs/45955088955 与 push CI https://github.com/trade3403/browseai/actions/runs/45955083980 均 failure。PR 实际 job 日志显示 database 成功，TestPostgresAccountLifecycle PASS，完整 race+PostgreSQL 测试覆盖率 80.6%；其他七个子 job 成功，backend 因 auth_password.go 的 crypto/sha256 与 crypto/subtle 导入排序违反 gofmt 失败，gate 因此失败。按 Runner 的 gofmt -d 结果修正唯一差异，未修改测试、权限或验收阈值。等待新 SHA 的双套 CI，尚不进入安全恢复/审批批次。
