@@ -101,3 +101,6 @@ SHA fa04258af5d42a975f3f61c15cc6db49b1e54ce4 push CI https://github.com/trade340
 
 ### 第六批 CI 工作流修复（2026-11-27）
 证据 SHA 40dc5611c0d33134844a52dfc28c8b5ac10a97db；push CI https://github.com/trade3403/browseai/actions/runs/45947817007 已结束失败，API 返回 0 jobs，未执行 Go/数据库/前端等测试。直接读取该 SHA 的 ci.yml 确认编辑时 JavaScript replace 的特殊替换符导致测试正则尾部美元符号与单引号被展开为原工作流后缀，造成命令截断及重复 job 块。恢复唯一完整 workflow，使用完整的 go test -mod=readonly -run '^TestPostgresAuthIntegration$' -count=1 -v 命令，保留所有 9 个必需子 job 及 gate、go mod verify 和只读 vet。提交前核对 job/trigger 名称唯一性及完整测试命令；未运行真实 Runner，待新 CI。尚不进入 CRUD 开发。
+
+## V0.2 第七批：项目 CRUD 与独立应用连接池
+证据 SHA ca8a8ed36ae9965cd652b4da37df9cb6ebeed980；PR CI https://github.com/trade3403/browseai/actions/runs/45949212776 与 push CI https://github.com/trade3403/browseai/actions/runs/45949206219 均 success，10 项通过，真实 TestPostgresAuthIntegration 通过，原单测覆盖率 77.0%。本批新增项目 GET/POST/PATCH/DELETE、事务内 RLS tenant context 与显式 tenant 条件、UUID、100 条游标分页、revision 冲突、存在任务时禁止删除、只允许更名（仓库/分支身份不可直接修改）、安全 Origin 与认证身份校验、独立 browseai_app 数据库连接池及真实双租户 API 测试。真实 GitHub 仓库 ID 暂为用户配置，不能当作授权或已验证身份，V0.3 才对账授权；不派发任务。整体后端覆盖率门槛仍 >=75%，从仅单测的 backend job 移至必需 database job 的完整单测+真实数据库集成+race 测试，backend 继续执行 gofmt/vet/race/build。新代码未本地跑完整依赖/数据库，待 CI 验证。默认 Compose 保留 mock；任务 CRUD、持久化状态机、租约操作与用户开通仍待完成。未进入 V0.3。

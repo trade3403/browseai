@@ -97,8 +97,12 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_auth LOGIN PASSWORD 'ci-auth-only'"
           export BROWSEAI_TEST_OWNER_DSN="postgres://postgres:ci-only-password@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           export BROWSEAI_TEST_AUTH_DSN="postgres://browseai_auth:ci-auth-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
+          psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_app LOGIN PASSWORD 'ci-app-only'"
+          export BROWSEAI_TEST_APP_DSN="postgres://browseai_app:ci-app-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           cd services/controller
-          go test -mod=readonly -run '^TestPostgresAuthIntegration$' -count=1 -v
+          go test -mod=readonly -race -coverprofile=coverage.out -count=1 -v ./...
+          go tool cover -func=coverage.out | tee coverage-summary.txt
+          awk '/^total:/ { found=1; if (($NF+0)<75) exit 1 } END { if (!found) exit 1 }' coverage-summary.txt
   schema:
     runs-on: ubuntu-24.04
     steps:
@@ -129,11 +133,7 @@ jobs:
           fi
       - run: go mod verify
       - run: go vet -mod=readonly ./...
-      - run: go test -race -coverprofile=coverage.out ./...
-      - name: Enforce backend coverage floor
-        run: |
-          go tool cover -func=coverage.out | tee coverage-summary.txt
-          awk '/^total:/ { found=1; if (($NF+0)<75) exit 1 } END { if (!found) exit 1 }' coverage-summary.txt
+      - run: go test -race -mod=readonly ./...
       - run: go build ./...
   web:
     runs-on: ubuntu-24.04

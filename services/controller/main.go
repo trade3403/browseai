@@ -80,6 +80,11 @@ func main() {
 			log.Fatal("authenticated startup failed: ", err)
 		}
 		defer db.Close()
+		appDB, err := openProjectRuntime(context.Background(), server, db, os.Getenv("BROWSEAI_APP_DSN"), os.Getenv("BROWSEAI_ORIGIN"))
+		if err != nil {
+			log.Fatal("project startup failed: ", err)
+		}
+		defer appDB.Close()
 	default:
 		log.Fatal("invalid BROWSEAI_MODE")
 	}
