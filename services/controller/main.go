@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -69,6 +70,19 @@ func newServer(addr string) *http.Server {
 
 func main() {
 	server := newServer(os.Getenv("LISTEN_ADDR"))
-	log.Printf("BrowseAI mock controller listening on %s", server.Addr)
+	mode := os.Getenv("BROWSEAI_MODE")
+	switch mode {
+	case "", "mock":
+		mode = "mock"
+	case "authenticated":
+		db, err := openAuthRuntime(context.Background(), server, os.Getenv("BROWSEAI_AUTH_DSN"), os.Getenv("BROWSEAI_ORIGIN"))
+		if err != nil {
+			log.Fatal("authenticated startup failed: ", err)
+		}
+		defer db.Close()
+	default:
+		log.Fatal("invalid BROWSEAI_MODE")
+	}
+	log.Printf("BrowseAI %s controller listening on %s", mode, server.Addr)
 	log.Fatal(server.ListenAndServe())
 }
