@@ -37,7 +37,7 @@ func TestPostgresLeaseIntegration(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		r, err := tasks.create(ctx, p, taskCreate{ProjectID: project.ID, Name: "Lease task", Stages: []stageCreate{{"S1", 1}}})
+		r, err := tasks.create(ctx, p, taskCreate{ProjectID: project.ID, Name: "Lease task", Stages: []stageCreate{{ID: "S1", Weight: 1, Instruction: "Implement sample", Acceptance: []string{"unit"}}}})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -83,6 +83,14 @@ func TestPostgresLeaseIntegration(t *testing.T) {
 	renewed, err := leases.renew(ctx, p, r.ID, 0, l.Fence)
 	if err != nil || renewed.Fence != l.Fence || renewed.ExpiresAt.Before(l.ExpiresAt) {
 		t.Fatal("renew failed", renewed, err)
+	}
+	if _, err := owner.Exec("UPDATE browseai.stages SET instruction=NULL,dependencies=ARRAY[]::text[],acceptance=ARRAY[]::text[] WHERE task_id=$1", r.ID); err != nil {
+		t.Fatal(err)
+	}
+	_, err = tasks.transition(ctx, p, r.ID, 0, actionReady, taskEvidence{ReadyToRun: true, LeaseFence: l.Fence})
+	reject(err)
+	if _, err := owner.Exec("UPDATE browseai.stages SET instruction='Implement sample',acceptance=ARRAY['unit'] WHERE task_id=$1", r.ID); err != nil {
+		t.Fatal(err)
 	}
 	ready, err := tasks.transition(ctx, p, r.ID, 0, actionReady, taskEvidence{ReadyToRun: true, LeaseFence: l.Fence})
 	if err != nil || ready.State != taskReady {

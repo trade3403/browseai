@@ -10,11 +10,11 @@ import (
 )
 
 func TestTaskInputValidation(t *testing.T) {
-	in := taskCreate{ProjectID: "00000000-0000-4000-8000-000000000011", Name: "Task", Stages: []stageCreate{{"S1", 1}}}
+	in := taskCreate{ProjectID: "00000000-0000-4000-8000-000000000011", Name: "Task", Stages: []stageCreate{{ID: "S1", Weight: 1, Instruction: "Implement sample", Acceptance: []string{"unit"}}}}
 	if !in.valid() {
 		t.Fatal("valid task denied")
 	}
-	for _, stages := range [][]stageCreate{nil, {{"S1", 0}}, {{"bad/id", 1}}, {{"S1", 1}, {"S1", 2}}} {
+	for _, stages := range [][]stageCreate{nil, {{ID: "S1", Weight: 0}}, {{ID: "bad/id", Weight: 1}}, {{ID: "S1", Weight: 1}, {ID: "S1", Weight: 2}}} {
 		bad := in
 		bad.Stages = stages
 		if bad.valid() {
@@ -67,7 +67,7 @@ func TestPostgresTaskIntegration(t *testing.T) {
 	const projectID = "00000000-0000-4000-8000-000000000011"
 	const otherProjectID = "00000000-0000-4000-8000-000000000012"
 	body := func(project string) string {
-		return `{"project_id":"` + project + `","name":"Test task","stages":[{"id":"S1","weight":1},{"id":"S2","weight":2}],"max_repairs":1}`
+		return `{"project_id":"` + project + `","name":"Test task","stages":[{"id":"S1","weight":1,"instruction":"Implement","dependencies":[],"acceptance":["unit"]},{"id":"S2","weight":2,"instruction":"Verify","dependencies":["S1"],"acceptance":["integration"]}],"max_repairs":1}`
 	}
 	request("GET", "/api/tasks", "", nil, 401)
 	request("POST", "/api/tasks", body(otherProjectID), ca, 404)
@@ -87,6 +87,12 @@ func TestPostgresTaskIntegration(t *testing.T) {
 	request("GET", "/api/tasks/"+draft.ID, "", ca, 404)
 	r := create()
 	path := "/api/tasks/" + r.ID
+	request("GET", path+"/stages", "", cb, 404)
+	planResponse := request("GET", path+"/stages", "", ca, 200)
+	var plan stagePlanResponse
+	if err := json.NewDecoder(planResponse.Body).Decode(&plan); err != nil || !plan.Configured || len(plan.Stages) != 2 || plan.Stages[1].Instruction != "Verify" || len(plan.Stages[1].Dependencies) != 1 || plan.Stages[1].Dependencies[0] != "S1" || plan.Stages[1].Acceptance[0] != "integration" {
+		t.Fatal("stage plan persistence", plan, err)
+	}
 	request("GET", path, "", cb, 404)
 	request("PATCH", path, `{"name":"stolen","revision":0}`, cb, 404)
 	request("POST", path+"/pause", `{"revision":0}`, cb, 404)

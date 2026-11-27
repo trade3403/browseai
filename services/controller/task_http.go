@@ -15,6 +15,7 @@ func (h taskHTTP) handler() http.Handler {
 	mux.HandleFunc("GET /api/tasks", h.list)
 	mux.HandleFunc("POST /api/tasks", h.create)
 	mux.HandleFunc("GET /api/tasks/{id}", h.get)
+	mux.HandleFunc("GET /api/tasks/{id}/stages", h.stages)
 	mux.HandleFunc("PATCH /api/tasks/{id}", h.rename)
 	mux.HandleFunc("DELETE /api/tasks/{id}", h.remove)
 	mux.HandleFunc("POST /api/tasks/{id}/pause", h.command(actionPause))
@@ -76,13 +77,26 @@ func (h taskHTTP) get(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, item)
 }
 
+func (h taskHTTP) stages(w http.ResponseWriter, r *http.Request) {
+	p, ok := h.identity(w, r)
+	if !ok {
+		return
+	}
+	plan, err := h.store.stages(r.Context(), p, r.PathValue("id"))
+	if err != nil {
+		resourceError(w, err)
+		return
+	}
+	writeJSON(w, plan)
+}
+
 func (h taskHTTP) create(w http.ResponseWriter, r *http.Request) {
 	p, ok := h.identity(w, r)
 	if !ok {
 		return
 	}
 	var in taskCreate
-	if !decodeResource(w, r, &in) {
+	if !decodeResourceLimit(w, r, &in, 128*1024) {
 		return
 	}
 	item, err := h.store.create(r.Context(), p, in)

@@ -32,12 +32,16 @@ func resourceError(w http.ResponseWriter, err error) {
 }
 
 func decodeResource(w http.ResponseWriter, r *http.Request, dst any) bool {
+	return decodeResourceLimit(w, r, dst, 8192)
+}
+
+func decodeResourceLimit(w http.ResponseWriter, r *http.Request, dst any, limit int64) bool {
 	kind, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil || kind != "application/json" {
 		http.Error(w, "JSON required", http.StatusUnsupportedMediaType)
 		return false
 	}
-	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 8192))
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, limit))
 	dec.DisallowUnknownFields()
 	if dec.Decode(dst) != nil || dec.Decode(new(any)) != io.EOF {
 		resourceError(w, errResourceInvalid)

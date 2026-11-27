@@ -51,7 +51,7 @@ func TestPostgresTaskControlIntegration(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	r, err := s.create(ctx, p, taskCreate{ProjectID: pr.ID, Name: "Control task", Stages: []stageCreate{{"S1", 1}}})
+	r, err := s.create(ctx, p, taskCreate{ProjectID: pr.ID, Name: "Control task", Stages: []stageCreate{{ID: "S1", Weight: 1, Instruction: "Implement sample", Acceptance: []string{"unit"}}}})
 	if err != nil {
 		t.Fatal(err)
 	}

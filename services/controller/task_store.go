@@ -26,8 +26,11 @@ type taskRecord struct {
 }
 
 type stageCreate struct {
-	ID     string `json:"id"`
-	Weight int    `json:"weight"`
+	ID           string   `json:"id"`
+	Weight       int      `json:"weight"`
+	Instruction  string   `json:"instruction"`
+	Dependencies []string `json:"dependencies"`
+	Acceptance   []string `json:"acceptance"`
 }
 
 type taskCreate struct {
@@ -41,14 +44,7 @@ func (in taskCreate) valid() bool {
 	if !resourceUUID.MatchString(in.ProjectID) || !validProjectName(in.Name) || len(in.Stages) < 1 || len(in.Stages) > 100 || (in.MaxRepairs != nil && (*in.MaxRepairs < 0 || *in.MaxRepairs > 20)) {
 		return false
 	}
-	seen := make(map[string]bool)
-	for _, st := range in.Stages {
-		if !stageIdentifier.MatchString(st.ID) || st.Weight < 1 || st.Weight > 10000 || seen[st.ID] {
-			return false
-		}
-		seen[st.ID] = true
-	}
-	return true
+	return validStagePlan(in.Stages)
 }
 
 func (r taskRecord) snapshot() taskSnapshot {
@@ -117,7 +113,11 @@ func (s taskStore) create(ctx context.Context, p principal, in taskCreate) (task
 			return taskRecord{}, err
 		}
 		for ordinal, st := range in.Stages {
-			if _, err := tx.ExecContext(ctx, "INSERT INTO browseai.stages(tenant_id,task_id,stage_id,ordinal,weight) VALUES($1,$2,$3,$4,$5)", p.tenantID, r.ID, st.ID, ordinal, st.Weight); err != nil {
+			deps := st.Dependencies
+			if deps == nil {
+				deps = []string{}
+			}
+			if _, err := tx.ExecContext(ctx, "INSERT INTO browseai.stages(tenant_id,task_id,stage_id,ordinal,weight,instruction,dependencies,acceptance) VALUES($1,$2,$3,$4,$5,$6,$7,$8)", p.tenantID, r.ID, st.ID, ordinal, st.Weight, st.Instruction, pq.Array(deps), pq.Array(st.Acceptance)); err != nil {
 				return taskRecord{}, err
 			}
 		}
@@ -169,6 +169,9 @@ func (s taskStore) transition(ctx context.Context, p principal, id string, revis
 		switch action {
 		case actionReady, actionPrepare, actionConfirmSent, actionRepair:
 			if err := requireLiveLease(ctx, tx, p, id, evidence.LeaseFence); err != nil {
+				return taskRecord{}, err
+			}
+			if err := requireStagePlan(ctx, tx, p, r); err != nil {
 				return taskRecord{}, err
 			}
 		}
