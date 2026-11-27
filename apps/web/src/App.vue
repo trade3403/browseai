@@ -21,6 +21,7 @@ const selected = computed(()=>projects.value.find(p=>p.id===current.value))
 const tabProjects = computed(()=>tabs.value.map(id=>projects.value.find(p=>p.id===id)).filter((p):p is Project=>!!p))
 const secondary = computed(()=>tabProjects.value.find(p=>p.id!==current.value))
 const state = computed(()=>selected.value?.state || 'QUEUED')
+const demoPassed = computed(()=>selected.value?.id==='localtunnel' && state.value==='DEVELOPING')
 const terminal = computed(()=>state.value==='STOPPED'||state.value==='COMPLETED')
 const statusColor = (s:State)=>s==='DEVELOPING'||s==='COMPLETED'?'green':s==='WAIT_CI'||s==='PAUSED'?'yellow':'muted'
 function log(s:string){notices.value.unshift(s)}
@@ -79,10 +80,10 @@ onMounted(load)
       <div class="controls"><button class="pause" :disabled="terminal||state==='PAUSED'||!selected" @click="act('pause')"><Pause :size="13"/> 暂停任务</button><button class="resume" :disabled="state!=='PAUSED'" @click="act('resume')"><Play :size="13"/> 恢复运行</button><button class="takeover" :disabled="!selected||terminal" :aria-pressed="takeover" @click="takeover=!takeover;log(takeover?'模拟接管开启':'模拟接管结束')"><User :size="13"/> {{takeover?'退出接管':'人工接管'}}</button><button class="stop" :disabled="terminal||!selected" @click="act('stop')"><Square :size="13"/> 结束任务</button></div>
       <template v-if="selected">
         <section><h3><PanelsTopLeft/> 项目信息</h3><b><Github :size="16"/> {{selected.name}}</b><dl><dt>仓库：</dt><dd>{{selected.repository||'未配置'}} <ExternalLink v-if="selected.repository" :size="11"/></dd><dt>分支：</dt><dd>未连接</dd><dt>最近提交：</dt><dd>未知</dd></dl></section>
-        <section><h3><Github/> GitHub CI 状态</h3><div class="ci-state"><CheckCircle2 :size="30"/> <div><b>{{state==='WAIT_CI'?'模拟等待 CI':'未连接 GitHub'}}</b><small>真实结果待 V0.3 接入</small></div></div><dl><dt>CI 流水线：</dt><dd>未知</dd><dt>运行时间：</dt><dd>未知</dd></dl></section>
-        <section><h3><RefreshCw/> 开发进度（模拟）</h3><div class="wide-progress"><div class="track"><div :style="{width:selected.progress+'%'}"></div></div><b>{{selected.progress}}%</b></div><p>阶段：未连接真实任务计划</p><div class="summary"><span>已完成：未知</span><span>进行中：未知</span></div></section>
-        <section><h3><Radio/> 任务状态（模拟）</h3><dl><dt>当前状态</dt><dd><span class="state-chip">{{state}} · {{labels[state]}}</span></dd><dt>下一步</dt><dd>等待用户确认</dd><dt>上下文</dt><dd>未知</dd><dt>交接文档</dt><dd>未连接</dd></dl></section>
-        <section><h3><ArrowRight/> 下一步任务</h3><ol><li>配置真实 GitHub 项目</li><li>接入 CI 状态验证</li><li>接入远程浏览器</li><li>配置任务交接</li></ol></section>
+        <section><h3><Github/> GitHub CI 状态 <span class="sample-label">示例</span></h3><div class="ci-state" :class="{'ci-demo-passed':demoPassed}"><CheckCircle2 :size="30"/> <div><b>{{demoPassed?'模拟 CI 通过':state==='WAIT_CI'?'模拟等待 CI':'未连接 GitHub'}}</b><small>{{demoPassed?'示例数据 · 非真实 CI':'真实结果待 V0.3 接入'}}</small></div></div><dl><dt>CI 流水线：</dt><dd>{{demoPassed?'Build & Test（示例）':'未知'}}</dd><dt>运行时间：</dt><dd>{{demoPassed?'3 分 28 秒（示例）':'未知'}}</dd></dl></section>
+        <section><h3><RefreshCw/> 开发进度（模拟）</h3><div class="wide-progress"><div class="track"><div :style="{width:selected.progress+'%'}"></div></div><b>{{selected.progress}}%</b></div><p>阶段：未连接真实任务计划</p><div class="summary"><span>已完成：未知</span><span>进行中：未知</span><span>剩余：未知</span></div></section>
+        <section><h3><Radio/> 任务状态（模拟）</h3><dl class="task-details"><dt><ListTodo :size="13"/> 当前状态</dt><dd><span class="state-chip">{{state}} · {{labels[state]}}</span></dd><dt><ArrowRight :size="13"/> 下一步</dt><dd>等待用户确认</dd><dt><RefreshCw :size="13"/> 上下文</dt><dd>未知</dd><dt><Clock :size="13"/> 交接文档</dt><dd>未连接</dd></dl></section>
+        <section><h3><ArrowRight/> 下一步任务</h3><ol class="next-actions"><li><Circle :size="12"/> 配置真实 GitHub 项目</li><li><ArrowRight :size="12"/> 接入 CI 状态验证</li><li><ArrowRight :size="12"/> 接入远程浏览器</li><li><ArrowRight :size="12"/> 配置任务交接</li></ol></section>
       </template>
     </aside>
     <footer><span><i class="green footer-status-dot" aria-hidden="true"></i> 当前：{{selected?.name||'未选中'}} / 模拟模式</span><span><Clock :size="15"/> 运行时长：未知</span><span><PanelsTopLeft :size="15"/> 窗口：{{tabs.length}}</span><span><Github :size="15"/> 最近同步：模拟</span><span class="footer-spacer"></span><span><Wifi :size="15"/> 网络：未知</span><span><Cloud :size="15"/> 本地预览</span><span><Circle :size="13"/> 不调用付费 AI API</span></footer>

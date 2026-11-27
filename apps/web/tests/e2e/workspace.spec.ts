@@ -39,3 +39,13 @@ test('API outage is shown rather than fake success',async({page})=>{
   await expect(page.getByText('API 503')).toBeVisible()
   await expect(page.locator('.project')).toHaveCount(0)
 })
+
+test('mock CI is explicitly marked and does not masquerade as GitHub evidence',async({page})=>{
+  await page.goto('/')
+  await expect(page.locator('.online')).toContainText('模拟')
+  await expect(page.locator('.ci-state')).toContainText('模拟 CI 通过')
+  await expect(page.locator('.ci-state')).toContainText('非真实 CI')
+  await page.locator('.project').filter({hasText:'GlobalChat'}).click()
+  await expect(page.locator('.ci-state')).toContainText('模拟等待 CI')
+  await expect(page.locator('.ci-demo-passed')).toHaveCount(0)
+})

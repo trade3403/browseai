@@ -78,3 +78,28 @@
 }
 .project-status-dot,.tab-status-dot,.footer-status-dot,.remote-status-dot{display:inline-block;flex-shrink:0;width:9px;height:9px;border-radius:50%;background:currentColor;vertical-align:1px}
 .tab-status-dot{width:11px;height:11px;vertical-align:0}.footer-status-dot{width:14px;height:14px}.remote-status-dot{width:10px;height:10px;vertical-align:0;margin-right:3px}
+
+/* Reference revision 3: align card baselines, status affordances and footer clusters. */
+.sample-label{margin-left:auto;color:#8fb6ef;font-size:11px;font-weight:500}
+.ci-state.ci-demo-passed{color:#45c965}.ci-demo-passed>svg{fill:#45c965;stroke:#153b28}.ci-demo-passed small{color:#73c78b}
+.task-details dt{display:flex;align-items:center;gap:6px}.task-details dt svg{color:#52b66e}
+.next-actions{list-style:none}.next-actions li{display:flex;align-items:center;gap:8px}.next-actions li svg{color:#7692ad}
+.next-actions li:first-child svg{color:#5997e5}
+@media(min-width:1401px){
+ .brand strong{font-size:19px;letter-spacing:0}.brand>svg{width:39px}.tagline{margin-left:0;color:#aab6c5}
+ .project-list{gap:7px}.project{min-height:70px;height:70px;padding-top:9px;padding-bottom:9px}
+ .project:first-child{height:77px;min-height:77px}.project:nth-child(2){height:74px;min-height:74px}.project:nth-child(3){height:72px;min-height:72px}
+ .project:nth-child(n+4){height:70px;min-height:70px}.project-progress{margin-top:17px}
+ .project-head>span{font-size:11px}.project-status-dot{width:9px;height:9px}
+ .project.selected{background:linear-gradient(125deg,#13396c,#1a396e)}
+ .workspace-toolbar strong{margin-right:25px}.tab:first-child button:first-child{min-width:110px}.tab:not(:first-child) button:first-child{min-width:97px}.tabs{gap:6px}
+ .remote-status>div{gap:5px}.remote-status .live{min-width:80px}.remote-status button{padding:5px 7px}.remote-status button:disabled{opacity:.6}
+ .right-panel section{margin-bottom:8px}.right-panel section:nth-of-type(1){height:124px;min-height:124px}
+ .right-panel section:nth-of-type(2){height:132px;min-height:132px}.right-panel section:nth-of-type(3){height:106px;min-height:106px}
+ .right-panel section:nth-of-type(4){height:147px;min-height:147px}.right-panel section:nth-of-type(5){height:148px;min-height:148px}
+ .right-panel h3{font-size:13px}.right-panel dl{font-size:12px;line-height:18px}
+ .right-panel .task-details{grid-template-columns:92px minmax(0,1fr);row-gap:8px}
+ .right-panel .next-actions{padding-left:1px;line-height:25px}
+ .wide-progress .track>div{background:linear-gradient(90deg,#4c8bf1,#639cf7)}
+ .shell footer{grid-template-columns:21.5% 12.3% 8.2% 17% minmax(0,1fr) auto auto auto;gap:8px}
+}

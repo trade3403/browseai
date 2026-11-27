@@ -39,3 +39,6 @@ PR #1，上一轮证据 SHA 8b55da9691810d3c6263689a871ecb4fc799510e，运行 ht
 
 ## 第二次真实视觉测量与定向调整
 证据 SHA a0c2b9d151f37b73c864fd85996f88c0c9c2f0f9；PR CI https://github.com/trade3403/browseai/actions/runs/45923184640，push CI https://github.com/trade3403/browseai/actions/runs/45923179558，均已结束失败。backend/web/functional/compose/windows-foundation 五项通过；visual-desktop/gate 未通过。实测 artifact 15165206822：外壳15.2792%（前16.0748%，改善0.7956个百分点），整图13.7859%，header14.3675%、sidebar14.5787%、workspace_toolbar16.8802%、right_panel17.9198%、footer11.0091%，远程边界1.453125px。已核对实际及原图截图；右栏第一卡片文字换行导致整体高度偏移。修订2：限制桌面卡片高度、避免标签换行、调整底栏网格和进度位置、状态点尺寸，并在视觉报告追加DOM几何坐标，供后续定位；保持真实未连接状态、禁用交互、基准原图及1%门槛。新结果尚待CI，不进入V0.2。
+
+## 第三次真实视觉测量及修订
+证据 SHA 14e879af30deeea89035f6673886dd5a3d237147；PR CI https://github.com/trade3403/browseai/actions/runs/45926036895，push CI https://github.com/trade3403/browseai/actions/runs/45926031996，均完成失败。backend、web、functional、compose、Windows foundation 五项通过。artifact 15166307886：外壳14.2434%（前15.2792%），整图13.2247%，header14.6701%、sidebar14.2697%、workspace_toolbar16.4994%、right_panel15.5251%、footer10.9219%，远程边界1.453125px。已核对截图及DOM几何。修订3：调整卡片高度和标签位置，补右栏状态图标及明确标记的 mock CI 样例（非真实 GitHub 状态），增加 mock/真实边界 E2E 断言，保持视觉门槛及原图不变。新结果待CI。不进入V0.2。
