@@ -19,6 +19,44 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  database:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: browseai_test
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: ${{ job.services.postgres.ports[5432] }}
+      PGUSER: postgres
+      PGPASSWORD: ci-only-password
+      PGDATABASE: browseai_test
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Install PostgreSQL client
+        run: command -v psql || (sudo apt-get update && sudo apt-get install -y postgresql-client)
+      - name: Verify migrations, tenant scope and global lease race
+        run: |
+          psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_app NOLOGIN NOSUPERUSER NOBYPASSRLS'
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0001_initial.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f tests/database/fixtures.sql
+          psql -X -v ON_ERROR_STOP=1 -f tests/database/isolation.sql
+          python3 tests/database/lease_race.py
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0001_initial.down.sql
+          test "$(psql -X -qAt -c \"SELECT count(*) FROM pg_namespace WHERE nspname='browseai'\")" = 0
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0001_initial.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f tests/database/fixtures.sql
+          psql -X -v ON_ERROR_STOP=1 -f tests/database/isolation.sql
   schema:
     runs-on: ubuntu-24.04
     steps:
@@ -211,7 +249,7 @@ jobs:
   gate:
     runs-on: ubuntu-24.04
     if: always()
-    needs: [schema, backend, web, functional, visual-desktop, compose, windows-foundation]
+    needs: [database, schema, backend, web, functional, visual-desktop, compose, windows-foundation]
     steps:
       - name: Require all checks
         env:

@@ -81,3 +81,6 @@ PR #1，上一轮证据 SHA 8b55da9691810d3c6263689a871ecb4fc799510e，运行 ht
 
 ## V0.2 第二批格式修复（2026-11-27）
 证据 SHA 6efc061fdc57cf2c60fdf13c325c552e1bdf9e2e，PR CI https://github.com/trade3403/browseai/actions/runs/45940439291、push CI https://github.com/trade3403/browseai/actions/runs/45940434727 均失败。PR 中 schema/compose/functional/web/visual-desktop/windows-foundation 六项通过；backend 在 gofmt 格式检查失败（job 140313264639），gate 随之失败；Linux 后续 vet/race/coverage 尚未执行。读取源码发现 taskAction 常量组整体多一空格对齐，本次仅修正对齐，不改变状态机逻辑，并使 CI 格式门禁失败时打印文件列表和 gofmt diff，保留强制失败。容器无法解析 GitHub raw 域名，未运行完整本地仓库测试，修复待新 CI 验证。尚不进入数据库开发。
+
+## V0.2 第三批 PostgreSQL 基础（2026-11-27）
+证据 SHA 1363546ece837f7cb2665c7fd8f137dfcb27cd71，PR CI https://github.com/trade3403/browseai/actions/runs/45941890846、push CI https://github.com/trade3403/browseai/actions/runs/45941885624 均 success，8 项检查通过。任务状态机核心通过当前阶段 CI。新增 PostgreSQL 16 初始 up/down migration、身份/租户/会话/项目/任务/阶段/全局 repo ID+branch 租约表、复合外键、任务状态约束、RLS 默认拒绝及独立应用角色权限。新增真实 PostgreSQL service CI，测试双租户读写隔离、CAS revision、跨租户 FK、并发租约唯一性及 fencing token、迁移回滚/重建，纳入 gate。当前容器没有 psql/postgres/docker，未本地运行数据库测试；新 CI 待验证。尚未接入 Go 数据库驱动、认证、事务级任务 CRUD/租约续期及真实运行配置，现有 Compose 仍为 mock；不能视为 V0.2 已完成。下批依据 CI 结果推进。
