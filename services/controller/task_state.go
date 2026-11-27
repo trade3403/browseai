@@ -81,6 +81,7 @@ type taskEvidence struct {
 	Reconciled      bool
 	VerifiedHandoff bool
 	ManualResume    bool
+	LocalResume     bool
 	FinalAccepted   bool
 }
 

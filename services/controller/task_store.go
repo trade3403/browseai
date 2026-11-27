@@ -153,16 +153,27 @@ func (s taskStore) rename(ctx context.Context, p principal, id, name string, rev
 }
 
 // Only trusted service code may supply evidence. Public HTTP handlers expose
-// pause and stop only; CI, dispatch, reconciliation and leases are not public flags.
+// pause, stop and locally safe resume; CI, dispatch and leases are not public flags.
 func (s taskStore) transition(ctx context.Context, p principal, id string, revision uint64, action taskAction, evidence taskEvidence) (taskRecord, error) {
 	return mutationTx(ctx, s.db, p, "task."+string(action), id, revision, nil, func(tx *sql.Tx) (taskRecord, error) {
 		r, err := lockedTask(ctx, tx, p, id, revision)
 		if err != nil {
 			return taskRecord{}, err
 		}
+		if action == actionResume && evidence.LocalResume {
+			evidence, err = localResumeEvidence(ctx, tx, p, r)
+			if err != nil {
+				return taskRecord{}, err
+			}
+		}
 		switch action {
 		case actionReady, actionPrepare, actionConfirmSent, actionRepair:
 			if err := requireLiveLease(ctx, tx, p, id, evidence.LeaseFence); err != nil {
+				return taskRecord{}, err
+			}
+		}
+		if action == actionConfirmSent {
+			if err := requireTaskApproval(ctx, tx, p, r, evidence.LeaseFence); err != nil {
 				return taskRecord{}, err
 			}
 		}

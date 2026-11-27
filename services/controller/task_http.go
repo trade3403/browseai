@@ -19,6 +19,8 @@ func (h taskHTTP) handler() http.Handler {
 	mux.HandleFunc("DELETE /api/tasks/{id}", h.remove)
 	mux.HandleFunc("POST /api/tasks/{id}/pause", h.command(actionPause))
 	mux.HandleFunc("POST /api/tasks/{id}/stop", h.command(actionStop))
+	mux.HandleFunc("POST /api/tasks/{id}/resume", h.command(actionResume))
+	mux.HandleFunc("POST /api/tasks/{id}/approve", h.command(taskAction("approve")))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
@@ -151,7 +153,13 @@ func (h taskHTTP) command(action taskAction) http.HandlerFunc {
 			resourceError(w, errResourceInvalid)
 			return
 		}
-		item, err := h.store.transition(r.Context(), p, r.PathValue("id"), *in.Revision, action, taskEvidence{})
+		var item taskRecord
+		var err error
+		if action == taskAction("approve") {
+			item, err = h.store.approve(r.Context(), p, r.PathValue("id"), *in.Revision)
+		} else {
+			item, err = h.store.transition(r.Context(), p, r.PathValue("id"), *in.Revision, action, taskEvidence{LocalResume: action == actionResume})
+		}
 		if err != nil {
 			resourceError(w, err)
 			return

@@ -119,3 +119,6 @@ SHA fa04258af5d42a975f3f61c15cc6db49b1e54ce4 push CI https://github.com/trade340
 
 ### 第十一批 CI 格式修复
 证据 SHA 013c42c10551e98c9bf520553084a56d07fc7dd8；PR CI https://github.com/trade3403/browseai/actions/runs/45955088955 与 push CI https://github.com/trade3403/browseai/actions/runs/45955083980 均 failure。PR 实际 job 日志显示 database 成功，TestPostgresAccountLifecycle PASS，完整 race+PostgreSQL 测试覆盖率 80.6%；其他七个子 job 成功，backend 因 auth_password.go 的 crypto/sha256 与 crypto/subtle 导入排序违反 gofmt 失败，gate 因此失败。按 Runner 的 gofmt -d 结果修正唯一差异，未修改测试、权限或验收阈值。等待新 SHA 的双套 CI，尚不进入安全恢复/审批批次。
+
+## V0.2 第十二批：本地安全恢复与审批意向
+证据 SHA 9ff8796be1c81d32bb9fa73b72d720576c251429，PR CI https://github.com/trade3403/browseai/actions/runs/45955429197 与 push CI https://github.com/trade3403/browseai/actions/runs/45955425057 均 success，10 项通过。新增 0006 task_approvals RLS 只追加记录；POST resume 只恢复首阶段、未派发、无租约、无相关审计记录的 PAUSED/QUEUED 草稿，其他状态必须可信对账；POST approve 在 AWAIT_APPROVAL、当前 revision、有效 fence 下记录用户审批意向，不改变任务状态或发送消息；confirm_sent 内部转换额外要求同 revision/stage/fence/actor 审批且仍需可信人工发送证据。两接口沿用幂等键与原子审计。真实数据库测试跨租户、伪造 evidence、旧审批、恢复拒绝和人工确认边界。审批仅为任务级意向，不是精确指令授权，V0.5 必须绑定实际不可变 dispatch 内容并核验人工发送；V0.3/V0.6 的 Git/CI 对账及外部恢复未实现。本批未本地完整执行，待新 CI。下一批阶段配置及 V0.2 综合验收。

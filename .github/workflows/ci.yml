@@ -85,6 +85,8 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0003_credentials.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0004_mutations.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0005_accounts.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0006_approvals.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0006_approvals.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0005_accounts.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0004_mutations.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0003_credentials.down.sql
@@ -101,6 +103,7 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0003_credentials.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0004_mutations.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0005_accounts.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0006_approvals.up.sql
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_admin LOGIN PASSWORD 'ci-admin-only'"
           export BROWSEAI_TEST_ADMIN_DSN="postgres://browseai_admin:ci-admin-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_auth LOGIN PASSWORD 'ci-auth-only'"

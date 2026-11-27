@@ -26,6 +26,9 @@ AND has_table_privilege(current_user,'browseai.idempotency_keys','UPDATE')
 AND has_table_privilege(current_user,'browseai.audit_logs','SELECT')
 AND has_table_privilege(current_user,'browseai.audit_logs','INSERT')
 AND NOT has_table_privilege(current_user,'browseai.audit_logs','UPDATE,DELETE,TRUNCATE')
+AND has_table_privilege(current_user,'browseai.task_approvals','SELECT')
+AND has_table_privilege(current_user,'browseai.task_approvals','INSERT')
+AND NOT has_table_privilege(current_user,'browseai.task_approvals','UPDATE,DELETE,TRUNCATE')
 AND has_table_privilege(current_user,'browseai.events','SELECT')
 AND has_table_privilege(current_user,'browseai.events','INSERT')
 AND NOT has_table_privilege(current_user,'browseai.events','UPDATE,DELETE,TRUNCATE')
@@ -33,7 +36,7 @@ AND NOT has_table_privilege(current_user,'browseai.users','SELECT')
 AND NOT has_table_privilege(current_user,'browseai.auth_sessions','SELECT')
 AND NOT has_function_privilege(current_user,'browseai.issue_session(uuid,uuid,bytea)','EXECUTE')
 AND (SELECT count(*) FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
-WHERE n.nspname='browseai' AND c.relname IN ('projects','tasks','stages','leases','idempotency_keys','audit_logs','events') AND c.relrowsecurity AND c.relforcerowsecurity AND c.relowner<>r.oid)=7
+WHERE n.nspname='browseai' AND c.relname IN ('projects','tasks','stages','leases','idempotency_keys','audit_logs','events','task_approvals') AND c.relrowsecurity AND c.relforcerowsecurity AND c.relowner<>r.oid)=8
 FROM pg_catalog.pg_roles r WHERE r.rolname=current_user`).Scan(&ok)
 	if err != nil || !ok {
 		return errors.New("project database role or schema invalid")
