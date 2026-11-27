@@ -260,3 +260,7 @@ Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified pus
 
 ### V0.3 6c-3b-2c-2b-2a 人工复核通过；6c-3b-2c-2b-2b-1 待 CI
 实际提交 73c6c26ff10ec9193c9dc124cbad80963f403d7a，Push 46069854806、PR 46069863091 总结论均成功，20 项 conclusion success；PR schema job 140743949400 status 异常 in_progress，但 completed_at 2026-11-27T21:22:33Z，全部五步 completed/success、6 个测试 OK，最终 gate 成功。依据实际日志及完成时间人工复核，不改变程序自动证据严格校验。新增固定离线构建上下文及材料摘要验证；真实构建、签名和隔离环境仍待完成。新 CI 待验收。
+
+
+### V0.3 离线构建材料已验收；镜像构建及签发待 CI
+实际提交 f158f6440edce76d9763ed20a2f300e1f5ffc42a，Push 46074590629、PR 46074596980 均 completed/success，20/20。新增固定构建命令、基础镜像预检、实际产物 ID 验证及构建签名编排；CI mock，不代表真实 Docker 构建、隔离或部署验收。新 CI 待验收。
