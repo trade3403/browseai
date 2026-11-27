@@ -1,0 +1,34 @@
+{
+  "name": "browseai-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vue-tsc --noEmit && vite build",
+    "typecheck": "vue-tsc --noEmit",
+    "lint": "eslint src --max-warnings 0",
+    "test:ci": "node --experimental-strip-types --test tests/state.test.ts",
+    "e2e": "playwright test",
+    "visual": "playwright test --project=visual"
+  },
+  "dependencies": {
+    "vue": "3.5.13",
+    "lucide-vue-next": "0.468.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "5.2.1",
+    "vite": "6.0.11",
+    "typescript": "5.7.3",
+    "vue-tsc": "2.2.0",
+    "eslint": "9.19.0",
+    "eslint-plugin-vue": "9.32.0",
+    "typescript-eslint": "8.22.0",
+    "@playwright/test": "1.50.1",
+    "sharp": "0.33.5",
+    "pixelmatch": "6.0.0",
+    "pngjs": "7.0.0",
+    "@types/pngjs": "6.0.5",
+    "@types/node": "22.13.1"
+  }
+}
