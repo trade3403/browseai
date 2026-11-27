@@ -33,7 +33,7 @@ func TestGitHubSupervisor(t *testing.T) {
 		name: "CI", path: ".github/workflows/ci.yml", required: []string{"gate"},
 	}
 	policy := githubIndependentPolicy{
-		task: githubEvidenceTask{"00000000-0000-4000-8000-000000000002", "00000000-0000-4000-8000-000000000003", 4},
+		task:      githubEvidenceTask{"00000000-0000-4000-8000-000000000002", "00000000-0000-4000-8000-000000000003", 4},
 		execution: p, sourceDigest: strings.Repeat("d", 64),
 		harnessDigest: strings.Repeat("e", 64), imageDigest: strings.Repeat("f", 64),
 		verifierID: "00000000-0000-4000-8000-000000000004",
@@ -60,7 +60,7 @@ func TestGitHubSupervisor(t *testing.T) {
 		// The execution can outlive the observation freshness window.
 		now = now.Add(time.Minute)
 		report := githubIsolatedReport{
-			checkoutSHA: req.statement.Execution.ExecutedSHA,
+			checkoutSHA:   req.statement.Execution.ExecutedSHA,
 			harnessDigest: req.harnessDigest, imageDigest: req.imageDigest,
 			jobs: []githubIsolatedJob{{91, "backend", true}, {92, "gate", true}},
 		}

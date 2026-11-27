@@ -224,3 +224,7 @@ Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified pus
 
 ### V0.3 6c-3a 已验收；6c-3b-1 待 CI
 实际提交 d86e9df01b9f40e99003ab402fcce38f4211e21e，Push 46046700691、PR 46046709390 均 completed/success，20/20。新增可信监督器编排、执行前后身份核对及模拟适配器测试。真实隔离执行适配器、独立服务与传输未实现，禁止自动推进。新 CI 待验收。
+
+
+### V0.3 6c-3b-1 格式修复
+提交 5bffa96d0e2ec4afa9f948789ca417ae34295054 Push 46049490013、PR 46049497112 各 8/10；backend 在 gofmt 检查发现 github_execution_supervisor_test.go 两处字段对齐错误，gate 随之失败。按两套实际日志修正格式，不修改测试语义或验收门槛。新 CI 待验收。
