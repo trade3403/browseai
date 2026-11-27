@@ -90,3 +90,18 @@ test('local notification badge reflects actual local log count',async({page})=>{
   await expect(page.locator('.notice')).toBeVisible()
   await expect(page.locator('.notice p')).toHaveCount(2)
 })
+
+test('desktop selection highlight follows the selected project, not the first card',async({page})=>{
+  await page.setViewportSize({width:1536,height:864})
+  await page.goto('/')
+  const cards=page.locator('.project')
+  await expect(cards).toHaveCount(6)
+  const initial=await cards.first().evaluate(el=>getComputedStyle(el).backgroundImage)
+  await cards.filter({hasText:'GlobalChat'}).click()
+  await expect(cards.first()).toHaveAttribute('aria-pressed','false')
+  await expect(cards.filter({hasText:'GlobalChat'})).toHaveAttribute('aria-pressed','true')
+  await expect(page.locator('.project.selected')).toHaveCount(1)
+  const inactive=await cards.first().evaluate(el=>getComputedStyle(el).backgroundImage)
+  expect(inactive).not.toBe(initial)
+  await expect(page.locator('.tab.active button').first()).toHaveAttribute('aria-pressed','true')
+})

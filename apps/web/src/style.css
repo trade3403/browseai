@@ -166,7 +166,7 @@
  .sidebar nav button{font-size:14px;gap:11px;height:35px}.sidebar nav button.active{height:38px}
  .sidebar nav button svg{stroke-width:1.8}
  .project-head{gap:10px}.project-head b{font-size:14px;line-height:20px}.project-head>span{font-size:11px;gap:3px}
- .project-list{gap:7px}.project:first-child{background:linear-gradient(110deg,#173a74,#1b3e76)}
+ .project-list{gap:7px}.project:first-child.selected{background:linear-gradient(110deg,#173a74,#1b3e76)}
  .project:first-child .project-progress{margin-top:23px}.project:nth-child(2) .project-progress{margin-top:22px}
  .project:nth-child(3) .project-progress{margin-top:21px}.project:nth-child(n+4) .project-progress{margin-top:19px}
  .project-progress .track{height:9px}.project-progress .track>div{background:linear-gradient(90deg,#79adf6,#8abbfb)}
@@ -186,4 +186,16 @@
  .right-panel .next-actions li{font-size:12px;line-height:25px}
  .shell footer{background:#101a25}.shell footer>span{font-size:12px}
  .shell footer>span:nth-of-type(6){color:#aebdcc}.shell footer>span:nth-of-type(7) svg{color:#6cbd89}
+}
+
+/* Reference revision 7: reference top strip measured from CI 45928622226.
+   Selection follows state rather than the index of a project. */
+@media(min-width:1401px){
+ .global-header{gap:34px}.brand strong{letter-spacing:.38px}
+ .global-header .brand,.global-header .tagline,.global-header .header-actions{position:relative;top:-1px}
+ .header-actions{gap:16px}.header-actions .online{min-width:97px;justify-content:center}
+ .workspace-toolbar>.tabs,.workspace-toolbar>.toolbar-buttons{position:relative;top:2px}
+ .toolbar-buttons{margin-right:6px}.toolbar-buttons button{padding-inline:9px}
+ .tab.active{background:linear-gradient(180deg,#194ea9 0%,#215ac2 80%,#3875e1 100%);border-color:#4c84dd}
+ .remote-status .live{min-width:80px;justify-content:center}
 }

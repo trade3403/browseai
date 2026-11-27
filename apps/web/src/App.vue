@@ -50,7 +50,7 @@ onMounted(load)
       <nav><button v-for="item in nav" :key="item.name" :class="{active:activeNav===item.name}" @click="activeNav=item.name"><GitHubMark v-if="item.name==='GitHub 监控'" :size="18"/><component :is="item.icon" v-else :size="18"/>{{item.name}}</button></nav>
       <div class="section-heading">项目列表 ({{projects.length}})<button title="打开下一个项目" :disabled="!projects.length" @click="nextWindow"><Plus :size="17"/></button></div>
       <div class="project-list">
-        <button v-for="p in projects" :key="p.id" class="project" :class="{selected:p.id===current}" @click="open(p.id);activeNav='项目总览'">
+        <button v-for="p in projects" :key="p.id" class="project" :class="{selected:p.id===current}" :aria-pressed="p.id===current" @click="open(p.id);activeNav='项目总览'">
           <div class="project-head"><GitHubMark :size="19"/><b>{{p.name}}</b><span :class="statusColor(p.state)"><CheckCircle2 v-if="p.state==='COMPLETED'" :size="12" class="project-check"/><i v-else class="project-status-dot" aria-hidden="true"></i> {{labels[p.state]}}</span></div>
           <div class="project-progress"><div class="track"><div :style="{width:p.progress+'%'}" :class="{complete:p.state==='COMPLETED'}"></div></div><span>{{p.progress}}%</span></div>
         </button>
@@ -60,7 +60,7 @@ onMounted(load)
       <div class="workspace-toolbar">
         <strong><PanelsTopLeft :size="19"/> 远程浏览器窗口</strong>
         <div class="tabs">
-          <div v-for="p in tabProjects" :key="p.id" class="tab" :class="{active:p.id===current}"><button @click="open(p.id);activeNav='项目总览'"><i :class="[statusColor(p.state),'tab-status-dot']" aria-hidden="true"></i> {{p.name}}</button><button :aria-label="'关闭 '+p.name" @click="close(p.id)"><X :size="13"/></button></div>
+          <div v-for="p in tabProjects" :key="p.id" class="tab" :class="{active:p.id===current}"><button :aria-pressed="p.id===current" @click="open(p.id);activeNav='项目总览'"><i :class="[statusColor(p.state),'tab-status-dot']" aria-hidden="true"></i> {{p.name}}</button><button :aria-label="'关闭 '+p.name" @click="close(p.id)"><X :size="13"/></button></div>
           <button aria-label="新增标签" @click="nextWindow"><Plus :size="18"/></button>
         </div>
         <div class="toolbar-buttons"><button :aria-pressed="split" @click="split=!split"><Columns2 :size="15"/> 分屏</button><button :aria-pressed="expanded" @click="expanded=!expanded"><Maximize :size="15"/> {{expanded?'退出全屏':'全屏'}}</button><button @click="nextWindow"><Plus :size="14"/> 新建窗口</button></div>

@@ -51,3 +51,6 @@ PR #1，上一轮证据 SHA 8b55da9691810d3c6263689a871ecb4fc799510e，运行 ht
 
 ## 第六次真实视觉测量及修订
 证据 SHA 4220e976a0164d12ac8ac7ef9595339dbab40fe3；PR CI https://github.com/trade3403/browseai/actions/runs/45928100111 和 push CI https://github.com/trade3403/browseai/actions/runs/45928093726 均完成失败。backend/web/functional/compose/windows-foundation 五项通过。artifact 15167232876：整图12.4919%，外壳12.8806%（前13.0587%），header14.3048%、sidebar11.7724%、workspace_toolbar14.9678%、right_panel14.4048%、footer10.1406%，边界1.453125px。已读取真实 reference/actual/diff 和几何报告；主要剩余差异集中在文字、图标、原图示例文案以及原图边缘模糊，布局边界已达标。修订6：矢量品牌标识、真实本地通知计数、导航GitHub标识、工具栏和卡片字体基线及进度位置微调，新增本地日志计数测试。保留模拟提示和禁用状态，不伪造真实服务在线、账户或CI。尚未达到1%验收，新效果待CI，不进入V0.2。
+
+## 第七次真实视觉测量及定向修订
+证据 SHA 5c8bfcff631cf9515a256f6c05c038b08a669745；PR CI https://github.com/trade3403/browseai/actions/runs/45928622226 与 push CI https://github.com/trade3403/browseai/actions/runs/45928616908 均已结束失败。backend/web/functional/compose/windows-foundation 五项通过，visual-desktop/gate 未通过。artifact 15167188945：整图12.1496%，外壳12.2439%（前12.8806%），header14.1710%、sidebar10.1835%、workspace_toolbar15.1629%、right_panel13.7085%、footer10.1875%，边界1.453125px。核查真实截图和JSON：工具栏标签实际y=65而设计约y=67，顶部品牌/标语位置偏移；发现第六轮CSS将首张卡片背景固定为蓝色而非按选中状态。修订7：修正顶部和标签位置、选中状态样式及ARIA状态，增加选中状态回归测试；报告附48px差异热点和字体属性，仅诊断，不更改计分、原图、排除范围或1%门槛。原图为压缩WebP，字体/图标、明确的模拟状态文案仍与参考不同，暂不能保证达到1%。新CI待验证，不进入V0.2。
