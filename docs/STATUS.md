@@ -84,3 +84,6 @@ PR #1，上一轮证据 SHA 8b55da9691810d3c6263689a871ecb4fc799510e，运行 ht
 
 ## V0.2 第三批 PostgreSQL 基础（2026-11-27）
 证据 SHA 1363546ece837f7cb2665c7fd8f137dfcb27cd71，PR CI https://github.com/trade3403/browseai/actions/runs/45941890846、push CI https://github.com/trade3403/browseai/actions/runs/45941885624 均 success，8 项检查通过。任务状态机核心通过当前阶段 CI。新增 PostgreSQL 16 初始 up/down migration、身份/租户/会话/项目/任务/阶段/全局 repo ID+branch 租约表、复合外键、任务状态约束、RLS 默认拒绝及独立应用角色权限。新增真实 PostgreSQL service CI，测试双租户读写隔离、CAS revision、跨租户 FK、并发租约唯一性及 fencing token、迁移回滚/重建，纳入 gate。当前容器没有 psql/postgres/docker，未本地运行数据库测试；新 CI 待验证。尚未接入 Go 数据库驱动、认证、事务级任务 CRUD/租约续期及真实运行配置，现有 Compose 仍为 mock；不能视为 V0.2 已完成。下批依据 CI 结果推进。
+
+### 数据库批次工作流配置修复
+SHA fa04258af5d42a975f3f61c15cc6db49b1e54ce4 push CI https://github.com/trade3403/browseai/actions/runs/45943338934 已失败，API 返回 0 jobs，未执行数据库测试。check-suite 详细错误接口无法访问；静态检查发现 job.services.postgres.ports 动态端口引用错误地位于 job env，改至实际 psql 步骤 env（允许 job context），其余测试与门槛不变。此为工作流配置修复，待新 CI 证实，尚不开始下一批。

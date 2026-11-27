@@ -37,7 +37,6 @@ jobs:
           --health-retries 10
     env:
       PGHOST: 127.0.0.1
-      PGPORT: ${{ job.services.postgres.ports[5432] }}
       PGUSER: postgres
       PGPASSWORD: ci-only-password
       PGDATABASE: browseai_test
@@ -46,6 +45,8 @@ jobs:
       - name: Install PostgreSQL client
         run: command -v psql || (sudo apt-get update && sudo apt-get install -y postgresql-client)
       - name: Verify migrations, tenant scope and global lease race
+        env:
+          PGPORT: ${{ job.services.postgres.ports[5432] }}
         run: |
           psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_app NOLOGIN NOSUPERUSER NOBYPASSRLS'
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0001_initial.up.sql
