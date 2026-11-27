@@ -52,3 +52,6 @@ Read-only workflow and run listing via a fresh scoped installation token, stable
 
 ## Batch 5b: attempt-specific jobs
 Read exact run attempt jobs with bounded pagination, current-run checks before and after the read, and strict candidate classification. Missing or duplicate required jobs, foreign attempts and non-success job outcomes cannot produce a pass. Optional skipped jobs and partial reruns may conservatively be rejected. PR relationship, workflow identity, freshness and live App compatibility remain pending. No task transition.
+
+## Batch 5c: bounded polling worker
+Internal single-target polling with 30-second normal interval, exponential error backoff capped at 15 minutes (upstream rate-limit deadline may be later), eight consecutive failure budget, mandatory caller deadline and 90-second per-read timeout. Authorization errors stop immediately after publishing unknown; failed reads invalidate previous candidate success. No GitHub write or task transition. Workflow/event selection rejects multiple matching runs and inactive workflow; missing run remains pending. The worker is not yet started by the runtime: durable per-installation rate coordination, scheduling, restart recovery, webhook wakeups, publication freshness and PR evidence are pending. Synthetic clock and failure tests only.
