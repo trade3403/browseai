@@ -5,7 +5,7 @@
 ## 1. 产品目标与边界
 - 用户定义项目、任务、阶段、CI 验收条件和固定指令；GitHub 提供实际代码与测试状态，BrowseAI 负责调度。
 - 真实 ChatGPT 官方网页由云端 Chrome 打开，用户在本地看到远程实时画面并可直接输入；不调用 OpenAI API，不新增 AI API 费用（服务器及 GitHub Actions 仍可能产生费用）。
-- 支持纯本地运行及云端运行：本地断网/关机不影响仍在线的云端服务。单用户个人工作站优先，非共享订阅服务。
+- 支持纯本地运行及云端运行：本地断网/关机不影响仍在线的云端服务。V1.0 多用户自托管平台；各用户独立账号、订阅、浏览器和 GitHub 授权，非共享订阅服务。
 - 默认人机协同：CI 查询、队列、恢复、准备指令可自动化；发送 ChatGPT 指令、登录和敏感操作由本人确认。无人值守第三方网页交互需另行获得明确授权，未获授权不得启用。禁止抓取聊天正文、截图 OCR、私有接口逆向、登录凭证提取、绕过地区/额度/验证限制。Git 中仅存正常项目工作产物及必要状态，不作为批量提取聊天输出的通道。
 - 官方条款参考：https://openai.com/policies/terms-of-use/ （2026-01-01 生效版）；上线前复核适用条款及支持地区。仅显示远程画面，不自动分析画面或录制聊天。
 
@@ -16,7 +16,7 @@
 - 中间自适应：远程 Chrome 真实像素画面（noVNC），连接状态、分辨率、延迟、键盘/鼠标控制与刷新。保持官方网页原样，不仿造登录页面；分屏与独立本地查看窗口均接入同一云端实例。
 - 右栏约 340px：项目仓库/分支/提交、CI 工作流/结果/用时、已验收阶段及总阶段、任务状态、交接状态、下一条待确认指令。上下文只展示保守轮次预算/未知，不声称精确剩余 token。
 - 底栏：当前项目、运行时长、窗口数、最近同步、网络、部署模式、无 OpenAI API。
-- 颜色：背景 #111827，面板 #1e293b，主要操作 #2563eb，成功 #22c55e，等待 #eab308，失败 #ef4444，文字 #e2e8f0；状态不只靠颜色。上述初始尺寸及颜色若与用户原图冲突，以 [UI 1:1 规范](../design/UI-SPEC.md) 和原图为准；原图尚待上传，禁止自行替换。
+- 颜色：背景 #111827，面板 #1e293b，主要操作 #2563eb，成功 #22c55e，等待 #eab308，失败 #ef4444，文字 #e2e8f0；状态不只靠颜色。上述初始尺寸及颜色若与用户原图冲突，以 [UI 1:1 规范](../design/UI-SPEC.md) 和原图为准；原图已按原始字节入库，禁止自行替换。
 - 所有按钮必须有实际动作、禁用原因、加载/失败反馈；无权限显示只读；断网显示陈旧状态，禁止伪造 CI 成功。
 
 ## 3. 模块与验收
@@ -35,8 +35,8 @@
 | F11 | 日志通知 | 仅任务/CI/控制事件，不保存聊天内容、键盘输入、录屏；失败及人工接管通知 |
 
 ## 4. 技术架构
-Go + Gin 后端（调度器、GitHub adapter、认证、REST/WebSocket），Vue3 + TypeScript + Vite + Ant Design Vue 前端，PostgreSQL（任务/事件/锁/检查点），Linux Chrome/Chromium + Xvfb + 窗口管理器 + VNC/noVNC（受认证的远程显示），Nginx TLS，Docker Compose。采用单租户单浏览器 profile 多窗口，禁止多个进程并发写同一 profile；云端与本地模式同一协议。Electron 外壳可选 V1.1，不阻塞 V1.0。
-- 目录：apps/web、services/controller、services/browser、deploy、schemas、tests/e2e、docs。
+Go + Gin 后端（调度器、GitHub adapter、认证、REST/WebSocket），Vue3 + TypeScript + Vite + Ant Design Vue 前端，PostgreSQL（任务/事件/锁/检查点），Linux Chrome/Chromium + Xvfb + 窗口管理器 + VNC/noVNC（受认证的远程显示），Nginx TLS，Docker Compose。每租户独立浏览器运行环境与 profile，单 profile 多窗口，禁止多进程并发写入；管理中心与浏览器节点解耦，支持单机和多节点。Electron 客户端纳入 V1.0 必需交付，复用 Web 前端。
+- 目录：apps/web、apps/desktop、services/controller、services/browser、deploy、schemas、tests/e2e、docs。
 - 数据：projects、tasks、stages、sessions、dispatches、ci_runs、events、leases、audit_logs。UUID、UTC 时间、revision、唯一约束；Git 记录持久业务检查点，DB 记录调度租约与用户确认。
 - API：GET/POST /api/projects；GET/POST /api/tasks；POST /api/tasks/:id/{pause,resume,stop,approve}；GET/POST /api/sessions；POST /api/sessions/:id/{takeover,release}；POST /api/webhooks/github；GET /api/events；GET /healthz、/readyz；WS /api/live。变更需认证、幂等键及 revision，冲突返回 409。
 - 安全：远程桌面/VNC/调试端口不直接暴露公网；TLS、独立授权、访问白名单或 VPN；浏览器与控制面隔离，不挂宿主 Docker socket；非 root、沙箱保留；GitHub token 仅服务端加密存储，禁止进浏览器/日志/公开仓库。
@@ -47,7 +47,10 @@ Go + Gin 后端（调度器、GitHub adapter、认证、REST/WebSocket），Vue3
 在建议 4 vCPU/8GB 测试机上验证 3 个浏览器窗口和 10 个排队项目（非账号并发承诺）；调度状态页面 P95 小于 2s（不含 GitHub/网页外部延迟），正常 Webhook 到状态更新 P95 小于 5s；轮询默认 30s，退避带抖动并遵守 Retry-After。控制服务重启 60s 内恢复调度状态目标；恢复不重复派发。备份恢复、24h mock soak、无高危未修复漏洞。实际基准由 CI 和发布报告记录，不达标不得虚报。
 
 ## 6. 发布范围
-V1.0 交付 Web 管理端、本地/云端 Docker 部署、Git 控制、真实远程查看和人工确认交互、可重复 CI 测试。生产 ChatGPT 登录/兼容性仅本人现场验证；无授权不得以无人值守真实网页测试替代。未来适配器仅在授权明确、另行验收后启用。
+V1.0 交付 Windows 安装版/便携版、同界面 Web 管理端、多用户隔离与管理中心/浏览器节点、本地/云端 Docker 部署、Git 控制、真实远程查看和人工确认交互、可重复 CI 测试。生产 ChatGPT 登录/兼容性仅本人现场验证；无授权不得以无人值守真实网页测试替代。未来适配器仅在授权明确、另行验收后启用。
 
 ## 7. 强制视觉验收
 遵循 design/UI-SPEC.md 与 design/visual-baseline.json。原图未上传或 SHA 不符时，视觉门禁必须阻塞；生产远程内容由真实浏览器呈现，不能用截图充当界面。
+
+## 8. 多用户和双端（用户已确认）
+详见 [MULTI-USER.md](MULTI-USER.md)，为 V1.0 强制要求，与旧单用户规划冲突时以此为准。每用户本人登录独立 ChatGPT 账号，平台管理员不默认访问私人画面；用户、资源、会话和 GitHub 数据须隔离。F12 多租户认证授权，F13 浏览器节点与资源配额，F14 Windows 客户端与共享 UI，F15 管理员用户/节点管理，均须通过真实隔离测试。

@@ -1,20 +1,74 @@
 # 开发状态
 
 日期：2026-11-27
-
-当前：需求设计阶段，V0.1 尚未开始。仓库为公开仓库。
+当前：V0.1 开发中，分支 feat/v0.1-foundation。V1.0 多用户、Windows/Web 共享 UI 与分离节点架构已经用户确认，详见 MULTI-USER.md。
 
 | 阶段 | 状态 |
 |---|---|
-| V0.1 基础工程与 UI | NOT_STARTED |
-| V0.2 Git 控制协议 | NOT_STARTED |
-| V0.3 CI 监控 | NOT_STARTED |
-| V0.4 远程浏览器 | NOT_STARTED |
+| V0.1 基础工程、UI、租户边界 | IN_PROGRESS |
+| V0.2 多租户认证、Git 控制协议、数据库 | NOT_STARTED |
+| V0.3 GitHub CI 与独立授权 | NOT_STARTED |
+| V0.4 独立浏览器节点及远程显示 | NOT_STARTED |
 | V0.5 调度与确认 | NOT_STARTED |
 | V0.6 交接恢复 | NOT_STARTED |
-| V0.7 多项目 | NOT_STARTED |
-| V0.8 安全部署 | NOT_STARTED |
-| V0.9 综合验收 | NOT_STARTED |
+| V0.7 多用户管理、Electron | NOT_STARTED |
+| V0.8 安全及部署 | NOT_STARTED |
+| V0.9 综合验收及 Windows 打包 | NOT_STARTED |
 | V1.0 发布 | NOT_STARTED |
 
-代码 SHA：无（仅设计文档提交）。CI：尚未配置或执行。下一步：按 CI-ROADMAP 中的 V0.1 清单实施基础工程、三栏 UI 和真实 CI 工作流。未获得无人值守网页交互授权前，不启用该能力。用户原图已指定为强制 1:1 视觉基准；设计规范与 SHA-256 清单已入库，二进制原图待上传。视觉 CI BLOCKED，其他阶段尚未开始。
+已提交 Go mock API、Vue 三栏原型、状态转换单测、Playwright 功能与视觉测试、Compose、租户访问边界及 CI 工作流。Go 本地 go1.23.2 下 go test -race -cover、go vet、go build 已通过；覆盖率 73.5%，未达到整体目标 75%，尚需改进。代码证据提交 5f8285e5196c2c4d8b65dda8d5423cf0737d7618；CI 配置提交 4af7b597f1d4e1f018982ba4a55a275f2dad9cd5，远端 PR CI 已失败，详见下方记录。没有生产登录、数据库或真实浏览器能力。
+
+阻塞：原图 design/screens/browseai-desktop.webp 尚未入库（SHA-256 已记录）；视觉门禁不得跳过。前端依赖 lockfile 尚未生成，CI 暂用 npm install，正式验收前提交 lockfile 并切换 npm ci。UI 误差未知，Compose 已通过，功能测试尚未运行成功。Go 整体覆盖率未达目标。默认网页发送需人工确认，无人值守授权未获得。
+
+下一步：核查当前 PR 和 Actions，修复失败；上传原图原始二进制并验证指纹；提交 lockfile；执行真实截图对比和 UI 修正。全部必需检查通过之前不进入 V0.2。
+
+## 2026-11-27 CI 修复记录
+PR #1，上一轮证据 SHA 8b55da9691810d3c6263689a871ecb4fc799510e，运行 https://github.com/trade3403/browseai/actions/runs/45921782957：backend、compose 通过；web 因 ESLint Vue 解析器被 TypeScript 解析器覆盖失败；functional 因 Playwright 1.50.1 不支持 Ubuntu 26.04 失败；visual-desktop 缺失原始图失败；gate 失败。
+本次修复 Vue ESLint parser 配置顺序、固定 Ubuntu 24.04，调整跨平台 E2E 启动目录与移动端最小宽度；新增 windows-foundation 实际 Windows Go EXE 测试、共用前端构建与 Chromium 功能测试；新增依赖锁文件 CI 产物用于后续固化。尚未完成 Electron，不得宣称 Windows 安装包已生成；完整客户端阶段门禁见 CI-ROADMAP §9。原始二进制、lockfile、视觉差异和覆盖率仍未达验收。新提交 CI 待核实，不进入 V0.2。
+
+## V0.1 第二轮 CI 与覆盖率修复
+证据 SHA 929fc80c6984a208cb1d3e2f8378a580267d3d53，PR CI https://github.com/trade3403/browseai/actions/runs/45922087583：backend、web、functional、compose、Windows foundation 全部通过；visual-desktop 缺失原图失败，gate 失败。Windows 已实际执行 Go EXE 编译/启动和 Chromium 功能测试，非 Electron 安装包验收。
+本次增加 HTTP 服务配置、响应头、JSON 编码错误测试；本地 go test -race、go vet、go build 通过，覆盖率 85.3%，新增 CI 75% 硬门槛。视觉测试调整为先保存实际截图，再校验原图存在及 SHA，缺失/不符仍必定失败并保留 BLOCKED 报告，不变更阈值。锁文件已从上述 CI 的 artifact 15165390426 下载并验证；原始图与 lockfile 已生成并验证可应用的 Git 二进制补丁，尚待实际入库。当前连接器无法将本地二进制文件或完整锁文件直接传到 GitHub；须通过用户 Git 上传或其他已授权文件传输方式解决。正式验收前 npm ci 与 Docker 依赖锁定仍待处理。新提交 CI 待核实，不进入 V0.2。
+
+## 原始图和 lockfile 已解决
+证据 SHA fbab00814a24fde55bcb56f81c7ffa50d74750ac，PR CI https://github.com/trade3403/browseai/actions/runs/45922396803：backend（含75%覆盖率门禁）、web、functional、compose、Windows foundation 均通过；visual-desktop 因缺失原图失败，gate 失败。以上旧记录保留。
+本次从经本地验证的 Git 二进制补丁无损解码原始图并调用 GitHub create_blob(base64)，返回 SHA cf3eca7dd025ca45b430980bdf203e3cdd8a8812，与本地原图 Git SHA 完全一致。原始 WebP 路径 design/screens/browseai-desktop.webp；103632 bytes，1536×864，SHA-256 cbbcf34029c6fff16e8ac2449da923a80e83eff8cb980bb531dcd32de3a59c05。CI lockfile 从同一补丁恢复，Git SHA 7f4f6bdde077acb1c65877a8bc23c3ca03ce6c19，与 CI 产物一致；一并入库。CI 和 Docker 改用 npm ci，禁止缺锁回退。原图上传及依赖锁定阻塞已解决；视觉差异仍待新 CI 实测，严禁改阈值，仍在 V0.1，不进入 V0.2。
+
+## 原图入库后首次真实视觉测量
+证据 SHA 67c88a53b75c5460ed0ad5f0998c9800087bbd9e；PR CI https://github.com/trade3403/browseai/actions/runs/45922696654。backend、web、functional、compose、Windows foundation 均通过；visual-desktop 和 gate 失败。报告 artifact 15165421705：整图差异14.2137%，外壳16.0748%（不含远程画面），header15.6817%、sidebar14.0646%、workspace_toolbar18.2910%、right_panel19.5277%、footer11.1146%，远程边界误差1.453125 CSS px（已通过2px）。已实际查看 reference/actual 图。首次外壳修订：按原图采样颜色及定位调节导航/项目卡片、标签、右侧卡片及底栏布局，保持真实未连接提示、禁用状态和响应式功能。新差异须由新 CI 测量；基准与1%门槛不变。不进入V0.2。
+
+## 第二次真实视觉测量与定向调整
+证据 SHA a0c2b9d151f37b73c864fd85996f88c0c9c2f0f9；PR CI https://github.com/trade3403/browseai/actions/runs/45923184640，push CI https://github.com/trade3403/browseai/actions/runs/45923179558，均已结束失败。backend/web/functional/compose/windows-foundation 五项通过；visual-desktop/gate 未通过。实测 artifact 15165206822：外壳15.2792%（前16.0748%，改善0.7956个百分点），整图13.7859%，header14.3675%、sidebar14.5787%、workspace_toolbar16.8802%、right_panel17.9198%、footer11.0091%，远程边界1.453125px。已核对实际及原图截图；右栏第一卡片文字换行导致整体高度偏移。修订2：限制桌面卡片高度、避免标签换行、调整底栏网格和进度位置、状态点尺寸，并在视觉报告追加DOM几何坐标，供后续定位；保持真实未连接状态、禁用交互、基准原图及1%门槛。新结果尚待CI，不进入V0.2。
+
+## 第三次真实视觉测量及修订
+证据 SHA 14e879af30deeea89035f6673886dd5a3d237147；PR CI https://github.com/trade3403/browseai/actions/runs/45926036895，push CI https://github.com/trade3403/browseai/actions/runs/45926031996，均完成失败。backend、web、functional、compose、Windows foundation 五项通过。artifact 15166307886：外壳14.2434%（前15.2792%），整图13.2247%，header14.6701%、sidebar14.2697%、workspace_toolbar16.4994%、right_panel15.5251%、footer10.9219%，远程边界1.453125px。已核对截图及DOM几何。修订3：调整卡片高度和标签位置，补右栏状态图标及明确标记的 mock CI 样例（非真实 GitHub 状态），增加 mock/真实边界 E2E 断言，保持视觉门槛及原图不变。新结果待CI。不进入V0.2。
+
+## 第四次真实视觉测量及定向修订
+证据 SHA c2d3ac63cda31bf8d7d11eaaebb9facc614ee58c；PR CI https://github.com/trade3403/browseai/actions/runs/45926699028 与 push CI https://github.com/trade3403/browseai/actions/runs/45926691243 均完成失败。backend/web/functional/compose/windows-foundation 五项通过，视觉与gate失败。artifact 15167150705：外壳13.3510%（前14.2434%），整图12.7449%，header14.2916%、sidebar13.3768%、workspace_toolbar16.0942%、right_panel14.0789%、footer10.4479%，边界1.453125px。实查截图、DOM坐标及采样颜色。修订4：调整工具栏尺寸、进度条基线、面板颜色和底栏分组；为明确标记的本地模拟项目补充阶段、任务及CI细节，仓库链接可打开，CI示例说明可查看，新增跨示例项目隔离断言。所有示例不得视为真实GitHub证据。视觉基准和1%门槛不变，修复效果待新CI验证，不进入V0.2。
+
+## 第五次真实视觉测量与修订
+证据 SHA 447f3e4a2ec1578369866c1b06b93ffe2dfed1c0；PR CI https://github.com/trade3403/browseai/actions/runs/45927408523，push CI https://github.com/trade3403/browseai/actions/runs/45927402733，均结束失败。backend/web/functional/compose/windows-foundation 五项通过。artifact 15167525318：外壳13.0587%（前13.3510%），整图12.5877%，header14.2916%、sidebar12.2230%、workspace_toolbar15.0006%、right_panel14.4690%、footer10.4948%，边界1.453125px。读取原图/实际图、JSON及像素颜色，发现底栏时长文本溢出与窗口字段重叠；新增底栏约束、缩短示例文字、真实 GitHub 图标组件和已完成状态图标，调整面板颜色和字体重量，新增底栏相邻元素不重叠断言。仍保留明确的模拟标记，不复制用户头像或伪造线上信息。新效果待 CI 测量，原图与1%门槛不变，不进入V0.2。
+
+## 第六次真实视觉测量及修订
+证据 SHA 4220e976a0164d12ac8ac7ef9595339dbab40fe3；PR CI https://github.com/trade3403/browseai/actions/runs/45928100111 和 push CI https://github.com/trade3403/browseai/actions/runs/45928093726 均完成失败。backend/web/functional/compose/windows-foundation 五项通过。artifact 15167232876：整图12.4919%，外壳12.8806%（前13.0587%），header14.3048%、sidebar11.7724%、workspace_toolbar14.9678%、right_panel14.4048%、footer10.1406%，边界1.453125px。已读取真实 reference/actual/diff 和几何报告；主要剩余差异集中在文字、图标、原图示例文案以及原图边缘模糊，布局边界已达标。修订6：矢量品牌标识、真实本地通知计数、导航GitHub标识、工具栏和卡片字体基线及进度位置微调，新增本地日志计数测试。保留模拟提示和禁用状态，不伪造真实服务在线、账户或CI。尚未达到1%验收，新效果待CI，不进入V0.2。
+
+## 第七次真实视觉测量及定向修订
+证据 SHA 5c8bfcff631cf9515a256f6c05c038b08a669745；PR CI https://github.com/trade3403/browseai/actions/runs/45928622226 与 push CI https://github.com/trade3403/browseai/actions/runs/45928616908 均已结束失败。backend/web/functional/compose/windows-foundation 五项通过，visual-desktop/gate 未通过。artifact 15167188945：整图12.1496%，外壳12.2439%（前12.8806%），header14.1710%、sidebar10.1835%、workspace_toolbar15.1629%、right_panel13.7085%、footer10.1875%，边界1.453125px。核查真实截图和JSON：工具栏标签实际y=65而设计约y=67，顶部品牌/标语位置偏移；发现第六轮CSS将首张卡片背景固定为蓝色而非按选中状态。修订7：修正顶部和标签位置、选中状态样式及ARIA状态，增加选中状态回归测试；报告附48px差异热点和字体属性，仅诊断，不更改计分、原图、排除范围或1%门槛。原图为压缩WebP，字体/图标、明确的模拟状态文案仍与参考不同，暂不能保证达到1%。新CI待验证，不进入V0.2。
+
+## 第八次真实视觉测量及修订
+证据 SHA c11de5ca4d736f9bb8e9433765c13598818d8ea9；PR CI https://github.com/trade3403/browseai/actions/runs/45929271868，push CI https://github.com/trade3403/browseai/actions/runs/45929266519 均已结束失败。backend/web/functional/compose/windows-foundation 五项通过。artifact 15168080745：整图11.9517%，外壳11.8757%（前12.2439%），header12.6808%、sidebar10.1835%、workspace_toolbar13.6875%、right_panel13.7085%、footer10.1875%，边界1.453125px。实查 report.json 的48px热点和截图：右栏任务清单1296,678/1296,726、状态区1344,534及顶部文案为主要差异。修订8：调整右栏任务清单行高、状态字段字体与对齐、工具栏字号；为真实数据驱动的模拟进度条加入ARIA并测试数值与实际长度一致、示例任务非自动执行及切换后隔离。参考进度条视觉长度与其75%文字并非完全一致，保留准确比例，不伪造进度或用户在线信息。原图、阈值、排除范围均未改变。新CI待验证，未进入V0.2。
+
+## 第九次视觉测量与回归修复
+证据 SHA 38059991fd8ceec72795d614758b390147c69e82；PR CI https://github.com/trade3403/browseai/actions/runs/45929946046，push CI https://github.com/trade3403/browseai/actions/runs/45929940721 均结束失败。backend/web/functional/compose/windows-foundation 五项通过。artifact 15168700459：整图11.9868%，外壳11.9411%（上一轮11.8757%，回退0.0653个百分点），header12.6664%、sidebar10.1835%、workspace_toolbar14.0958%、right_panel13.7449%、footer10.1875%，边界1.453125px。实查 report.json/actual/reference/diff，任务状态卡的下一步文案换行导致交接文档越出卡片。修订9：恢复已实测较优的第七轮CSS，保留第八轮数据驱动进度条、ARIA及测试；缩短明确标记的示例任务文案（完整提示保留），使任务卡按内容伸展，调整行距、状态标签与工具栏，加入任务卡不溢出及项目切换断言。未改变计分、原图、排除范围或1%门槛。字体和安全标记与原图文案差异仍为主要阻塞；不能保证1%可达。新CI待验证，不进入V0.2。
+
+## 第十次真实视觉测量与字体诊断改进
+证据 SHA 0fc2f5fdd98a8c8a8969813b20ff30fe897f255a；PR CI https://github.com/trade3403/browseai/actions/runs/45930511504，push CI https://github.com/trade3403/browseai/actions/runs/45930505914，均结束失败。backend/web/functional/compose/windows-foundation 五项通过。外壳11.7695%（前11.9411%），header12.6808%、sidebar10.1835%、workspace_toolbar13.8126%、right_panel13.3654%、footer10.1875%。当前本地容器存在 Chromium 与中文字体，但无法解析 raw.githubusercontent.com，也无完整前端依赖，不能声称本地页面验收。为避免反复猜测字体，在 visual.spec.ts 增加独立诊断测试：同一次CI按相同阈值分别渲染当前、Noto优先、system-ui优先、Liberation优先、YaHei优先五种字体栈，输出原始截图、各区域差异、实际Chromium平台字体和边界误差；诊断不改变生产样式或正式验收的actual.png、原图、1%门槛及排除区域，不能使用候选评分冒充通过。先收集证据再决定是否修改字体。没有宣称本轮UI已改善，不进入V0.2。
+
+## 第十一轮视觉测量与分区诊断
+证据 SHA 02b25d3670848a581bb07e67b23d7b3e85641fa0；PR CI https://github.com/trade3403/browseai/actions/runs/45931058951，push CI https://github.com/trade3403/browseai/actions/runs/45931053054，均已完成失败。backend/web/functional/compose/windows-foundation 五项通过；visual-desktop 中原图验收失败、字体诊断通过。artifact 15168622393，实查 font-report.json、report.json 和 reference/actual：当前与 Liberation 优先均为11.7695%，system-ui 12.0749%，Noto 优先和 YaHei 优先均12.0827%，均边界1.453125px。实际当前渲染为 Liberation Sans 和 Noto Sans CJK SC；YaHei 候选使用回退字体而非已安装真实YaHei。正式外壳11.7695%，整图11.8945%，各区域与上一轮一致。保留当前字体栈。原图示例版本、在线状态、账户、通知数、任务文案、进度条像素和实际模拟状态不一致，不能通过伪造状态来消除。修订10：调整工具栏文字/按钮间距与任务卡行距；新增12种分区排版候选诊断、按区域排名和溢出标记，正式验收不使用候选结果，不改变原图、阈值、远程区域排除或1%门槛。新CI待验证，尚不能进入V0.2。若诊断仍无明显改善，需获得原始可编辑UI设计稿、确切字体及图标素材，或由用户明确批准其他视觉验收办法；不得自行放宽。
+
+## 第十二轮视觉测量：采用实测最优候选并明确阻塞
+证据 SHA 2f1ac17ad86464627fcab6c812a5bfe501e8c441。PR CI https://github.com/trade3403/browseai/actions/runs/45931831405 和 push CI https://github.com/trade3403/browseai/actions/runs/45931825577 均已结束失败。PR 的 backend/web/functional/compose/windows-foundation 五项通过，visual-desktop 中正式验收失败，字体与排版诊断均通过。正式外壳11.7591%（前11.7695%），header12.6808%、sidebar10.1835%、workspace_toolbar13.7341%、right_panel13.3654%、footer10.1875%；边界1.453125px。依据 visual-desktop job 140285978330 的 LAYOUT_DIAGNOSTICS 输出，12个候选中 toolbar-type-1 的工具栏差异13.5814%、外壳11.7390%，footer-type-2 的底栏差异10.1641%、外壳11.7566%；两个候选均无检测到的溢出，边界不变。仅采用这两个候选的样式，组合效果尚未验证；其他候选无收益，不采用。字体维持当前。原图、正式验收计分、1%门槛、排除范围及功能交互不变。阶段V0.1仍未通过，V0.2不得启动。多轮有证据的优化后仍距目标甚远，不能将布局边界达标等同于像素验收通过。若组合实测仍失败，应避免重复无依据微调；优先取得可编辑设计稿/准确字体与图标素材，或请求用户明确批准调整验收方式。未经批准不改变验收标准，不假报通过。
+
+## 用户批准开发阶段视觉门槛调整（2026-11-27）
+证据 SHA df3cbf54f4b3a937fd7038854dc9fee3894d3d46；PR CI https://github.com/trade3403/browseai/actions/runs/45932386067 与 push CI https://github.com/trade3403/browseai/actions/runs/45932380662 均完成失败，按当时 1% 规则历史结果仍为失败。外壳 11.7364%，header12.6808%、sidebar10.1835%、workspace_toolbar13.5814%、right_panel13.3654%、footer10.1641%，边界1.453125px，五项非视觉检查及两项诊断通过。此前 NEED_HUMAN 记录：https://github.com/trade3403/browseai/pull/1#issuecomment-7208830351。用户明确批准“同意将开发阶段UI视觉误差标准调整为15%，保留最终视觉验收要求，重新运行CI，通过后继续下一阶段开发。” 现 V0.1–V0.9 采用 development 门槛 15%，V1.0 最终 release 门槛仍 1%，整体与各核心区域均适用；2px 边界、0.1 色差、原图 SHA、排除区域、所有功能门禁均不变。测试同时输出两个门槛独立判定，CI 手动支持 release 且 v1.* tag 强制 release；不进行实际发布。此提交仅更新验收政策、实际执行代码与文档，不改 UI 或伪造历史结果。新 CI 尚未实测；全部通过后才开始 V0.2，最终视觉未完成项必须保留至严格发布验收。

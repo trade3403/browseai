@@ -1,0 +1,240 @@
+*{box-sizing:border-box}html,body,#app{margin:0;min-height:100%;font-family:Arial,"Noto Sans CJK SC","Microsoft YaHei",sans-serif;color:#e2e8f0;background:#101922;font-size:13px}button{font:inherit;color:inherit;cursor:pointer;background:#192430;border:1px solid #34414f;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:6px 8px;white-space:nowrap}button:hover:not(:disabled){filter:brightness(1.18)}button:disabled{opacity:.45;cursor:not-allowed}button:focus-visible{outline:2px solid #78b1ff;outline-offset:2px}svg{flex-shrink:0}i{font-style:normal}.green{color:#37c660}.yellow{color:#e9bb45}.muted{color:#84909c}.shell{height:100dvh;min-height:650px;display:grid;grid-template-columns:minmax(190px,15.5%) minmax(0,1fr) minmax(275px,21.9%);grid-template-rows:54px minmax(0,1fr) 50px;overflow:hidden;background:linear-gradient(120deg,#111d29,#0c151d)}.global-header{grid-column:1/-1;display:flex;align-items:center;padding:0 16px;gap:24px;background:#111a25;border-bottom:1px solid #304053;white-space:nowrap}.brand{display:flex;align-items:center;gap:9px}.brand>svg{color:#5790ff}.brand strong{font-size:19px}.version{border:1px solid #315781;color:#84b9ff;font-size:11px;padding:2px 6px;border-radius:5px}.tagline{font-size:12px;color:#aeb9c7;overflow:hidden;text-overflow:ellipsis}.header-actions{margin-left:auto;display:flex;align-items:center;gap:12px}.header-actions button{background:transparent;border:0;padding:3px}.online{color:#5ad477;background:#14372c;border-radius:15px;padding:5px 9px;display:flex;align-items:center;gap:5px}.user-avatar{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#64748b}.sidebar{border-right:1px solid #2c3a48;padding:10px 9px;overflow:auto;min-height:0}.sidebar nav{display:grid;gap:4px}.sidebar nav button{justify-content:flex-start;height:33px;border:0;background:transparent;padding:0 14px;gap:12px;color:#c6d0dd}.sidebar nav button.active{background:#1b3a69;color:#79a9ff;font-weight:600}.section-heading{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #293645;margin-top:12px;padding:10px 2px;font-weight:600}.section-heading button{padding:3px}.project-list{display:grid;gap:7px}.project{display:block;text-align:left;min-height:72px;padding:12px 11px 9px;background:#1b2936;border:1px solid transparent;border-radius:7px}.project.selected{background:linear-gradient(130deg,#15448e,#19345a);border-color:#4c8df5}.project-head{display:flex;align-items:center;gap:6px}.project-head b{font-size:14px;overflow:hidden;text-overflow:ellipsis}.project-head>span{font-size:11px;margin-left:auto}.project-progress{display:flex;align-items:center;gap:5px;margin:14px 0 0 30px;font-size:12px}.track{height:8px;background:#34414f;border-radius:12px;overflow:hidden;flex:1}.track>div{height:100%;background:linear-gradient(90deg,#5086f5,#81b5f8);border-radius:12px}.track>div.complete{background:#78ced6}.workspace{padding:10px;display:flex;flex-direction:column;min-width:0;min-height:0;gap:8px}.workspace-toolbar{display:flex;align-items:center;gap:10px;min-height:39px;min-width:0}.workspace-toolbar strong{display:flex;gap:6px;align-items:center;white-space:nowrap}.workspace-toolbar strong svg{color:#70a5ff}.tabs{display:flex;align-items:center;gap:5px;min-width:0;overflow:auto}.tab{display:flex;background:#172431;border:1px solid #354252;border-radius:5px;white-space:nowrap}.tab.active{background:linear-gradient(140deg,#164aaa,#2d66c8);border-color:#6699ff}.tab button{background:transparent;border:0;padding:8px 7px}.toolbar-buttons{display:flex;gap:4px;margin-left:auto}.toolbar-buttons button{font-size:12px}.remote{flex:1;min-height:0;display:flex;flex-direction:column;border:1px solid #3c4654;border-radius:9px;overflow:hidden;background:#11161d}.remote-status{height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 9px;font-size:12px}.remote-status>div{display:flex;gap:4px;align-items:center}.remote-status button{font-size:11px;padding:4px}.live{color:#65d68d;background:#19352a;padding:5px;border-radius:5px;display:inline-flex;align-items:center;gap:4px}.browser-grid{flex:1;display:grid;min-height:0;min-width:0}.browser-grid.split{grid-template-columns:1fr 1fr;gap:4px}.browser{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;background:#202020;border-radius:7px}.browser-chrome{background:#c4cdef;color:#253040;flex-shrink:0}.browser-tabs{height:34px;display:flex;align-items:center;gap:10px;padding:0 11px}.window-dots{display:flex;gap:7px}.window-dots i{width:11px;height:11px;border-radius:50%;background:#fa6d59}.window-dots i:nth-child(2){background:#f9c452}.window-dots i:nth-child(3){background:#61bc6c}.browser-tab{background:#f1f2f6;border-radius:8px 8px 0 0;padding:8px;display:flex;align-items:center;gap:8px;color:#222}.address{height:37px;display:flex;align-items:center;gap:12px;padding:0 12px;background:#eef0f4}.address-value{flex:1;background:#dce0e9;padding:6px 12px;border-radius:17px;color:#242c35}.mock-chat{display:flex;flex:1;min-height:0;overflow:hidden;background:#202020}.mock-sidebar{width:25%;min-width:115px;padding:18px 12px;background:#161616;color:#cbd0d4;overflow:hidden}.mock-sidebar b{font-size:16px;color:#f5f5f5}.mock-sidebar p{margin:12px 0;padding:6px 8px;white-space:nowrap}.mock-sidebar small{display:block;color:#999;margin:22px 0 5px}.mock-selected{background:#303030;border-radius:5px}.chat-body{flex:1;display:flex;flex-direction:column;padding:16px 28px;min-width:0;overflow:auto}.chat-title{font-size:16px;font-weight:600;display:flex;justify-content:space-between}.chat-title span{font-size:12px;color:#a5a5a5}.bubble{margin:24px 0 20px auto;max-width:90%;background:#363636;border-radius:17px;padding:13px 16px;line-height:1.6}.reply{line-height:1.7;flex:1;padding:4px 15px}.reply p{margin:9px 0}.composer{background:#343434;border-radius:24px;padding:13px 15px;color:#b8b8b8;display:flex;gap:10px;align-items:center;margin-top:auto}.right-panel{border-left:1px solid #2c3a48;padding:12px 9px;min-width:0;overflow:auto}.controls{display:flex;gap:5px;margin-bottom:12px}.controls button{flex:1;font-size:11px;padding:7px 3px;border:0;font-weight:600}.pause{background:#1766e8}.resume{background:#217b38}.takeover{background:#7f46ae}.stop{background:#bc3439}.right-panel section{background:linear-gradient(130deg,#17232e,#14202b);border:1px solid #303e4c;border-radius:7px;padding:10px 12px;margin-bottom:7px}.right-panel h3{margin:0 0 10px;font-size:13px;display:flex;align-items:center;gap:7px}.right-panel h3 svg{width:15px;height:15px;color:#6999f3}.right-panel b{display:inline-flex;align-items:center;gap:5px}.right-panel dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:5px 12px;margin:8px 0 0;font-size:12px}.right-panel dt{color:#acb8c6}.right-panel dd{margin:0;overflow-wrap:anywhere}.ci-state{display:flex;align-items:center;gap:10px;padding:4px 0;color:#98a8bc}.ci-state small{display:block;margin-top:4px}.wide-progress{display:flex;align-items:center;gap:8px}.right-panel p{color:#adb8c5;font-size:12px;margin:9px 0}.summary{display:flex;justify-content:space-between;color:#acb8c6;font-size:12px}.state-chip{color:#83b7ff;background:#1a3b64;border-radius:4px;padding:2px 5px;font-size:11px}.right-panel ol{margin:0;padding-left:22px;font-size:12px;line-height:2;color:#c4cdd9}.empty{flex:1;display:grid;place-content:center;text-align:center;gap:10px;padding:20px}.empty ul{text-align:left}.shell footer{grid-column:1/-1;display:flex;gap:26px;align-items:center;padding:0 20px;background:#111b26;border-top:1px solid #2b3949;white-space:nowrap;color:#b9c6d4}.shell footer span{display:flex;align-items:center;gap:6px}.footer-spacer{flex:1}.notice{position:fixed;top:54px;right:12px;width:310px;padding:12px;background:#202d3d;border:1px solid #53677d;border-radius:7px;z-index:10;max-height:60vh;overflow:auto}.notice h3{display:flex;justify-content:space-between}.expanded{grid-template-columns:0 minmax(0,1fr) 0}.expanded .sidebar,.expanded .right-panel{visibility:hidden;padding:0}.expanded .workspace{grid-column:2}.expanded .sidebar{grid-column:1}.expanded .right-panel{grid-column:3}
+@media(max-width:1400px){.tagline{display:none}.workspace-toolbar strong{font-size:11px}.workspace-toolbar{gap:5px}.toolbar-buttons button{font-size:11px}.shell footer{gap:12px;font-size:11px}.remote-status{font-size:10px}.tab button{font-size:11px;padding:7px 5px}.controls button{font-size:10px}}
+@media(max-width:900px){.shell{height:auto;min-height:100dvh;overflow:visible;grid-template-columns:1fr;grid-template-rows:auto auto auto auto auto}.global-header{min-height:54px;padding:8px;gap:8px;flex-wrap:wrap}.brand strong{font-size:15px}.header-actions{gap:6px}.sidebar{grid-column:1;border:0}.sidebar nav{display:flex;overflow:auto}.sidebar nav button{font-size:11px;padding:0 8px}.project-list{grid-template-columns:repeat(2,minmax(0,1fr))}.project{min-height:60px}.workspace{grid-column:1;height:600px}.workspace-toolbar{flex-wrap:wrap}.toolbar-buttons{margin-left:0}.right-panel{grid-column:1}.shell footer{flex-wrap:wrap;gap:10px;padding:10px}.mock-sidebar{display:none}.chat-body{padding:12px}.remote-status{height:auto;min-height:40px;flex-wrap:wrap}.expanded .workspace{grid-column:1}.expanded .sidebar,.expanded .right-panel{display:none}.browser-grid.split{grid-template-columns:1fr;grid-template-rows:1fr 1fr}.browser-grid.split .reply{display:none}}
+
+/* Keep the grid inside the mobile viewport even with long project labels. */
+@media(max-width:900px){.shell{grid-template-columns:minmax(0,1fr)}.global-header,.sidebar,.right-panel,.workspace{min-width:0}.project{min-width:0}.project-head b{min-width:0}.tabs{max-width:100%}.remote-status>div{flex-wrap:wrap}.browser-grid.split{grid-template-columns:minmax(0,1fr)}}
+
+/* Reference revision 1: measured 1536x864 layout and sampled shell palette. */
+.shell{background:linear-gradient(115deg,#101923,#0f1822)}
+.global-header{background:linear-gradient(100deg,#101722,#101922);padding:0 13px 0 21px;gap:32px;border-bottom-color:#2a3949}
+.brand{gap:10px}.brand>svg{width:38px;height:30px}.brand strong{font-size:19px}.version{font-size:11px;padding:3px 7px}
+.tagline{font-size:13px}.header-actions{gap:17px}.online{padding:5px 11px;font-weight:600}
+.sidebar{padding:10px 9px 10px;background:linear-gradient(160deg,#101922,#0e1720)}
+.sidebar nav{gap:0}.sidebar nav button{height:35px;padding:0 14px;gap:12px;font-size:14px}.sidebar nav button.active{height:38px;background:#173564}
+.section-heading{margin-top:8px;padding:9px 3px 12px;font-size:14px}.section-heading button{width:25px;height:25px;padding:3px}
+.project-list{gap:7px}.project{min-height:72px;padding:9px 11px 10px;background:linear-gradient(130deg,#1b2632,#16222d)}
+.project:first-child{min-height:76px}.project:nth-child(2){min-height:74px}
+.project.selected{background:linear-gradient(115deg,#124180,#193766);border-color:#3978cf}
+.project-head{gap:9px}.project-head b{font-size:14px}.project-head>span{font-size:12px;letter-spacing:-.25px}
+.project-progress{margin:16px -1px 0 31px;font-size:12px}.track{height:9px;background:#303e4e}.track>div{background:linear-gradient(90deg,#659af5,#80b9fc)}
+.workspace-toolbar{gap:8px}.workspace-toolbar strong{font-size:14px;gap:9px;margin-right:18px}.tabs{gap:6px}
+.tab{height:37px;align-items:center;background:#151f2b}.tab button{font-size:13px;padding:9px 8px}
+.tab button:first-child{padding-left:13px}.tab button:last-child{padding-right:12px}.tab.active{background:linear-gradient(140deg,#194cac,#2862cb)}
+.tabs>button{height:37px;width:41px}.toolbar-buttons{gap:6px}.toolbar-buttons button{height:30px;padding:5px 8px}
+.remote-status{font-size:12px}.remote-status>span{font-weight:600}.remote-status>div{gap:6px}.live{padding:5px 8px}
+.right-panel{padding:14px 9px 10px 11px;background:linear-gradient(145deg,#101922,#0f1821)}
+.controls{gap:6px;margin-bottom:12px}.controls button{height:31px;font-size:11px;padding:6px 2px}.pause{background:linear-gradient(#2577f0,#1b5fd4)}.resume{background:#21853e}.takeover{background:#8645b2}.stop{background:#c53739}
+.right-panel section{padding:10px 13px;margin-bottom:8px;background:linear-gradient(130deg,#16212d,#141e29);border-color:#2c3948;border-radius:8px}
+.right-panel h3{margin:0 0 6px;font-size:14px;line-height:18px;gap:7px}
+.right-panel dl{grid-template-columns:58px minmax(0,1fr);gap:3px 10px;margin:7px 0 0;font-size:12px;line-height:16px}
+.right-panel section:nth-of-type(1){min-height:123px}.right-panel section:nth-of-type(1)>b{font-size:13px}
+.right-panel section:nth-of-type(1) dd:first-of-type{color:#77aaf3;text-decoration:underline}
+.right-panel section:nth-of-type(2){min-height:132px}.right-panel section:nth-of-type(2) dl{grid-template-columns:85px minmax(0,1fr);border-top:1px solid #293746;padding-top:6px;margin-top:4px}
+.ci-state{padding:2px 0;gap:8px;min-height:40px}.ci-state b{font-size:14px}.ci-state small{font-size:11px;margin-top:2px}
+.right-panel section:nth-of-type(3){min-height:106px}.wide-progress{gap:8px;margin-top:8px}.wide-progress .track{height:11px}.right-panel p{margin:7px 0;line-height:16px}
+.right-panel section:nth-of-type(4){min-height:147px}.right-panel section:nth-of-type(4) dl{grid-template-columns:89px minmax(0,1fr);gap:9px 8px}.state-chip{border-radius:10px;padding:3px 8px}
+.right-panel section:nth-of-type(5){min-height:144px}.right-panel section:nth-of-type(5) h3 svg{color:#c28bea}.right-panel ol{line-height:25px;padding-left:21px;font-size:12px}
+.shell footer{background:linear-gradient(90deg,#121b26,#101a25);border-color:#2b3949}
+@media(min-width:1401px){.shell footer{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(0,.95fr) minmax(0,.65fr) minmax(0,1.25fr) 1fr auto auto auto;gap:12px}.shell footer span{font-size:13px}.footer-spacer{min-width:0}}
+@media(min-width:901px) and (max-width:1400px){.workspace-toolbar strong{font-size:11px;margin-right:0}.tab button{font-size:11px;padding:7px 5px}.tab button:first-child{padding-left:5px}.tab button:last-child{padding-right:5px}.controls button{font-size:10px}.header-actions{gap:10px}.shell footer{gap:12px}}
+@media(max-width:900px){.global-header{padding:8px;gap:8px}.brand strong{font-size:15px}.brand>svg{width:30px}.header-actions{gap:6px}.sidebar nav button{font-size:11px;padding:0 8px}.project,.project:first-child,.project:nth-child(2){min-height:60px}.workspace-toolbar strong{margin-right:0;font-size:11px}.tab button{font-size:11px;padding:7px 5px}.tab button:first-child{padding-left:5px}.tab button:last-child{padding-right:5px}.right-panel{padding:10px 9px}.shell footer{gap:10px;padding:10px}.expanded .sidebar,.expanded .right-panel{display:none}}
+
+/* Reference revision 2: geometry from actual CI screenshot a0c2b9d.
+   Desktop only: keep mobile and narrow layouts independent. */
+@media(min-width:1401px){
+  .global-header{gap:32px;padding-left:21px}.brand strong{font-size:18px;letter-spacing:-.3px}.brand{gap:9px}.tagline{font-weight:500}
+  .sidebar{background:linear-gradient(165deg,#101722,#0e131f)}
+  .project{padding-left:13px;padding-right:10px;background:linear-gradient(115deg,#192531,#1d2733)}
+  .project.selected{background:linear-gradient(125deg,#14376b,#173569);border-color:#3675c8}
+  .project-list{gap:7px}.project:first-child{min-height:77px}.project:nth-child(2){min-height:74px}
+  .project-head{gap:8px}.project-head b{font-weight:700}.project-head>span{font-weight:600;font-size:11px}
+  .project-progress{margin-top:19px;margin-left:29px;margin-right:0;gap:5px}
+  .project-progress .track>div{background:linear-gradient(90deg,#659df6,#80bafa)}
+  .project-progress .track>div.complete{background:#86d3d6}
+  .workspace-toolbar strong{margin-right:25px}.tab{height:37px}.tab button:first-child{min-width:104px;text-align:left;justify-content:flex-start}.tab button:last-child{padding-right:9px}
+  .tab.active{background:linear-gradient(140deg,#16489c,#235ec8)}
+  .toolbar-buttons{gap:5px}.toolbar-buttons button{height:30px;padding:5px 7px}
+  .remote{background:#0b1017;border-color:#303b48}.remote-status{padding:0 9px}.remote-status>div{gap:6px}.remote-status .live{min-width:80px}
+  .right-panel{padding:14px 9px 8px 11px}
+  .controls{margin-left:-8px;gap:6px}.controls button{font-size:11px;height:30px}
+  .right-panel section{padding:8px 13px 9px;margin-bottom:8px;background:linear-gradient(135deg,#16212d,#151e2b)}
+  .right-panel h3{margin:0 0 4px;line-height:18px;font-size:13px;font-weight:700}
+  .right-panel section:nth-of-type(1){min-height:123px;height:123px}
+  .right-panel section:nth-of-type(1)>b{line-height:18px;font-size:13px}
+  .right-panel dl{grid-template-columns:60px minmax(0,1fr);column-gap:8px;row-gap:2px;margin-top:5px;font-size:12px;line-height:17px}
+  .right-panel dt{white-space:nowrap}
+  .right-panel section:nth-of-type(2){min-height:132px;height:132px}
+  .right-panel section:nth-of-type(2) dl{margin-top:6px;padding-top:6px;grid-template-columns:86px minmax(0,1fr)}
+  .ci-state{min-height:40px;padding:3px 0;gap:9px}.ci-state small{margin-top:2px}
+  .right-panel section:nth-of-type(3){min-height:106px;height:106px}
+  .wide-progress{margin-top:7px}.right-panel p{margin:6px 0}.summary{font-size:12px}
+  .right-panel section:nth-of-type(4){min-height:147px;height:147px}
+  .right-panel section:nth-of-type(4) dl{grid-template-columns:89px minmax(0,1fr);gap:9px 8px;margin-top:12px}
+  .right-panel section:nth-of-type(5){min-height:144px;height:144px;margin-bottom:0}
+  .right-panel ol{line-height:25px;font-size:12px;padding-left:21px}
+  .shell footer{background:#121b26;grid-template-columns:21.3% 12% 8% 18% minmax(0,1fr) auto auto auto;gap:8px;padding:0 20px}
+  .shell footer span{font-weight:500;white-space:nowrap}
+}
+.project-status-dot,.tab-status-dot,.footer-status-dot,.remote-status-dot{display:inline-block;flex-shrink:0;width:9px;height:9px;border-radius:50%;background:currentColor;vertical-align:1px}
+.tab-status-dot{width:11px;height:11px;vertical-align:0}.footer-status-dot{width:14px;height:14px}.remote-status-dot{width:10px;height:10px;vertical-align:0;margin-right:3px}
+
+/* Reference revision 3: align card baselines, status affordances and footer clusters. */
+.sample-label{margin-left:auto;color:#8fb6ef;font-size:11px;font-weight:500}
+.ci-state.ci-demo-passed{color:#45c965}.ci-demo-passed>svg{fill:#45c965;stroke:#153b28}.ci-demo-passed small{color:#73c78b}
+.task-details dt{display:flex;align-items:center;gap:6px}.task-details dt svg{color:#52b66e}
+.next-actions{list-style:none}.next-actions li{display:flex;align-items:center;gap:8px}.next-actions li svg{color:#7692ad}
+.next-actions li:first-child svg{color:#5997e5}
+@media(min-width:1401px){
+ .brand strong{font-size:19px;letter-spacing:0}.brand>svg{width:39px}.tagline{margin-left:0;color:#aab6c5}
+ .project-list{gap:7px}.project{min-height:70px;height:70px;padding-top:9px;padding-bottom:9px}
+ .project:first-child{height:77px;min-height:77px}.project:nth-child(2){height:74px;min-height:74px}.project:nth-child(3){height:72px;min-height:72px}
+ .project:nth-child(n+4){height:70px;min-height:70px}.project-progress{margin-top:17px}
+ .project-head>span{font-size:11px}.project-status-dot{width:9px;height:9px}
+ .project.selected{background:linear-gradient(125deg,#13396c,#1a396e)}
+ .workspace-toolbar strong{margin-right:25px}.tab:first-child button:first-child{min-width:110px}.tab:not(:first-child) button:first-child{min-width:97px}.tabs{gap:6px}
+ .remote-status>div{gap:5px}.remote-status .live{min-width:80px}.remote-status button{padding:5px 7px}.remote-status button:disabled{opacity:.6}
+ .right-panel section{margin-bottom:8px}.right-panel section:nth-of-type(1){height:124px;min-height:124px}
+ .right-panel section:nth-of-type(2){height:132px;min-height:132px}.right-panel section:nth-of-type(3){height:106px;min-height:106px}
+ .right-panel section:nth-of-type(4){height:147px;min-height:147px}.right-panel section:nth-of-type(5){height:148px;min-height:148px}
+ .right-panel h3{font-size:13px}.right-panel dl{font-size:12px;line-height:18px}
+ .right-panel .task-details{grid-template-columns:92px minmax(0,1fr);row-gap:8px}
+ .right-panel .next-actions{padding-left:1px;line-height:25px}
+ .wide-progress .track>div{background:linear-gradient(90deg,#4c8bf1,#639cf7)}
+ .shell footer{grid-template-columns:21.5% 12.3% 8.2% 17% minmax(0,1fr) auto auto auto;gap:8px}
+}
+
+/* Reference revision 4: align individual controls and safe sample data. */
+.right-panel dd a{color:#77aaf3;text-decoration:underline;display:inline-flex;align-items:center;gap:5px;overflow-wrap:anywhere}
+.commit-chip{display:inline-block;font:inherit;background:#263340;border-radius:6px;padding:0 5px;color:#cad3df}.subtle{color:#a9b6c4;font-size:11px}
+.right-panel h3 .sample-label{border:0;background:transparent;color:#79a9f0;text-decoration:underline;padding:0;margin-left:auto;font-size:12px}
+.right-panel dl dt svg{vertical-align:-2px}.ci-detail{display:flex;align-items:center;justify-content:space-between;gap:4px}.ci-detail svg{color:#52c26d}
+.right-panel .summary b{font-weight:600}.task-details dd{font-size:12px}.task-details dd:nth-of-type(2){font-size:11px;line-height:16px}
+@media(min-width:1401px){
+ .sidebar{background:linear-gradient(165deg,#101923,#0c1620)}
+ .sidebar nav{margin-left:1px;margin-right:0}.sidebar nav button{padding-left:13px;gap:12px}
+ .section-heading{padding-left:4px}.project-list{margin-left:1px}.project-head{gap:8px}
+ .project{padding-left:13px;padding-top:9px;padding-bottom:8px}
+ .project:first-child .project-progress{margin-top:22px}.project:nth-child(2) .project-progress{margin-top:20px}.project:nth-child(3) .project-progress{margin-top:20px}.project:nth-child(n+4) .project-progress{margin-top:17px}
+ .project-progress{margin-left:29px}.project-progress .track{height:9px}
+ .project.selected{background:linear-gradient(115deg,#19366d,#16356a)}
+ .workspace-toolbar strong{margin-right:25px}.tab:first-child button:first-child{min-width:114px}.tab:nth-child(2) button:first-child{min-width:103px}.tab:nth-child(3) button:first-child{min-width:96px}
+ .tabs{gap:6px}.tab.active{background:linear-gradient(145deg,#1851ab,#2461c9)}.toolbar-buttons button{padding-left:9px;padding-right:9px}
+ .remote-status{background:#111318}.remote-status>span{font-size:11.5px}.remote-status>div{gap:6px}.remote-status .live{min-width:80px}
+ .right-panel{background:linear-gradient(145deg,#0e1720,#101923)}.right-panel h3{color:#e1e7ef}.right-panel section{background:linear-gradient(130deg,#16222e,#151e2b)}
+ .right-panel section:nth-of-type(1){height:124px}.right-panel section:nth-of-type(1) dl{row-gap:2px;line-height:17px}
+ .right-panel section:nth-of-type(2) dl{margin-top:5px;row-gap:2px}.ci-state{min-height:42px}
+ .wide-progress .track{height:11px}.right-panel .summary{margin-top:3px}
+ .right-panel .next-actions{padding-left:1px;line-height:25px}.right-panel .task-details{row-gap:8px}
+ .shell footer{grid-template-columns:21.5% 12.3% 8.2% 14% minmax(0,1fr) 165px 110px 126px;gap:8px;background:linear-gradient(90deg,#131d28,#101a25)}
+ .shell footer>span:nth-of-type(6){justify-content:flex-start}.shell footer>span:nth-of-type(7){justify-content:flex-start}
+}
+@media(max-width:900px){.right-panel dd a{max-width:100%;overflow-wrap:anywhere}}
+
+/* Reference revision 5: actual CI a0/c2/447 geometry; retain real UI components. */
+.project-head>svg{color:#edf2f8}.project-head>span{display:inline-flex;align-items:center;gap:4px}
+.project-check{color:#53c86b}.right-panel h3>svg{flex-shrink:0}.right-panel h3>svg[fill="currentColor"]{color:#e8eef5}
+.footer-duration{min-width:0}.shell footer .footer-duration .footer-value{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shell footer>span:not(.footer-spacer){min-width:0}
+@media(min-width:1401px){
+ .brand strong{font-size:19px;font-weight:700}.global-header{background:#101722}.global-header .tagline{font-size:13px;font-weight:500}
+ .project-head b{font-size:14px;line-height:20px}.project-head>span{font-size:11px}.project-progress{font-size:12px}
+ .project-progress .track>div{background:linear-gradient(90deg,#76aef5,#86befa)}
+ .project-progress .track>div.complete{background:#8ad2d9}
+ .sidebar nav button{font-weight:500}.sidebar nav button.active{font-weight:600}.sidebar nav button svg{stroke-width:2.2}
+ .workspace-toolbar strong{font-weight:700}.tab button{font-weight:500}.tab.active button:first-child{font-weight:600}
+ .toolbar-buttons button{font-weight:500}.remote-status{font-size:12px}
+ .right-panel section{background:#151e2b}.right-panel h3{font-size:13px;font-weight:700}
+ .right-panel section:nth-of-type(1)>b{font-weight:600}.right-panel dl{font-size:12px}
+ .right-panel .ci-state b{font-weight:700}.right-panel .summary,.right-panel p{font-size:12px}
+ .right-panel section:nth-of-type(5){height:144px;min-height:144px}
+ .shell footer{background:#121b26;grid-template-columns:21.5% 12.3% 8.2% 14% minmax(0,1fr) 165px 110px 126px}
+ .shell footer>span{font-size:12px;gap:6px}.shell footer>span:nth-of-type(8){font-size:11px;gap:4px}
+ .shell footer>span:nth-of-type(8)>svg{width:13px}
+}
+
+/* Reference revision 6: text baselines and vector icon details; no raster UI overlay. */
+.brand-mark{color:#538ef4;filter:none}
+.notification-button{position:relative}.notice-count{position:absolute;top:-4px;right:-5px;background:#c83d47;color:white;font-size:9px;font-weight:700;border-radius:50%;min-width:14px;height:14px;display:grid;place-items:center;padding:0 2px;line-height:14px}
+.sidebar nav button svg{width:17px;height:17px}.project-head>svg{width:19px;height:19px}
+.ci-state.ci-demo-passed>svg{width:29px;height:29px}
+@media(min-width:1401px){
+ .global-header{padding-left:21px;gap:29px}
+ .brand{gap:9px}.brand strong{font-size:18px;letter-spacing:.1px;font-weight:700}.brand>svg{width:40px;height:32px}
+ .tagline{font-size:13px;font-weight:500;letter-spacing:-.12px}
+ .header-actions{gap:15px}.header-actions .online{padding:5px 10px;font-size:12px}
+ .sidebar nav button{font-size:14px;gap:11px;height:35px}.sidebar nav button.active{height:38px}
+ .sidebar nav button svg{stroke-width:1.8}
+ .project-head{gap:10px}.project-head b{font-size:14px;line-height:20px}.project-head>span{font-size:11px;gap:3px}
+ .project-list{gap:7px}.project:first-child.selected{background:linear-gradient(110deg,#173a74,#1b3e76)}
+ .project:first-child .project-progress{margin-top:23px}.project:nth-child(2) .project-progress{margin-top:22px}
+ .project:nth-child(3) .project-progress{margin-top:21px}.project:nth-child(n+4) .project-progress{margin-top:19px}
+ .project-progress .track{height:9px}.project-progress .track>div{background:linear-gradient(90deg,#79adf6,#8abbfb)}
+ .project-progress .track>div.complete{background:#82cdd2}
+ .workspace-toolbar strong{gap:9px}.tab{height:37px}.tab button{font-size:13px}
+ .tab:nth-child(2) button:first-child{min-width:108px}.tab:nth-child(3) button:first-child{min-width:95px}
+ .tab button:last-child{padding-right:9px}.toolbar-buttons button{height:29px;padding:4px 8px}
+ .remote-status>div{gap:5px}.remote-status .live{padding:5px 7px}.remote-status button{padding:5px 6px}
+ .right-panel .controls button{font-weight:700;gap:4px}
+ .right-panel .controls .resume:disabled{background:#236b38;opacity:.75;color:#d0d8d1}
+ .right-panel section{padding-top:9px;padding-bottom:8px}
+ .right-panel section:nth-of-type(1) dl{grid-template-columns:60px minmax(0,1fr);row-gap:3px}
+ .right-panel section:nth-of-type(2) dl{grid-template-columns:86px minmax(0,1fr);row-gap:2px}
+ .right-panel .ci-state{min-height:42px;padding:3px 0;gap:9px}.ci-state small{font-size:11px}
+ .right-panel .wide-progress .track{height:11px}.right-panel .summary{margin-top:4px}
+ .right-panel .task-details dt{font-size:12px}.right-panel .task-details dd{font-size:12px}
+ .right-panel .next-actions li{font-size:12px;line-height:25px}
+ .shell footer{background:#101a25}.shell footer>span{font-size:12px}
+ .shell footer>span:nth-of-type(6){color:#aebdcc}.shell footer>span:nth-of-type(7) svg{color:#6cbd89}
+}
+
+/* Reference revision 7: reference top strip measured from CI 45928622226.
+   Selection follows state rather than the index of a project. */
+@media(min-width:1401px){
+ .global-header{gap:34px}.brand strong{letter-spacing:.38px}
+ .global-header .brand,.global-header .tagline,.global-header .header-actions{position:relative;top:-1px}
+ .header-actions{gap:16px}.header-actions .online{min-width:97px;justify-content:center}
+ .workspace-toolbar>.tabs,.workspace-toolbar>.toolbar-buttons{position:relative;top:2px}
+ .toolbar-buttons{margin-right:6px}.toolbar-buttons button{padding-inline:9px}
+ .tab.active{background:linear-gradient(180deg,#194ea9 0%,#215ac2 80%,#3875e1 100%);border-color:#4c84dd}
+ .remote-status .live{min-width:80px;justify-content:center}
+}
+
+/* Reference revision 9: undo the regression from revision 8 and contain
+   dynamic task labels without concealing the full accessible text. */
+.right-panel .task-details dd{min-width:0}
+.right-panel .task-details .next-step-value{overflow-wrap:anywhere}
+@media(min-width:1401px){
+ .right-panel section:nth-of-type(4){height:auto;min-height:147px;padding-bottom:10px}
+ .right-panel .task-details{grid-template-columns:88px minmax(0,1fr);row-gap:7px;line-height:18px;margin-top:10px}
+ .right-panel .task-details dd{font-size:12px;line-height:18px}
+ .right-panel .task-details .next-step-value{font-size:12px}
+ .right-panel .task-details dt{font-size:12px}
+ .right-panel .task-details .state-chip{display:inline-block;max-width:100%;padding:2px 7px;line-height:16px}
+ .workspace-toolbar strong{gap:8px}
+ .toolbar-buttons button{height:29px}
+ .remote-status>span{font-weight:500}
+ .remote-status .live{gap:4px}
+}
+
+/* Reference revision 10: measured 1536px toolbar / task-card positions.
+   Avoid changing dynamic progress values and mock-status labels. */
+@media(min-width:1401px){
+ .workspace-toolbar strong{gap:12px;margin-right:21px}
+ .remote-status>div{gap:6px}
+ .remote-status button{padding-inline:9px}
+ .right-panel .task-details{row-gap:5px}
+ .right-panel section:nth-of-type(4){min-height:147px}
+}
+
+/* Reference revision 11: adopt only measured improvements from CI 45931831405.
+   toolbar-type-1 and footer-type-2 both retained the boundary and had no detected overflow.
+   The combined result must still pass the unchanged authoritative visual test. */
+@media(min-width:1401px){
+ .workspace-toolbar strong{font-size:14px;font-weight:700}
+ .tab button{font-size:13.5px}
+ .toolbar-buttons button{font-size:12px}
+ .remote-status>span{font-size:12px}
+ .shell footer>span{font-size:12.5px;font-weight:500}
+ .shell footer>span:nth-of-type(8){font-size:11.5px}
+}

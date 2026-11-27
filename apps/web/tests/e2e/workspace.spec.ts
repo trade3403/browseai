@@ -1,0 +1,140 @@
+import {test,expect} from '@playwright/test'
+test('project switch, tabs and terminal controls',async({page})=>{
+  await page.goto('/')
+  await expect(page.locator('.project')).toHaveCount(6)
+  await page.locator('.project').filter({hasText:'GlobalChat'}).click()
+  await expect(page.locator('.state-chip')).toContainText('WAIT_CI')
+  await page.getByRole('button',{name:'暂停任务'}).click()
+  await expect(page.locator('.state-chip')).toContainText('PAUSED')
+  await page.getByRole('button',{name:'恢复运行'}).click()
+  await expect(page.locator('.state-chip')).toContainText('WAIT_CI')
+  await page.getByRole('button',{name:'人工接管'}).click()
+  await expect(page.getByRole('button',{name:'退出接管'})).toBeVisible()
+  await page.getByRole('button',{name:'结束任务'}).click()
+  await expect(page.locator('.state-chip')).toContainText('STOPPED')
+  await expect(page.getByRole('button',{name:'恢复运行'})).toBeDisabled()
+  await page.getByRole('button',{name:'关闭 GlobalChat'}).click()
+  await expect(page.locator('.tab')).toHaveCount(2)
+  await page.getByRole('button',{name:'新增标签'}).click()
+  await expect(page.locator('.tab')).toHaveCount(3)
+})
+test('split, full screen and mobile layout',async({page})=>{
+  await page.goto('/')
+  await expect(page.locator('.project')).toHaveCount(6)
+  await page.getByRole('button',{name:'分屏'}).click()
+  await expect(page.locator('.browser')).toHaveCount(2)
+  await page.getByRole('button',{name:'全屏',exact:true}).click()
+  await expect(page.locator('.shell')).toHaveClass(/expanded/)
+  await page.getByRole('button',{name:'退出全屏'}).click()
+  for(const size of [{width:1920,height:1080},{width:1366,height:768},{width:390,height:844}]){
+    await page.setViewportSize(size)
+    await expect(page.locator('.workspace')).toBeVisible()
+    await expect(page.getByRole('button',{name:'新建窗口'})).toBeVisible()
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(size.width+1)
+  }
+})
+test('API outage is shown rather than fake success',async({page})=>{
+  await page.route('**/api/projects',route=>route.fulfill({status:503,body:'unavailable'}))
+  await page.goto('/')
+  await expect(page.getByText('API 503')).toBeVisible()
+  await expect(page.locator('.project')).toHaveCount(0)
+})
+
+test('mock CI is explicitly marked and does not masquerade as GitHub evidence',async({page})=>{
+  await page.goto('/')
+  await expect(page.locator('.online')).toContainText('模拟')
+  await expect(page.locator('.ci-state')).toContainText('模拟 CI 通过')
+  await expect(page.locator('.ci-state')).toContainText('非真实 CI')
+  await page.locator('.project').filter({hasText:'GlobalChat'}).click()
+  await expect(page.locator('.ci-state')).toContainText('模拟等待 CI')
+  await expect(page.locator('.ci-demo-passed')).toHaveCount(0)
+})
+
+test('reference sample fields stay scoped to the mock project and details are labeled',async({page})=>{
+  await page.goto('/')
+  await expect(page.locator('.project')).toHaveCount(6)
+  await expect(page.getByRole('link',{name:'trade3403/localtunnel'})).toHaveAttribute('href','https://github.com/trade3403/localtunnel')
+  await expect(page.getByText('V0.8（第 8 / 10 阶段，示例）',{exact:false})).toBeVisible()
+  await page.getByRole('button',{name:'查看示例'}).click()
+  await expect(page.locator('.notice')).toContainText('不代表 GitHub 实际结果')
+  await page.locator('.project').filter({hasText:'GlobalChat'}).click()
+  await expect(page.getByText('未连接真实任务计划',{exact:false})).toBeVisible()
+  await expect(page.locator('.ci-demo-passed')).toHaveCount(0)
+})
+
+test('desktop footer labels do not overlap adjacent status fields',async({page})=>{
+  await page.setViewportSize({width:1536,height:864})
+  await page.goto('/')
+  await expect(page.locator('.project')).toHaveCount(6)
+  const fields=await page.locator('.shell footer > span:not(.footer-spacer)').evaluateAll(nodes=>nodes.map(node=>{
+    const rect=node.getBoundingClientRect()
+    const range=document.createRange()
+    range.selectNodeContents(node)
+    const content=range.getBoundingClientRect()
+    return {left:rect.left,right:rect.right,contentRight:content.right}
+  }))
+  for(let i=0;i<fields.length-1;i++){
+    expect(fields[i].right).toBeLessThanOrEqual(fields[i+1].left+1)
+    expect(fields[i].contentRight).toBeLessThanOrEqual(fields[i+1].left+1)
+  }
+  await expect(page.locator('.footer-duration')).toContainText('示例')
+})
+
+test('local notification badge reflects actual local log count',async({page})=>{
+  await page.goto('/')
+  await expect(page.locator('.project')).toHaveCount(6)
+  await expect(page.locator('.notice-count')).toHaveText('1')
+  await page.getByRole('button',{name:'暂停任务'}).click()
+  await expect(page.locator('.notice-count')).toHaveText('2')
+  await page.getByRole('button',{name:'通知，2条本地日志'}).click()
+  await expect(page.locator('.notice')).toBeVisible()
+  await expect(page.locator('.notice p')).toHaveCount(2)
+})
+
+test('desktop selection highlight follows the selected project, not the first card',async({page})=>{
+  await page.setViewportSize({width:1536,height:864})
+  await page.goto('/')
+  const cards=page.locator('.project')
+  await expect(cards).toHaveCount(6)
+  const initial=await cards.first().evaluate(el=>getComputedStyle(el).backgroundImage)
+  await cards.filter({hasText:'GlobalChat'}).click()
+  await expect(cards.first()).toHaveAttribute('aria-pressed','false')
+  await expect(cards.filter({hasText:'GlobalChat'})).toHaveAttribute('aria-pressed','true')
+  await expect(page.locator('.project.selected')).toHaveCount(1)
+  const inactive=await cards.first().evaluate(el=>getComputedStyle(el).backgroundImage)
+  expect(inactive).not.toBe(initial)
+  await expect(page.locator('.tab.active button').first()).toHaveAttribute('aria-pressed','true')
+})
+
+test('development progress remains data-driven and sample tasks are explicitly scoped',async({page})=>{
+  await page.setViewportSize({width:1536,height:864})
+  await page.goto('/')
+  await expect(page.locator('.project')).toHaveCount(6)
+  const progress=page.getByRole('progressbar',{name:'模拟开发进度'})
+  await expect(progress).toHaveAttribute('aria-valuenow','75')
+  const ratio=await progress.evaluate(el=>el.firstElementChild!.getBoundingClientRect().width/el.getBoundingClientRect().width)
+  expect(ratio).toBeCloseTo(.75,2)
+  await expect(page.locator('.next-actions')).toHaveAttribute('aria-label','本地示例任务（不会自动执行）')
+  await page.locator('.project').filter({hasText:'GlobalChat'}).click()
+  await expect(page.locator('.next-actions')).toHaveAttribute('aria-label','待确认任务')
+  await expect(page.locator('.next-actions')).not.toContainText('progress.json')
+})
+
+test('desktop task details fit the task card without covering the next card',async({page})=>{
+  await page.setViewportSize({width:1536,height:864})
+  await page.goto('/')
+  await expect(page.locator('.project')).toHaveCount(6)
+  const details=page.locator('.task-details')
+  await expect(details.locator('.next-step-value')).toContainText('示例')
+  const geometry=await details.evaluate(el=>{
+    const card=el.closest('section')!
+    const following=card.nextElementSibling!
+    const bounds=card.getBoundingClientRect()
+    const last=el.lastElementChild!.getBoundingClientRect()
+    return {bottom:bounds.bottom,lastBottom:last.bottom,nextTop:following.getBoundingClientRect().top}
+  })
+  expect(geometry.lastBottom).toBeLessThanOrEqual(geometry.bottom)
+  expect(geometry.bottom).toBeLessThanOrEqual(geometry.nextTop)
+  await page.locator('.project').filter({hasText:'GlobalChat'}).click()
+  await expect(details.locator('.next-step-value')).toHaveText('等待用户确认')
+})
