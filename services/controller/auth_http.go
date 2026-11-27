@@ -150,12 +150,18 @@ func (a *authHTTP) login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "authentication busy", http.StatusTooManyRequests)
 		return
 	}
-	p, err := a.verifier.verify(r.Context(), body.Login, body.Password)
-	if err != nil {
-		authError(w, err)
-		return
+	var token string
+	if issuer, ok := a.verifier.(interface {
+		verifyAndIssue(context.Context, string, string) (string, error)
+	}); ok {
+		token, err = issuer.verifyAndIssue(r.Context(), body.Login, body.Password)
+	} else {
+		var p principal
+		p, err = a.verifier.verify(r.Context(), body.Login, body.Password)
+		if err == nil {
+			token, err = a.sessions.issueVerified(r.Context(), p)
+		}
 	}
-	token, err := a.sessions.issueVerified(r.Context(), p)
 	if err != nil {
 		authError(w, err)
 		return

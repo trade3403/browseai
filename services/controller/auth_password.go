@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/subtle"
+	"crypto/sha256"
 	"database/sql"
 	"encoding/base64"
 	"errors"
@@ -57,15 +58,43 @@ type sqlCredentialVerifier struct {
 	db *sql.DB
 }
 
-func (v sqlCredentialVerifier) verify(ctx context.Context, login, password string) (principal, error) {
+func (v sqlCredentialVerifier) verifiedCandidate(ctx context.Context, login, password string) (principal, string, error) {
 	var p principal
 	var stored string
 	err := v.db.QueryRowContext(ctx, "SELECT user_id::text,tenant_id::text,role,password_hash FROM browseai.login_candidate($1)", login).Scan(&p.userID, &p.tenantID, &p.role, &stored)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return principal{}, err
+		return principal{}, "", err
 	}
 	if !checkPassword(password, stored) || err != nil || !validSessionPrincipal(p) {
-		return principal{}, errUnauthenticated
+		return principal{}, "", errUnauthenticated
 	}
-	return p, nil
+	return p, stored, nil
+}
+
+func (v sqlCredentialVerifier) verify(ctx context.Context, login, password string) (principal, error) {
+	p, _, err := v.verifiedCandidate(ctx, login, password)
+	return p, err
+}
+
+// The real HTTP login binds token issuance to the exact verified password
+// hash. A concurrent reset/disable cannot turn a stale proof into a session.
+func (v sqlCredentialVerifier) verifyAndIssue(ctx context.Context, login, password string) (string, error) {
+	p, stored, err := v.verifiedCandidate(ctx, login, password)
+	if err != nil {
+		return "", err
+	}
+	var raw [32]byte
+	if _, err := rand.Read(raw[:]); err != nil {
+		return "", err
+	}
+	digest := sha256.Sum256(raw[:])
+	var issued bool
+	err = v.db.QueryRowContext(ctx, "SELECT browseai.issue_verified_session($1::uuid,$2::uuid,$3::bytea,$4)", p.userID, p.tenantID, digest[:], stored).Scan(&issued)
+	if err != nil {
+		return "", err
+	}
+	if !issued {
+		return "", errUnauthenticated
+	}
+	return base64.RawURLEncoding.EncodeToString(raw[:]), nil
 }

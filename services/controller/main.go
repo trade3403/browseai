@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -69,6 +70,22 @@ func newServer(addr string) *http.Server {
 }
 
 func main() {
+	if len(os.Args) > 1 {
+		if os.Args[1] != "account" || !adminDSNValid(os.Getenv("BROWSEAI_ADMIN_DSN")) {
+			log.Fatal("account command requires explicit browseai_admin TLS DSN")
+		}
+		db, err := sql.Open("postgres", os.Getenv("BROWSEAI_ADMIN_DSN"))
+		if err != nil {
+			log.Fatal("invalid operator database configuration")
+		}
+		defer db.Close()
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if err := accountCommand(ctx, db, os.Args[2:], os.Stdin, os.Stdout); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
 	server := newServer(os.Getenv("LISTEN_ADDR"))
 	mode := os.Getenv("BROWSEAI_MODE")
 	switch mode {

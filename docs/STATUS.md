@@ -113,3 +113,6 @@ SHA fa04258af5d42a975f3f61c15cc6db49b1e54ce4 push CI https://github.com/trade340
 
 ## V0.2 第十批：变更幂等与事务审计
 证据 SHA 300bbee71407899c170774cddcdfa9c878b0a36e，PR CI https://github.com/trade3403/browseai/actions/runs/45954023205 与 push CI https://github.com/trade3403/browseai/actions/runs/45954016760 均 success，事务级租约批次已通过。新增 0004 migration：租户+用户范围幂等键、只追加 audit_logs 与 events、RLS 隔离；项目/任务全部现有变更接口要求 Idempotency-Key，作用域绑定认证用户，动作/对象/revision/规范化参数哈希，同键同内容重放已提交结果，同键异内容 409，数据库行、幂等结果、审计和事件同事务提交，失败回滚。内部任务状态转换亦记录审计与事件，不暴露 evidence。真实数据库并发重复创建、跨租户相同键、重放更新删除、回滚、审计不可删除测试；迁移回滚/重建加入既有必需 job。事件仅为持久记录基础，消费者、派发 outbox 重试/唯一 dispatch key、清理保留策略及账号生命周期审计尚未完成。项目/任务 API 的安全恢复/审批、完整阶段定义及账户开通仍待收尾；不进入 V0.3。当前提交未本地实际运行 PostgreSQL CI，待新 CI 验证。
+
+## V0.2 第十一批：账号生命周期及永久会话撤销
+证据 SHA b2c729ca0cfcfc54c33709bd1860dc04745e2bf2；PR CI https://github.com/trade3403/browseai/actions/runs/45954517830 与 push CI https://github.com/trade3403/browseai/actions/runs/45954510019 均 success，10 项检查通过。新增 0005 migration、独立 browseai_admin 运维角色及 account CLI（创建一用户一工作区、禁用、启用、密码重置），密码通过 stdin 而非命令行参数，生产 DSN 要求 verify-full，账号审计不记录密码。用户密码/启停及租户启停触发永久 session 撤销，真实 HTTP 登录的 Argon2id 验证结果在签发时再次锁定并校验密码哈希，拒绝密码重置期间的旧证明；签发锁定身份记录。测试真实 PostgreSQL 账号生命周期、重复创建回滚、角色隔离、旧密码与旧会话失效、审计。默认 Compose 仍 mock；管理员 UI/配额属 V0.7，浏览器控制租约即时撤销、GitHub 授权撤销与外部写入协调待相关阶段。此次未本地运行完整数据库测试，待 CI；后续补齐安全恢复/审批边界及阶段定义后综合验收。未进入 V0.3。
