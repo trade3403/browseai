@@ -39,7 +39,14 @@ jobs:
         with:
           go-version-file: services/controller/go.mod
           cache: false
-      - run: test -z "$(gofmt -l .)"
+      - name: Check Go formatting
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            printf 'Unformatted Go files:\n%s\n' "$unformatted"
+            gofmt -d .
+            exit 1
+          fi
       - run: go vet ./...
       - run: go test -race -coverprofile=coverage.out ./...
       - name: Enforce backend coverage floor

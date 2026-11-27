@@ -78,3 +78,6 @@ PR #1，上一轮证据 SHA 8b55da9691810d3c6263689a871ecb4fc799510e，运行 ht
 
 ## V0.2 第二批：任务状态机核心
 证据 SHA bd0379c60665c2fa67bbd5c913fac0c3f15ea852，PR CI https://github.com/trade3403/browseai/actions/runs/45939000172 与 push CI https://github.com/trade3403/browseai/actions/runs/45938986923 均 success，8 项必需检查通过（含 schema）。本批加入 Go 纯领域状态机 task_state.go 与单元测试：revision 乐观并发、人工发送确认、匹配 SHA 的 CI 证据、最终用户确认、修复次数上限、暂停/离线对账恢复、交接验证和不可恢复终态。内部 evidence 仅为已验证事实的输入契约，不能直接信任 HTTP 请求；没有自动发送网页操作。当前尚无数据库原子写入、真实证据适配器、认证或 API 接入，不视为生产完成。保留 V0.2 数据库迁移/认证/任务 CRUD/全局租约及持久化测试待办。新 CI 待验证。
+
+## V0.2 第二批格式修复（2026-11-27）
+证据 SHA 6efc061fdc57cf2c60fdf13c325c552e1bdf9e2e，PR CI https://github.com/trade3403/browseai/actions/runs/45940439291、push CI https://github.com/trade3403/browseai/actions/runs/45940434727 均失败。PR 中 schema/compose/functional/web/visual-desktop/windows-foundation 六项通过；backend 在 gofmt 格式检查失败（job 140313264639），gate 随之失败；Linux 后续 vet/race/coverage 尚未执行。读取源码发现 taskAction 常量组整体多一空格对齐，本次仅修正对齐，不改变状态机逻辑，并使 CI 格式门禁失败时打印文件列表和 gofmt diff，保留强制失败。容器无法解析 GitHub raw 域名，未运行完整本地仓库测试，修复待新 CI 验证。尚不进入数据库开发。
