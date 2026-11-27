@@ -15,10 +15,11 @@ import (
 
 func TestPostgresGitHubProvisioning(t *testing.T) {
 	ownerDSN, appDSN := os.Getenv("BROWSEAI_TEST_OWNER_DSN"), os.Getenv("BROWSEAI_TEST_APP_DSN")
+	operatorDSN := os.Getenv("BROWSEAI_TEST_GITHUB_OPERATOR_DSN")
 	if ownerDSN == "" && appDSN == "" {
 		t.Skip("isolated PostgreSQL integration only")
 	}
-	if ownerDSN == "" || appDSN == "" {
+	if ownerDSN == "" || appDSN == "" || operatorDSN == "" {
 		t.Fatal("incomplete test configuration")
 	}
 	open := func(dsn string) *sql.DB {
@@ -67,7 +68,8 @@ func TestPostgresGitHubProvisioning(t *testing.T) {
 		binding: githubBinding{"00000000-0000-4000-8000-000000000001", 8123, 8456, "owner/provision"},
 		appID:   12, accountID: 34,
 	}
-	s := githubProvisioner{owner, a}
+	operator := open(operatorDSN)
+	s := githubProvisioner{operator, a}
 	reject := func(s githubProvisioner, approval githubInstallationApproval) {
 		t.Helper()
 		if err := s.provision(ctx, approval, now); err == nil {
@@ -93,6 +95,16 @@ func TestPostgresGitHubProvisioning(t *testing.T) {
 		}
 	}
 	count(8123, 1)
+	var audits int
+	if err := owner.QueryRow("SELECT count(*) FROM browseai.github_binding_audit WHERE installation_id=8123 AND operator_role='browseai_github_operator' AND app_id=12 AND account_id=34").Scan(&audits); err != nil || audits != 1 {
+		t.Fatal("missing or duplicate audit", audits, err)
+	}
+	if _, err := operator.Exec("UPDATE browseai.github_installations SET enabled=false WHERE installation_id=8123"); err == nil {
+		t.Fatal("operator granted direct update")
+	}
+	if _, err := runtimeDB.Exec("SELECT * FROM browseai.github_binding_audit"); err == nil {
+		t.Fatal("runtime can read private audit")
+	}
 	other := approval
 	other.binding.tenantID = "00000000-0000-4000-8000-000000000002"
 	reject(s, other)
