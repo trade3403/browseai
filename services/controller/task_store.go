@@ -160,6 +160,12 @@ func (s taskStore) transition(ctx context.Context, p principal, id string, revis
 		if err != nil {
 			return taskRecord{}, err
 		}
+		switch action {
+		case actionReady, actionPrepare, actionConfirmSent, actionRepair:
+			if err := requireLiveLease(ctx, tx, p, id, evidence.LeaseFence); err != nil {
+				return taskRecord{}, err
+			}
+		}
 		next, err := advanceTask(r.snapshot(), revision, action, evidence)
 		if errors.Is(err, errTaskRevision) || errors.Is(err, errTaskTransition) {
 			return taskRecord{}, errResourceConflict

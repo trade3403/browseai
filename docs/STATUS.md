@@ -107,3 +107,6 @@ SHA fa04258af5d42a975f3f61c15cc6db49b1e54ce4 push CI https://github.com/trade340
 
 ## V0.2 第八批：任务 CRUD 与状态机事务持久化
 证据 SHA 2b2b53d5c2ddacfb82cbbbe75c7ada8b227990a6，PR CI https://github.com/trade3403/browseai/actions/runs/45950859034 与 push CI https://github.com/trade3403/browseai/actions/runs/45950852815 均 success，10 项检查通过。新增任务列表/详情/创建/更名/安全草稿删除 API，创建事务写入 stages；事务内 RLS 和显式租户过滤，行锁+revision 状态转换 CAS；公开 pause/stop，其他 evidence 只允许可信内部 service 提供，禁止 HTTP 伪造 CI 结果或自动恢复派发。仅未修改的 QUEUED 草稿可删除，已变更或停止任务保留历史。真实双租户 API 测试及两个同 revision 并发 stop 测试。未实现 HTTP resume/approve（需可信对账/确认适配器）、创建幂等键、stage 指令/依赖持久化、审计/outbox、租约续期/释放及 fencing 执行，待后续批次；默认 Compose 仍 mock。整体覆盖率及 CI 门禁不变，本次未在本地运行完整依赖/数据库测试，新 CI 待验收。
+
+## V0.2 第九批：事务级全局分支租约
+证据 SHA 3c9d98e7734a02ac2c7f86c65199043e263729a1；PR CI https://github.com/trade3403/browseai/actions/runs/45952447631 与 push CI https://github.com/trade3403/browseai/actions/runs/45952442058 均 success，10 项检查通过。新增内部 leaseStore：任务行锁及 revision 检查、repo stable ID+branch 全局抢占、DB 时钟 60 秒有效期、续期、过期禁止续期/派发、fencing token、仅非派发状态且可信对账后释放，过期不自动抢占；ready/prepare/confirm_sent/repair 持久化转换同事务检查有效 fence。真实 PostgreSQL 双租户竞争、不同分支并行、过期/旧 token 拒绝及释放后递增测试。verifiedBranch 只是未来可信 GitHub 适配器输入契约，V0.3 才完成真实授权，当前没有公开租约 API 或网页派发；外部 GitHub 写入 fencing、完整调度/恢复、幂等键/outbox、审计仍待后续实现。未本地执行完整数据库测试，待新 CI。V0.2 未宣称完成。

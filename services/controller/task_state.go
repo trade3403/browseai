@@ -71,6 +71,7 @@ type taskSnapshot struct {
 // constructing it. No transition itself sends a browser instruction.
 type taskEvidence struct {
 	ReadyToRun      bool
+	LeaseFence      int64
 	ManualSent      bool
 	VerifiedCommit  bool
 	CodeSHA         string
