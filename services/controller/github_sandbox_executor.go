@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"time"
 )
@@ -137,16 +138,32 @@ func githubDockerSandboxRunner(binary, socket string) (func(context.Context, str
 	if err != nil || info.Mode()&os.ModeSocket == 0 {
 		return nil, errGitHubAuthorization
 	}
-	command := func(ctx context.Context, args ...string) error {
+	command := func(ctx context.Context, stdout io.Writer, args ...string) error {
 		cmd := exec.CommandContext(ctx, binary, append([]string{"--host=unix://" + socket}, args...)...)
 		cmd.Env = []string{"PATH=/usr/bin:/bin", "HOME=/nonexistent", "DOCKER_CONFIG=/nonexistent"}
 		cmd.Dir = "/"
-		cmd.Stdout, cmd.Stderr = io.Discard, io.Discard
+		cmd.Stdout, cmd.Stderr = stdout, io.Discard
 		cmd.WaitDelay = 5 * time.Second
 		return cmd.Run()
 	}
 	return func(ctx context.Context, name string, args []string) error {
-		err := command(ctx, args...)
+		// Do not run arbitrary argument lists, even from an internal caller.
+		if len(args) == 0 || !strings.HasPrefix(name, "browseai-check-") {
+			return errGitHubAuthorization
+		}
+		image := args[len(args)-1]
+		if !githubSandboxImageValid(image, strings.TrimPrefix(image, "sha256:")) ||
+			!slices.Equal(args, githubSandboxArgs(image, name)) {
+			return errGitHubAuthorization
+		}
+		probe, stop := context.WithTimeout(ctx, 10*time.Second)
+		defer stop()
+		var info, inspect githubSandboxInspectBuffer
+		if command(probe, &info, "info", "--format", "{{json .}}") != nil || !githubSandboxRuntimeValid(info.Bytes()) ||
+			command(probe, &inspect, "image", "inspect", image) != nil || !githubSandboxImageConfigValid(inspect.Bytes(), image) {
+			return errGitHubAuthorization
+		}
+		err := command(ctx, io.Discard, args...)
 		if err == nil && ctx.Err() == nil {
 			return nil
 		}
@@ -154,7 +171,7 @@ func githubDockerSandboxRunner(binary, socket string) (func(context.Context, str
 		// bounded cleanup independently; never treat an uncertain result as pass.
 		cleanup, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()
-		cleanupErr := command(cleanup, "rm", "-f", name)
+		cleanupErr := command(cleanup, io.Discard, "rm", "-f", name)
 		return errors.Join(errGitHubAuthorization, err, ctx.Err(), cleanupErr)
 	}, nil
 }
