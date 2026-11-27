@@ -200,28 +200,19 @@
  .remote-status .live{min-width:80px;justify-content:center}
 }
 
-/* Reference revision 8: report hotspots at right_panel (1296,678)/(1296,726)
-   and task-details (1344,534). Match typography without changing data or scoring. */
+/* Reference revision 9: undo the regression from revision 8 and contain
+   dynamic task labels without concealing the full accessible text. */
+.right-panel .task-details dd{min-width:0}
+.right-panel .task-details .next-step-value{overflow-wrap:anywhere}
 @media(min-width:1401px){
- .right-panel section{border-color:#2a3643}
- .right-panel section:nth-of-type(1) dl{font-size:12.5px}
- .right-panel section:nth-of-type(2) dl{font-size:12.5px}
- .right-panel .ci-state b{font-size:14px}
- .right-panel .ci-state small{font-size:11px}
- .right-panel section:nth-of-type(3) p,.right-panel section:nth-of-type(3) .summary{font-size:13px}
- .right-panel section:nth-of-type(3) .wide-progress{margin-top:6px}
- .right-panel section:nth-of-type(4) .task-details{grid-template-columns:95px minmax(0,1fr);row-gap:9px;margin-top:11px}
- .right-panel .task-details dt{font-size:13px}
- .right-panel .task-details dd{font-size:12.5px;line-height:18px}
- .right-panel .task-details dd:nth-of-type(2){font-size:12px;line-height:17px}
- .right-panel .state-chip{font-size:11.5px;padding:3px 7px}
- .right-panel section:nth-of-type(5) .next-actions{margin-top:3px}
- .right-panel .next-actions li{font-size:13px;line-height:25px;gap:9px}
- .right-panel .next-actions li>svg{flex:0 0 13px}
- .right-panel .next-actions li:first-child{font-weight:500}
- .workspace-toolbar strong{font-size:14.5px;letter-spacing:-.15px;margin-right:21px}
- .remote-status>span{font-size:12px}
- .remote-status button{padding-inline:7px}
- .toolbar-buttons button{font-size:12px}
- .brand strong{letter-spacing:.3px}
+ .right-panel section:nth-of-type(4){height:auto;min-height:147px;padding-bottom:10px}
+ .right-panel .task-details{grid-template-columns:88px minmax(0,1fr);row-gap:7px;line-height:18px;margin-top:10px}
+ .right-panel .task-details dd{font-size:12px;line-height:18px}
+ .right-panel .task-details .next-step-value{font-size:12px}
+ .right-panel .task-details dt{font-size:12px}
+ .right-panel .task-details .state-chip{display:inline-block;max-width:100%;padding:2px 7px;line-height:16px}
+ .workspace-toolbar strong{gap:8px}
+ .toolbar-buttons button{height:29px}
+ .remote-status>span{font-weight:500}
+ .remote-status .live{gap:4px}
 }

@@ -119,3 +119,22 @@ test('development progress remains data-driven and sample tasks are explicitly s
   await expect(page.locator('.next-actions')).toHaveAttribute('aria-label','待确认任务')
   await expect(page.locator('.next-actions')).not.toContainText('progress.json')
 })
+
+test('desktop task details fit the task card without covering the next card',async({page})=>{
+  await page.setViewportSize({width:1536,height:864})
+  await page.goto('/')
+  await expect(page.locator('.project')).toHaveCount(6)
+  const details=page.locator('.task-details')
+  await expect(details.locator('.next-step-value')).toContainText('示例')
+  const geometry=await details.evaluate(el=>{
+    const card=el.closest('section')!
+    const following=card.nextElementSibling!
+    const bounds=card.getBoundingClientRect()
+    const last=el.lastElementChild!.getBoundingClientRect()
+    return {bottom:bounds.bottom,lastBottom:last.bottom,nextTop:following.getBoundingClientRect().top}
+  })
+  expect(geometry.lastBottom).toBeLessThanOrEqual(geometry.bottom)
+  expect(geometry.bottom).toBeLessThanOrEqual(geometry.nextTop)
+  await page.locator('.project').filter({hasText:'GlobalChat'}).click()
+  await expect(details.locator('.next-step-value')).toHaveText('等待用户确认')
+})
