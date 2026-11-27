@@ -226,3 +226,15 @@
  .right-panel .task-details{row-gap:5px}
  .right-panel section:nth-of-type(4){min-height:147px}
 }
+
+/* Reference revision 11: adopt only measured improvements from CI 45931831405.
+   toolbar-type-1 and footer-type-2 both retained the boundary and had no detected overflow.
+   The combined result must still pass the unchanged authoritative visual test. */
+@media(min-width:1401px){
+ .workspace-toolbar strong{font-size:14px;font-weight:700}
+ .tab button{font-size:13.5px}
+ .toolbar-buttons button{font-size:12px}
+ .remote-status>span{font-size:12px}
+ .shell footer>span{font-size:12.5px;font-weight:500}
+ .shell footer>span:nth-of-type(8){font-size:11.5px}
+}
