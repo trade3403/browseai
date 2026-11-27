@@ -70,3 +70,6 @@ Run `controller github-monitor` with BROWSEAI_MONITOR_DSN (dedicated browseai_mo
 
 ## Batch 5d-3c: multi-target concurrency acceptance
 Adds PostgreSQL integration with twelve independent connection pools racing for three targets across two installations and tenants. Checks one live claim per installation, independent progress during a shared cooldown, expired lease recovery, old token denial, and revoked binding denial. Time-dependent fixture changes are performed only by the isolated test owner. No real GitHub traffic or production load certification. Next authoritative CI evidence gate and task integration.
+
+## Batch 6a: push evidence snapshot
+Adds a separate read-only evidence path binding tenant, installation, repository, branch, exact SHA, workflow ID/name/path, push event, current attempt and complete required jobs. Workflow/run list is re-read after the jobs query; ambiguous or changed run identity fails closed. Evidence expires 30 seconds from read start and is bound to the exact configured policy. This is not yet a consumer or task transition; trusted workflow source provenance, PR merge relationship, live API compatibility and transactional evidence consumption remain pending. Partial reruns remain conservative. Unit tests cover policy/run/workflow mismatches, freshness and incomplete jobs; remote snapshot integration tests follow.
