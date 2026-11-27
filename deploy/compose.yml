@@ -1,0 +1,15 @@
+services:
+  controller:
+    build: ../services/controller
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:8080/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  web:
+    build: ../apps/web
+    ports:
+      - "127.0.0.1:8088:80"
+    depends_on:
+      controller:
+        condition: service_healthy
