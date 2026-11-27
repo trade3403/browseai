@@ -178,3 +178,5 @@ Batch 5d-3a 502a5e856660072e61d56be12074bff395867a95 verified push attempt 2 htt
 Batch 5d-3b c9296f14a1d8800acbbcffc5b55559efe4e4b9ff verified push https://github.com/trade3403/browseai/actions/runs/46010160794 and PR https://github.com/trade3403/browseai/actions/runs/46010173238 both 10/10 success. Batch 5d-3c adds twelve-session multi-target PostgreSQL coordination, cooldown and revocation tests. CI pending. Next V0.3 batch 6 authoritative evidence verification. Live credentials and deployment remain pending.
 
 Batch 5d-3c e1e2bb9af584468afcce50843ca124eef87efd4a verified push https://github.com/trade3403/browseai/actions/runs/46012272250 and PR https://github.com/trade3403/browseai/actions/runs/46012282719 both 10/10 success. Batch 6a adds strict push evidence snapshot and mismatch tests. New CI pending. Next PR evidence and remote observation tests; no task transition or live deployment.
+
+Batch 6a initial push 46014573683 and PR 46014574910 failed backend gofmt (github_evidence_test.go alignment) and dependent gate. Apply exact gofmt correction without changing test semantics or CI rules; full backend tests still pending.

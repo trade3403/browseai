@@ -9,7 +9,7 @@ import (
 func TestGitHubPushEvidence(t *testing.T) {
 	p := githubEvidencePolicy{
 		binding: githubBinding{"00000000-0000-4000-8000-000000000001", 12, 34, "owner/repo"},
-		branch: "feat/demo", sha: strings.Repeat("a", 40), workflowID: 56,
+		branch:  "feat/demo", sha: strings.Repeat("a", 40), workflowID: 56,
 		name: "CI", path: ".github/workflows/ci.yml", required: []string{"gate", "backend"},
 	}
 	w := githubWorkflow{56, "CI", ".github/workflows/ci.yml", "active"}
