@@ -40,7 +40,8 @@ func (b *githubPreviewTestArchive) load(_ context.Context, image string, input i
 	return []byte(`[{"Id":"` + image + `","Os":"linux","Config":{"User":"65532:65532","Env":["PATH=/usr/bin:/bin","HOME=/tmp"],"Entrypoint":["/opt/browseai/trusted-test"],"Cmd":null,"WorkingDir":"/","Volumes":null,"OnBuild":null}}]`), nil
 }
 
-func TestGitHubNodePreviewPreparation(t *testing.T) {
+func githubPreviewFixture(t *testing.T) (githubNodePreviewConfig, ed25519.PrivateKey, ed25519.PrivateKey, []byte) {
+	t.Helper()
 	if runtime.GOOS != "linux" {
 		t.Skip("persistent node requires Linux")
 	}
@@ -60,17 +61,10 @@ func TestGitHubNodePreviewPreparation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fixture := httptest.NewTLSServer(http.NotFoundHandler())
-	cert := fixture.TLS.Certificates[0]
-	roots := x509.NewCertPool()
-	roots.AddCert(fixture.Certificate())
-	pin := sha256.Sum256(fixture.Certificate().RawSubjectPublicKeyInfo)
-	fixture.Close()
 
 	var c githubNodePreviewConfig
 	c.Domain = githubNodePreviewDomain
 	c.Address = "127.0.0.1:8443"
-	c.ClientPin = hex.EncodeToString(pin[:])
 	c.BuilderID = "00000000-0000-4000-8000-000000000006"
 	c.BuilderKey = pub
 	c.BaseDigest = strings.Repeat("d", 64)
@@ -140,6 +134,19 @@ func TestGitHubNodePreviewPreparation(t *testing.T) {
 	sum = sha256.Sum256(archive)
 	c.Archive = githubImageArchiveReceipt{githubImageArchiveDomain, digest, "sha256:" + c.Request.ImageDigest, hex.EncodeToString(sum[:]), int64(len(archive))}
 	c.ArchiveSignature = sign(c.Archive)
+	return c, builder, nodeKey, archive
+}
+
+func TestGitHubNodePreviewPreparation(t *testing.T) {
+	c, builder, nodeKey, archive := githubPreviewFixture(t)
+	fixture := httptest.NewTLSServer(http.NotFoundHandler())
+	cert := fixture.TLS.Certificates[0]
+	roots := x509.NewCertPool()
+	roots.AddCert(fixture.Certificate())
+	pin := sha256.Sum256(fixture.Certificate().RawSubjectPublicKeyInfo)
+	fixture.Close()
+
+	c.ClientPin = hex.EncodeToString(pin[:])
 	backend := &githubPreviewTestArchive{t: t}
 	runner := func(context.Context, string, []string) error {
 		t.Fatal("startup must not execute a workload")
@@ -166,13 +173,17 @@ func TestGitHubNodePreviewPreparation(t *testing.T) {
 	bad = c
 	bad.Request.Statement.Task = "invalid"
 	// Re-sign the altered build so this reaches node identity validation.
-	request, err = githubSandboxRequestBytes(githubIsolatedRequest{bad.Request.Statement, bad.Request.HarnessDigest, bad.Request.ImageDigest})
+	request, err := githubSandboxRequestBytes(githubIsolatedRequest{bad.Request.Statement, bad.Request.HarnessDigest, bad.Request.ImageDigest})
 	if err != nil {
 		t.Fatal(err)
 	}
-	sum = sha256.Sum256(request)
+	sum := sha256.Sum256(request)
 	bad.Build.RequestDigest = hex.EncodeToString(sum[:])
-	bad.BuildSignature = sign(bad.Build)
+	raw, err := json.Marshal(bad.Build)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bad.BuildSignature = ed25519.Sign(builder, raw)
 	reject("invalid node identity", bad, nodeKey, cert, roots, archive, ctx)
 	reject("missing certificate", c, nodeKey, tls.Certificate{}, roots, archive, ctx)
 	reject("missing CA", c, nodeKey, cert, nil, archive, ctx)
