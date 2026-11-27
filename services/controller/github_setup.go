@@ -36,7 +36,7 @@ func readProtectedGitHubFile(path string, limit int) ([]byte, error) {
 	if err != nil || !os.SameFile(before, info) || !info.Mode().IsRegular() || info.Mode().Perm()&0077 != 0 {
 		return nil, errGitHubAuthorization
 	}
-	raw, err := io.ReadAll(io.LimitReader(f, limit+1))
+	raw, err := io.ReadAll(io.LimitReader(f, int64(limit)+1))
 	if err != nil || len(raw) > limit {
 		return nil, errGitHubAuthorization
 	}
