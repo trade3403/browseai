@@ -75,3 +75,6 @@ PR #1，上一轮证据 SHA 8b55da9691810d3c6263689a871ecb4fc799510e，运行 ht
 
 ## V0.1 开发门禁通过，启动 V0.2（2026-11-27）
 已验收 SHA 7c36fdcdd275d2765625731a01bc418823d7bbd6；PR CI https://github.com/trade3403/browseai/actions/runs/45937506693 和 push CI https://github.com/trade3403/browseai/actions/runs/45937499945 均 success，七项 job 全部成功。VISUAL_ACCEPTANCE: developmentPassed=true, releasePassed=false，外壳11.7364%、最大核心区域13.5814%、边界1.453125px。V0.1 开发验收完成，最终1%视觉债务保留。V0.1 PR #1 未合并。V0.2 叠加分支 feat/v0.2-task-control 从已验收 SHA 创建，独立草稿 PR 指向 V0.1 分支，未经授权不合并。首批实现 JSON Schema 2020-12 config/tasks/progress/result、模拟样本、离线跨文档校验、负样本测试及 schema 必需 CI job。tasks/result 字段为首次具体化约定；尚未实现服务端接入、真实 Git 可达性/CI 验证、handoff 验证、多租户认证、PostgreSQL、任务 CRUD、状态机及全局租约，V0.2 尚未完成，新 CI 待验证。
+
+## V0.2 第二批：任务状态机核心
+证据 SHA bd0379c60665c2fa67bbd5c913fac0c3f15ea852，PR CI https://github.com/trade3403/browseai/actions/runs/45939000172 与 push CI https://github.com/trade3403/browseai/actions/runs/45938986923 均 success，8 项必需检查通过（含 schema）。本批加入 Go 纯领域状态机 task_state.go 与单元测试：revision 乐观并发、人工发送确认、匹配 SHA 的 CI 证据、最终用户确认、修复次数上限、暂停/离线对账恢复、交接验证和不可恢复终态。内部 evidence 仅为已验证事实的输入契约，不能直接信任 HTTP 请求；没有自动发送网页操作。当前尚无数据库原子写入、真实证据适配器、认证或 API 接入，不视为生产完成。保留 V0.2 数据库迁移/认证/任务 CRUD/全局租约及持久化测试待办。新 CI 待验证。
