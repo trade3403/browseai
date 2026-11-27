@@ -134,3 +134,6 @@ V0.2 最终文档证据 SHA a1aea68e21deee039b6d1ab06dc77eb8fa2ecbe2，PR CI htt
 
 ## V0.3 第二批：GitHub 只读仓库与分支观察
 证据 SHA af1cd53da3311cd83dce4aac428e1e5c6c476d86，PR CI https://github.com/trade3403/browseai/actions/runs/45963975601 与 push CI https://github.com/trade3403/browseai/actions/runs/45963967551 均 completed/success，PR 10 jobs 成功。新增固定 HTTPS 只读 API 客户端，禁止重定向/外部 URL，限制响应 2 MiB，错误不泄露凭据；每次观察获取单仓库短期 token，远程 repo stable ID/名称/禁用/归档校验、准确 branch 和 40 位 head SHA 校验；内部 project observer 从认证 principal 和项目/绑定查询获取目标，网络读取后再次检查本地授权。GET 429、明确限流 403、5xx 产生 Retry-After/限额 reset 的下一次可重试时间，不在请求内循环重试。mock 测试仓库/分支不符、过期 token、非法 ref、响应超限、HTTP 错误和限流。仅内部观察接口，尚未接入真实私钥加载、安装归属验证/绑定操作、轮询调度、分页和 Webhook；token 签发接口限流尚需完善。未修改状态机或启用自动派发。待当前 CI 验证。
+
+## V0.3 第二批验收与窗口交接
+证据 SHA 7aa1bb593231125d4000b881bc70f7698489dac3，PR CI https://github.com/trade3403/browseai/actions/runs/45965865818 和 push CI https://github.com/trade3403/browseai/actions/runs/45965857888 均 success，PR 10 项成功，实际 database job 覆盖率 80.9%，四项 GitHub 相关测试 PASS；visual developmentPassed=true，releasePassed=false。交接详见 docs/HANDOFF-V0.3.md。本文档提交待自身 CI，暂停新增功能，下一窗口从第三批继续。
