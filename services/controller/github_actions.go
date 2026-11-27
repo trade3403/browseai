@@ -52,13 +52,21 @@ func githubActionsPages[T any](ctx context.Context, a *githubApp, token githubTo
 			Total     *int `json:"total_count"`
 			Workflows []T  `json:"workflows"`
 			Runs      []T  `json:"workflow_runs"`
+			Jobs      []T  `json:"jobs"`
 		}
 		if err := a.readJSON(ctx, token, path, q, now, &response); err != nil {
 			return nil, err
 		}
-		batch := response.Workflows
-		if key == "workflow_runs" {
+		var batch []T
+		switch key {
+		case "workflows":
+			batch = response.Workflows
+		case "workflow_runs":
 			batch = response.Runs
+		case "jobs":
+			batch = response.Jobs
+		default:
+			return nil, errGitHubUnavailable
 		}
 		if response.Total == nil || *response.Total < 0 || *response.Total > githubActionsMaxPages*githubActionsPageSize || batch == nil || len(batch) > githubActionsPageSize {
 			return nil, errGitHubUnavailable

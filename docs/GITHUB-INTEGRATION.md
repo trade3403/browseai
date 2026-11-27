@@ -49,3 +49,6 @@ Adds protected webhook secret file boundary tests, Windows fail-closed test, eig
 
 ## Batch 5a: Actions listings
 Read-only workflow and run listing via a fresh scoped installation token, stable repository identity verification, locally constructed pagination (30 per page, at most 10 pages), exact branch/head SHA filters and response checks. Missing totals, duplicates, inconsistent totals, partial pages and foreign head repositories fail closed. A bounded listing may reject busy repositories rather than truncate. These are observations only; PR merge-SHA relationship validation, per-attempt job evidence, scheduling and persistence remain pending. Synthetic HTTP transport tests only; no real GitHub App credentials.
+
+## Batch 5b: attempt-specific jobs
+Read exact run attempt jobs with bounded pagination, current-run checks before and after the read, and strict candidate classification. Missing or duplicate required jobs, foreign attempts and non-success job outcomes cannot produce a pass. Optional skipped jobs and partial reruns may conservatively be rejected. PR relationship, workflow identity, freshness and live App compatibility remain pending. No task transition.
