@@ -59,3 +59,8 @@ V0.1 必须新增 visual-desktop 检查：验证原图 SHA、固定 1536×864/DP
 
 ## 8. 多用户和 Windows CI
 遵循 docs/MULTI-USER.md。V0.2 起每项 API 均加入跨租户负向测试；V0.4 验证两租户的浏览器/显示/存储隔离与节点故障恢复；V0.7 共享 UI 及管理员权限；V0.9 Windows runner 构建和运行安装/便携版本，并验证两个 mock 用户的完整链路。V1.0 不允许以单用户预览代替正式多租户验收。
+
+## 9. 官方 Windows Runner 强制门禁（用户已确认）
+- V0.1 新增 windows-foundation：GitHub-hosted windows-latest 实际执行 Go 测试、编译 Windows EXE、启动并检查 HTTP 接口、编译共用 Vue UI、Windows Chromium 功能测试。此阶段不冒充 Electron 客户端验收。
+- V0.7 Electron 开发完成起增加独立 windows-desktop 门禁：Windows 实际构建、启动真实 Electron、测试独立窗口/托盘/连接/权限/断网恢复，并在 1536×864 固定环境截图比较。V0.9 生成 NSIS x64 安装版和便携版，测试安装、启动、卸载和签名状态，产物归档；V1.0 前补 Windows 10/11 真机验证。所有 Windows job 必须为官方标准规格 windows-latest，不使用付费大型 Runner 或私有自建 Runner，除非用户另行批准。
+- Linux 工作流固定 ubuntu-24.04，因 Playwright 1.50.1 不支持 ubuntu-latest 当前映射的 26.04。升级 Playwright/Runner 时需重新验证视觉基准；不得用改变阈值或跳过检查解决。
