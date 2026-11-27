@@ -17,19 +17,20 @@ import (
 
 // A node instance authorizes exactly one execution, provisioned separately
 // from the caller. No retry is allowed after admission, even on failure.
-// Production provisioning must durably prevent reissuing an ambiguous grant.
+// The journal must durably prevent reissuing an ambiguous grant.
 type githubExecutionNode struct {
 	allowed   []byte
 	clientPin [32]byte
 	key       ed25519.PrivateKey
 	executor  githubIsolatedExecutor
+	grants    *githubExecutionGrantStore
 	used      atomic.Bool
 }
 
-func newGitHubExecutionNode(allowed githubIsolatedRequest, clientPin [32]byte, key ed25519.PrivateKey, executor githubIsolatedExecutor) (*githubExecutionNode, error) {
+func newGitHubExecutionNode(allowed githubIsolatedRequest, clientPin [32]byte, key ed25519.PrivateKey, executor githubIsolatedExecutor, grants *githubExecutionGrantStore) (*githubExecutionNode, error) {
 	s := allowed.statement
 	e := s.Execution
-	if executor == nil || clientPin == ([32]byte{}) || len(key) != ed25519.PrivateKeySize ||
+	if executor == nil || grants == nil || clientPin == ([32]byte{}) || len(key) != ed25519.PrivateKeySize ||
 		!bytes.Equal(key, ed25519.NewKeyFromSeed(key.Seed())) ||
 		s.Domain != githubTaskExecutionDomain || e.Domain != githubExecutionDomain ||
 		!(githubEvidenceTask{s.Project, s.Task, s.Revision}).valid() ||
@@ -68,7 +69,7 @@ func newGitHubExecutionNode(allowed githubIsolatedRequest, clientPin [32]byte, k
 	if err != nil || len(raw) > githubRemoteBodyLimit-64 {
 		return nil, errGitHubAuthorization
 	}
-	return &githubExecutionNode{allowed: raw, clientPin: clientPin, key: append(ed25519.PrivateKey(nil), key...), executor: executor}, nil
+	return &githubExecutionNode{allowed: raw, clientPin: clientPin, key: append(ed25519.PrivateKey(nil), key...), executor: executor, grants: grants}, nil
 }
 
 // This handler must be attached only to a dedicated TLS listener. Require
@@ -125,6 +126,10 @@ func (n *githubExecutionNode) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if r.Context().Err() != nil || !n.used.CompareAndSwap(false, true) {
+		http.Error(w, "execution unavailable", http.StatusConflict)
+		return
+	}
+	if err := n.grants.claim(wire.Statement.Execution, n.allowed); err != nil || r.Context().Err() != nil {
 		http.Error(w, "execution unavailable", http.StatusConflict)
 		return
 	}

@@ -240,3 +240,7 @@ Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified pus
 
 ### V0.3 6c-3b-2a 已验收；6c-3b-2b 待 CI
 实际提交 75a6df426ea728852cf9e2fa4563d80133fb8b47，Push 46057353386、PR 46057361671 均 completed/success，20/20。新增独立节点单次授权 HTTP handler、TLS 客户端验证、并发防重与签名报告测试。授权仅进程内；持久授权、独立服务启动及实际沙箱待完成，禁止生产自动推进。新 CI 待验收。
+
+
+### V0.3 6c-3b-2b 已验收；6c-3b-2c-1 待 CI
+实际提交 98ede011c9b96dd84337e048cda0333402bce2e0，Push 46059974959、PR 46059981244 均 completed/success，20/20。新增 Linux 持久化单次准入日志，真实文件系统并发/重建测试。实际沙箱、独立进程启动及部署尚未完成。新 CI 待验收。

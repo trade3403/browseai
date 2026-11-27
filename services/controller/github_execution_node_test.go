@@ -13,6 +13,8 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -20,6 +22,22 @@ import (
 )
 
 func TestGitHubExecutionNode(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("persistent Linux execution node only")
+	}
+	newStore := func() *githubExecutionGrantStore {
+		t.Helper()
+		dir := t.TempDir()
+		if err := os.Chmod(dir, 0700); err != nil {
+			t.Fatal(err)
+		}
+		s, err := newGitHubExecutionGrantStore(dir)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return s
+	}
+	grants := newStore()
 	pub, key, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
@@ -51,11 +69,11 @@ func TestGitHubExecutionNode(t *testing.T) {
 		runs.Add(1)
 		return githubIsolatedReport{r.statement.Execution.ExecutedSHA, r.harnessDigest, r.imageDigest, []githubIsolatedJob{{91, "gate", true}}}, nil
 	})
-	node, err := newGitHubExecutionNode(req, pin, key, executor)
+	node, err := newGitHubExecutionNode(req, pin, key, executor, grants)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := newGitHubExecutionNode(req, pin, key, nil); err == nil {
+	if _, err := newGitHubExecutionNode(req, pin, key, nil, grants); err == nil {
 		t.Fatal("missing executor accepted")
 	}
 	if _, err := node.serverConfig(tls.Certificate{}, nil); err == nil {
@@ -134,9 +152,21 @@ func TestGitHubExecutionNode(t *testing.T) {
 	if w := send(node, changed, state); w.Code != http.StatusConflict {
 		t.Fatal("second nonce bypassed one-shot authorization")
 	}
+	// A fresh instance using the same persistent journal cannot replay the grant.
+	reopened, err := newGitHubExecutionGrantStore(grants.dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	restarted, err := newGitHubExecutionNode(req, pin, key, executor, reopened)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if w := send(restarted, raw, state); w.Code != http.StatusConflict || runs.Load() != 1 {
+		t.Fatal("restarted node replayed execution")
+	}
 	failed, err := newGitHubExecutionNode(req, pin, key, githubMockIsolatedExecutor(func(context.Context, githubIsolatedRequest) (githubIsolatedReport, error) {
 		return githubIsolatedReport{}, errors.New("failure")
-	}))
+	}), newStore())
 	if err != nil {
 		t.Fatal(err)
 	}
