@@ -2,8 +2,13 @@ package main
 
 import (
 	"context"
+	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/hex"
+	"encoding/json"
 	"io"
 	"net/http"
 	"strings"
@@ -33,6 +38,9 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 	run := `{"id":81,"workflow_id":2,"run_attempt":2,"head_sha":"` + head + `","head_branch":"feat/demo","event":"pull_request","status":"completed","conclusion":"success","repository":{"id":456},"head_repository":{"id":456},"path":".github/workflows/ci.yml","pull_requests":[` + link + `]}`
 	workflow := `{"total_count":1,"workflows":[{"id":2,"name":"CI","path":".github/workflows/ci.yml","state":"active"}]}`
 	job := `{"total_count":1,"jobs":[{"id":91,"run_id":81,"run_attempt":2,"head_sha":"` + head + `","name":"gate","status":"completed","conclusion":"success"}]}`
+	const source = "name: CI\non: push\n"
+	sum := sha256.Sum256([]byte(source))
+	digest := hex.EncodeToString(sum[:])
 	mode := ""
 	prReads, listReads, detailReads := 0, 0, 0
 	a, err := newGitHubApp("mock-app", key, githubTestTransport(func(r *http.Request) (*http.Response, error) {
@@ -44,6 +52,16 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 			body = `{"token":"synthetic","expires_at":"2026-11-27T01:00:00Z","repositories":[{"id":456}],"permissions":{"actions":"read","checks":"read","contents":"read","pull_requests":"read","metadata":"read"}}`
 		case "/repos/owner/repo":
 			body = `{"id":456,"full_name":"owner/repo"}`
+		case "/repos/owner/repo/contents/.github/workflows/ci.yml":
+			text := source
+			if mode == "source-changed" {
+				text = "changed"
+			}
+			raw, err := json.Marshal(githubWorkflowSource{Type: "file", Path: p.push.path, Size: len(text), Encoding: "base64", Content: base64.StdEncoding.EncodeToString([]byte(text))})
+			if err != nil {
+				t.Fatal(err)
+			}
+			body = string(raw)
 		case "/repos/owner/repo/pulls/3":
 			prReads++
 			body = pr
@@ -133,6 +151,35 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 	}
 	if _, err := a.observePRRelationship(ctx, p, nil); err == nil {
 		t.Fatal("nil relationship clock accepted")
+	}
+	public, private, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sign := func(statement githubExecutionStatement) githubExecutionProof {
+		t.Helper()
+		raw, err := json.Marshal(statement)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return githubExecutionProof{statement.IssuedUnix, ed25519.Sign(private, raw)}
+	}
+	prEvidence := githubCIEvidence{candidate.policy.push, candidate.runID, candidate.attempt, candidate.jobIDs, candidate.observedAt}
+	prProof := sign(githubExecutionMessage(p.push, prEvidence, digest, &p, candidate.relationship, now.Unix()))
+	if err := a.verifyPRExecution(ctx, p, digest, prProof, public, clock); err != nil {
+		t.Fatal("composite PR proof rejected", err)
+	}
+	mode = "source-changed"
+	if err := a.verifyPRExecution(ctx, p, digest, prProof, public, clock); err == nil {
+		t.Fatal("changed source accepted")
+	}
+	mode = "push"
+	pushProof := sign(githubExecutionMessage(p.push, e, digest, nil, githubPRRelationship{}, now.Unix()))
+	if err := a.verifyPushExecution(ctx, p.push, digest, pushProof, public, clock); err != nil {
+		t.Fatal("composite push proof rejected", err)
+	}
+	if err := a.verifyPushExecution(ctx, p.push, digest, githubExecutionProof{}, public, clock); err == nil {
+		t.Fatal("unsigned execution accepted")
 	}
 	if _, err := a.observePushEvidence(ctx, p.push, nil); err == nil {
 		t.Fatal("nil push clock accepted")
