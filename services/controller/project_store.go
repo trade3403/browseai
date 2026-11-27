@@ -73,7 +73,7 @@ func tenantTx[T any](ctx context.Context, db *sql.DB, p principal, fn func(*sql.
 		return zero, err
 	}
 	defer tx.Rollback()
-	if _, err := tx.ExecContext(ctx, "SELECT set_config('browseai.tenant_id',$1,true)", p.tenantID); err != nil {
+	if _, err := tx.ExecContext(ctx, "SELECT set_config('browseai.tenant_id',$1,true),set_config('browseai.actor_id',$2,true)", p.tenantID, p.userID); err != nil {
 		return zero, err
 	}
 	value, err := fn(tx)
@@ -130,7 +130,7 @@ func (s projectStore) create(ctx context.Context, p principal, in projectCreate)
 	if !in.valid() {
 		return projectRecord{}, errResourceInvalid
 	}
-	return tenantTx(ctx, s.db, p, func(tx *sql.Tx) (projectRecord, error) {
+	return mutationTx(ctx, s.db, p, "project.create", "", 0, in, func(tx *sql.Tx) (projectRecord, error) {
 		return readProject(tx.QueryRowContext(ctx, "INSERT INTO browseai.projects(id,tenant_id,name,repository_id,repository,code_branch) VALUES(gen_random_uuid(),$1,$2,$3,$4,$5) RETURNING "+projectFields, p.tenantID, in.Name, in.RepositoryID, in.Repository, in.CodeBranch))
 	})
 }
@@ -139,7 +139,7 @@ func (s projectStore) rename(ctx context.Context, p principal, id, name string, 
 	if !validProjectName(name) || revision < 0 {
 		return projectRecord{}, errResourceInvalid
 	}
-	return tenantTx(ctx, s.db, p, func(tx *sql.Tx) (projectRecord, error) {
+	return mutationTx(ctx, s.db, p, "project.rename", id, uint64(revision), name, func(tx *sql.Tx) (projectRecord, error) {
 		row, err := readProject(tx.QueryRowContext(ctx, "SELECT "+projectFields+" FROM browseai.projects WHERE tenant_id=$1 AND id=$2 FOR UPDATE", p.tenantID, id))
 		if err != nil {
 			return projectRecord{}, err
@@ -155,7 +155,7 @@ func (s projectStore) remove(ctx context.Context, p principal, id string, revisi
 	if revision < 0 {
 		return errResourceInvalid
 	}
-	_, err := tenantTx(ctx, s.db, p, func(tx *sql.Tx) (bool, error) {
+	_, err := mutationTx(ctx, s.db, p, "project.delete", id, uint64(revision), nil, func(tx *sql.Tx) (bool, error) {
 		row, err := readProject(tx.QueryRowContext(ctx, "SELECT "+projectFields+" FROM browseai.projects WHERE tenant_id=$1 AND id=$2 FOR UPDATE", p.tenantID, id))
 		if err != nil {
 			return false, err

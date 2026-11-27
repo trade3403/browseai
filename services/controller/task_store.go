@@ -103,7 +103,7 @@ func (s taskStore) create(ctx context.Context, p principal, in taskCreate) (task
 	if in.MaxRepairs != nil {
 		max = *in.MaxRepairs
 	}
-	return tenantTx(ctx, s.db, p, func(tx *sql.Tx) (taskRecord, error) {
+	return mutationTx(ctx, s.db, p, "task.create", "", 0, in, func(tx *sql.Tx) (taskRecord, error) {
 		var projectID string
 		err := tx.QueryRowContext(ctx, "SELECT id::text FROM browseai.projects WHERE tenant_id=$1 AND id=$2 FOR KEY SHARE", p.tenantID, in.ProjectID).Scan(&projectID)
 		if errors.Is(err, sql.ErrNoRows) {
@@ -140,7 +140,7 @@ func (s taskStore) rename(ctx context.Context, p principal, id, name string, rev
 	if !validProjectName(name) {
 		return taskRecord{}, errResourceInvalid
 	}
-	return tenantTx(ctx, s.db, p, func(tx *sql.Tx) (taskRecord, error) {
+	return mutationTx(ctx, s.db, p, "task.rename", id, revision, name, func(tx *sql.Tx) (taskRecord, error) {
 		r, err := lockedTask(ctx, tx, p, id, revision)
 		if err != nil {
 			return taskRecord{}, err
@@ -155,7 +155,7 @@ func (s taskStore) rename(ctx context.Context, p principal, id, name string, rev
 // Only trusted service code may supply evidence. Public HTTP handlers expose
 // pause and stop only; CI, dispatch, reconciliation and leases are not public flags.
 func (s taskStore) transition(ctx context.Context, p principal, id string, revision uint64, action taskAction, evidence taskEvidence) (taskRecord, error) {
-	return tenantTx(ctx, s.db, p, func(tx *sql.Tx) (taskRecord, error) {
+	return mutationTx(ctx, s.db, p, "task."+string(action), id, revision, nil, func(tx *sql.Tx) (taskRecord, error) {
 		r, err := lockedTask(ctx, tx, p, id, revision)
 		if err != nil {
 			return taskRecord{}, err
@@ -178,7 +178,7 @@ func (s taskStore) transition(ctx context.Context, p principal, id string, revis
 }
 
 func (s taskStore) remove(ctx context.Context, p principal, id string, revision uint64) error {
-	_, err := tenantTx(ctx, s.db, p, func(tx *sql.Tx) (bool, error) {
+	_, err := mutationTx(ctx, s.db, p, "task.delete", id, revision, nil, func(tx *sql.Tx) (bool, error) {
 		r, err := lockedTask(ctx, tx, p, id, revision)
 		if err != nil {
 			return false, err

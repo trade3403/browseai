@@ -110,3 +110,6 @@ SHA fa04258af5d42a975f3f61c15cc6db49b1e54ce4 push CI https://github.com/trade340
 
 ## V0.2 第九批：事务级全局分支租约
 证据 SHA 3c9d98e7734a02ac2c7f86c65199043e263729a1；PR CI https://github.com/trade3403/browseai/actions/runs/45952447631 与 push CI https://github.com/trade3403/browseai/actions/runs/45952442058 均 success，10 项检查通过。新增内部 leaseStore：任务行锁及 revision 检查、repo stable ID+branch 全局抢占、DB 时钟 60 秒有效期、续期、过期禁止续期/派发、fencing token、仅非派发状态且可信对账后释放，过期不自动抢占；ready/prepare/confirm_sent/repair 持久化转换同事务检查有效 fence。真实 PostgreSQL 双租户竞争、不同分支并行、过期/旧 token 拒绝及释放后递增测试。verifiedBranch 只是未来可信 GitHub 适配器输入契约，V0.3 才完成真实授权，当前没有公开租约 API 或网页派发；外部 GitHub 写入 fencing、完整调度/恢复、幂等键/outbox、审计仍待后续实现。未本地执行完整数据库测试，待新 CI。V0.2 未宣称完成。
+
+## V0.2 第十批：变更幂等与事务审计
+证据 SHA 300bbee71407899c170774cddcdfa9c878b0a36e，PR CI https://github.com/trade3403/browseai/actions/runs/45954023205 与 push CI https://github.com/trade3403/browseai/actions/runs/45954016760 均 success，事务级租约批次已通过。新增 0004 migration：租户+用户范围幂等键、只追加 audit_logs 与 events、RLS 隔离；项目/任务全部现有变更接口要求 Idempotency-Key，作用域绑定认证用户，动作/对象/revision/规范化参数哈希，同键同内容重放已提交结果，同键异内容 409，数据库行、幂等结果、审计和事件同事务提交，失败回滚。内部任务状态转换亦记录审计与事件，不暴露 evidence。真实数据库并发重复创建、跨租户相同键、重放更新删除、回滚、审计不可删除测试；迁移回滚/重建加入既有必需 job。事件仅为持久记录基础，消费者、派发 outbox 重试/唯一 dispatch key、清理保留策略及账号生命周期审计尚未完成。项目/任务 API 的安全恢复/审批、完整阶段定义及账户开通仍待收尾；不进入 V0.3。当前提交未本地实际运行 PostgreSQL CI，待新 CI 验证。

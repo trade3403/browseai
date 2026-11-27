@@ -5,7 +5,9 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -36,12 +38,15 @@ func testAuth(t *testing.T, v credentialVerifier) (*authHTTP, *fakeSessions) {
 	return a, f
 }
 
+var testRequestSequence atomic.Uint64
+
 func authRequest(h http.Handler, method, path, origin, body, peer string, cookie *http.Cookie) *httptest.ResponseRecorder {
 	r := httptest.NewRequest(method, testOrigin+path, strings.NewReader(body))
 	r.RemoteAddr = peer + ":12345"
 	r.Header.Set("Origin", origin)
 	r.Header.Set("Content-Type", "application/json")
 	r.Header.Set("X-Tenant-ID", "tenant-b")
+	r.Header.Set("Idempotency-Key", "test-"+strconv.FormatUint(testRequestSequence.Add(1), 10))
 	if cookie != nil {
 		r.AddCookie(cookie)
 	}

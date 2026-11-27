@@ -60,6 +60,10 @@ func (h projectHTTP) handler() http.Handler {
 			resourceError(w, errForbidden)
 			return
 		}
+		r, ok := requireMutationKey(w, r)
+		if !ok {
+			return
+		}
 		mux.ServeHTTP(w, r)
 	})
 }

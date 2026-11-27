@@ -82,6 +82,8 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0002_auth.up.sql
           psql -X -v ON_ERROR_STOP=1 -f tests/database/auth.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0003_credentials.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0004_mutations.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0004_mutations.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0003_credentials.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0002_auth.down.sql
           psql -X -v ON_ERROR_STOP=1 -c "SELECT 1 / CASE WHEN to_regprocedure('browseai.resolve_session(bytea)') IS NULL THEN 1 ELSE 0 END"
@@ -94,6 +96,7 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0002_auth.up.sql
           psql -X -v ON_ERROR_STOP=1 -f tests/database/auth.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0003_credentials.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0004_mutations.up.sql
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_auth LOGIN PASSWORD 'ci-auth-only'"
           export BROWSEAI_TEST_OWNER_DSN="postgres://postgres:ci-only-password@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           export BROWSEAI_TEST_AUTH_DSN="postgres://browseai_auth:ci-auth-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
