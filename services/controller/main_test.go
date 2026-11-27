@@ -20,9 +20,12 @@ func TestHealth(t *testing.T) {
 
 func TestProjects(t *testing.T) {
 	w := httptest.NewRecorder()
-	routes().ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/api/projects", nil))
+	r := httptest.NewRequest(http.MethodGet, "/api/projects?tenant_id=other", nil)
+	r.Header.Set("X-Tenant-ID", "other")
+	r.Header.Set("X-Role", "platform_admin")
+	routes().ServeHTTP(w, r)
 	var body struct {
-		Mock bool `json:"mock"`
+		Mock     bool      `json:"mock"`
 		Projects []Project `json:"projects"`
 	}
 	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
@@ -34,7 +37,10 @@ func TestProjects(t *testing.T) {
 }
 
 func TestUnknownAndWrite(t *testing.T) {
-	for _, tc := range []struct{ method, path string; code int }{
+	for _, tc := range []struct {
+		method, path string
+		code         int
+	}{
 		{http.MethodGet, "/missing", 404},
 		{http.MethodPost, "/api/projects", 405},
 	} {
