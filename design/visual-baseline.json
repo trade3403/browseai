@@ -1,0 +1,58 @@
+{
+  "reference": "design/screens/browseai-desktop.webp",
+  "width": 1536,
+  "height": 864,
+  "format": "webp",
+  "size_bytes": 103632,
+  "sha256": "cbbcf34029c6fff16e8ac2449da923a80e83eff8cb980bb531dcd32de3a59c05",
+  "status": "PENDING_REFERENCE_UPLOAD",
+  "visual_ci": {
+    "viewport": {
+      "width": 1536,
+      "height": 864
+    },
+    "device_scale_factor": 1,
+    "threshold": 0.1,
+    "max_diff_ratio": 0.01,
+    "max_boundary_error_css_px": 2,
+    "regions": {
+      "header": [
+        0,
+        0,
+        1536,
+        54
+      ],
+      "sidebar": [
+        0,
+        54,
+        238,
+        760
+      ],
+      "workspace_toolbar": [
+        238,
+        54,
+        962,
+        98
+      ],
+      "remote_viewport": [
+        249,
+        152,
+        941,
+        652
+      ],
+      "right_panel": [
+        1200,
+        54,
+        336,
+        760
+      ],
+      "footer": [
+        0,
+        814,
+        1536,
+        50
+      ]
+    },
+    "remote_viewport": "separate mock validation; live content excluded from shell score"
+  }
+}
