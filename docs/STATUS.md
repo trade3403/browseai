@@ -36,3 +36,6 @@ PR #1，上一轮证据 SHA 8b55da9691810d3c6263689a871ecb4fc799510e，运行 ht
 
 ## 原图入库后首次真实视觉测量
 证据 SHA 67c88a53b75c5460ed0ad5f0998c9800087bbd9e；PR CI https://github.com/trade3403/browseai/actions/runs/45922696654。backend、web、functional、compose、Windows foundation 均通过；visual-desktop 和 gate 失败。报告 artifact 15165421705：整图差异14.2137%，外壳16.0748%（不含远程画面），header15.6817%、sidebar14.0646%、workspace_toolbar18.2910%、right_panel19.5277%、footer11.1146%，远程边界误差1.453125 CSS px（已通过2px）。已实际查看 reference/actual 图。首次外壳修订：按原图采样颜色及定位调节导航/项目卡片、标签、右侧卡片及底栏布局，保持真实未连接提示、禁用状态和响应式功能。新差异须由新 CI 测量；基准与1%门槛不变。不进入V0.2。
+
+## 第二次真实视觉测量与定向调整
+证据 SHA a0c2b9d151f37b73c864fd85996f88c0c9c2f0f9；PR CI https://github.com/trade3403/browseai/actions/runs/45923184640，push CI https://github.com/trade3403/browseai/actions/runs/45923179558，均已结束失败。backend/web/functional/compose/windows-foundation 五项通过；visual-desktop/gate 未通过。实测 artifact 15165206822：外壳15.2792%（前16.0748%，改善0.7956个百分点），整图13.7859%，header14.3675%、sidebar14.5787%、workspace_toolbar16.8802%、right_panel17.9198%、footer11.0091%，远程边界1.453125px。已核对实际及原图截图；右栏第一卡片文字换行导致整体高度偏移。修订2：限制桌面卡片高度、避免标签换行、调整底栏网格和进度位置、状态点尺寸，并在视觉报告追加DOM几何坐标，供后续定位；保持真实未连接状态、禁用交互、基准原图及1%门槛。新结果尚待CI，不进入V0.2。

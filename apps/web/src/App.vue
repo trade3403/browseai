@@ -47,7 +47,7 @@ onMounted(load)
       <div class="section-heading">项目列表 ({{projects.length}})<button title="打开下一个项目" :disabled="!projects.length" @click="nextWindow"><Plus :size="17"/></button></div>
       <div class="project-list">
         <button v-for="p in projects" :key="p.id" class="project" :class="{selected:p.id===current}" @click="open(p.id);activeNav='项目总览'">
-          <div class="project-head"><Github :size="19"/><b>{{p.name}}</b><span :class="statusColor(p.state)">● {{labels[p.state]}}</span></div>
+          <div class="project-head"><Github :size="19"/><b>{{p.name}}</b><span :class="statusColor(p.state)"><i class="project-status-dot" aria-hidden="true"></i> {{labels[p.state]}}</span></div>
           <div class="project-progress"><div class="track"><div :style="{width:p.progress+'%'}" :class="{complete:p.state==='COMPLETED'}"></div></div><span>{{p.progress}}%</span></div>
         </button>
       </div>
@@ -56,13 +56,13 @@ onMounted(load)
       <div class="workspace-toolbar">
         <strong><PanelsTopLeft :size="19"/> 远程浏览器窗口</strong>
         <div class="tabs">
-          <div v-for="p in tabProjects" :key="p.id" class="tab" :class="{active:p.id===current}"><button @click="open(p.id);activeNav='项目总览'"><i :class="statusColor(p.state)">●</i> {{p.name}}</button><button :aria-label="'关闭 '+p.name" @click="close(p.id)"><X :size="13"/></button></div>
+          <div v-for="p in tabProjects" :key="p.id" class="tab" :class="{active:p.id===current}"><button @click="open(p.id);activeNav='项目总览'"><i :class="[statusColor(p.state),'tab-status-dot']" aria-hidden="true"></i> {{p.name}}</button><button :aria-label="'关闭 '+p.name" @click="close(p.id)"><X :size="13"/></button></div>
           <button aria-label="新增标签" @click="nextWindow"><Plus :size="18"/></button>
         </div>
         <div class="toolbar-buttons"><button :aria-pressed="split" @click="split=!split"><Columns2 :size="15"/> 分屏</button><button :aria-pressed="expanded" @click="expanded=!expanded"><Maximize :size="15"/> {{expanded?'退出全屏':'全屏'}}</button><button @click="nextWindow"><Plus :size="14"/> 新建窗口</button></div>
       </div>
       <div class="remote">
-        <div class="remote-status"><span><i class="green">●</i> 云端 Chrome（模拟） · 分辨率 1920×1080 · 延迟未知</span><div><span class="live"><Monitor :size="13"/> 模拟画面</span><button disabled><Keyboard :size="13"/> 键盘</button><button disabled><Mouse :size="13"/> 鼠标</button><button @click="load"><RefreshCw :size="13"/> 刷新</button></div></div>
+        <div class="remote-status"><span><i class="green remote-status-dot" aria-hidden="true"></i> 云端 Chrome（模拟） · 分辨率 1920×1080 · 延迟未知</span><div><span class="live"><Monitor :size="13"/> 模拟画面</span><button disabled><Keyboard :size="13"/> 键盘</button><button disabled><Mouse :size="13"/> 鼠标</button><button @click="load"><RefreshCw :size="13"/> 刷新</button></div></div>
         <div v-if="loading" class="empty">正在加载模拟项目…</div>
         <div v-else-if="error" class="empty"><p>{{error}}</p><button @click="load">重试</button></div>
         <div v-else-if="activeNav!=='项目总览' && activeNav!=='浏览器窗口'" class="empty"><h2>{{activeNav}}</h2><p>V0.1 模拟工作站；此模块尚未接入真实服务。</p><ul v-if="activeNav==='运行日志'"><li v-for="(line,i) in notices" :key="i">{{line}}</li></ul><button @click="activeNav='项目总览'">返回工作区</button></div>
@@ -85,7 +85,7 @@ onMounted(load)
         <section><h3><ArrowRight/> 下一步任务</h3><ol><li>配置真实 GitHub 项目</li><li>接入 CI 状态验证</li><li>接入远程浏览器</li><li>配置任务交接</li></ol></section>
       </template>
     </aside>
-    <footer><span><i class="green">●</i> 当前：{{selected?.name||'未选中'}} / 模拟模式</span><span><Clock :size="15"/> 运行时长：未知</span><span><PanelsTopLeft :size="15"/> 窗口：{{tabs.length}}</span><span><Github :size="15"/> 最近同步：模拟</span><span class="footer-spacer"></span><span><Wifi :size="15"/> 网络：未知</span><span><Cloud :size="15"/> 本地预览</span><span><Circle :size="13"/> 不调用付费 AI API</span></footer>
+    <footer><span><i class="green footer-status-dot" aria-hidden="true"></i> 当前：{{selected?.name||'未选中'}} / 模拟模式</span><span><Clock :size="15"/> 运行时长：未知</span><span><PanelsTopLeft :size="15"/> 窗口：{{tabs.length}}</span><span><Github :size="15"/> 最近同步：模拟</span><span class="footer-spacer"></span><span><Wifi :size="15"/> 网络：未知</span><span><Cloud :size="15"/> 本地预览</span><span><Circle :size="13"/> 不调用付费 AI API</span></footer>
     <div v-if="showNotices" class="notice"><h3>运行日志 <button @click="showNotices=false"><X :size="16"/></button></h3><p v-for="(line,i) in notices" :key="i">{{line}}</p></div>
   </div>
 </template>

@@ -39,3 +39,42 @@
 @media(min-width:1401px){.shell footer{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(0,.95fr) minmax(0,.65fr) minmax(0,1.25fr) 1fr auto auto auto;gap:12px}.shell footer span{font-size:13px}.footer-spacer{min-width:0}}
 @media(min-width:901px) and (max-width:1400px){.workspace-toolbar strong{font-size:11px;margin-right:0}.tab button{font-size:11px;padding:7px 5px}.tab button:first-child{padding-left:5px}.tab button:last-child{padding-right:5px}.controls button{font-size:10px}.header-actions{gap:10px}.shell footer{gap:12px}}
 @media(max-width:900px){.global-header{padding:8px;gap:8px}.brand strong{font-size:15px}.brand>svg{width:30px}.header-actions{gap:6px}.sidebar nav button{font-size:11px;padding:0 8px}.project,.project:first-child,.project:nth-child(2){min-height:60px}.workspace-toolbar strong{margin-right:0;font-size:11px}.tab button{font-size:11px;padding:7px 5px}.tab button:first-child{padding-left:5px}.tab button:last-child{padding-right:5px}.right-panel{padding:10px 9px}.shell footer{gap:10px;padding:10px}.expanded .sidebar,.expanded .right-panel{display:none}}
+
+/* Reference revision 2: geometry from actual CI screenshot a0c2b9d.
+   Desktop only: keep mobile and narrow layouts independent. */
+@media(min-width:1401px){
+  .global-header{gap:32px;padding-left:21px}.brand strong{font-size:18px;letter-spacing:-.3px}.brand{gap:9px}.tagline{font-weight:500}
+  .sidebar{background:linear-gradient(165deg,#101722,#0e131f)}
+  .project{padding-left:13px;padding-right:10px;background:linear-gradient(115deg,#192531,#1d2733)}
+  .project.selected{background:linear-gradient(125deg,#14376b,#173569);border-color:#3675c8}
+  .project-list{gap:7px}.project:first-child{min-height:77px}.project:nth-child(2){min-height:74px}
+  .project-head{gap:8px}.project-head b{font-weight:700}.project-head>span{font-weight:600;font-size:11px}
+  .project-progress{margin-top:19px;margin-left:29px;margin-right:0;gap:5px}
+  .project-progress .track>div{background:linear-gradient(90deg,#659df6,#80bafa)}
+  .project-progress .track>div.complete{background:#86d3d6}
+  .workspace-toolbar strong{margin-right:25px}.tab{height:37px}.tab button:first-child{min-width:104px;text-align:left;justify-content:flex-start}.tab button:last-child{padding-right:9px}
+  .tab.active{background:linear-gradient(140deg,#16489c,#235ec8)}
+  .toolbar-buttons{gap:5px}.toolbar-buttons button{height:30px;padding:5px 7px}
+  .remote{background:#0b1017;border-color:#303b48}.remote-status{padding:0 9px}.remote-status>div{gap:6px}.remote-status .live{min-width:80px}
+  .right-panel{padding:14px 9px 8px 11px}
+  .controls{margin-left:-8px;gap:6px}.controls button{font-size:11px;height:30px}
+  .right-panel section{padding:8px 13px 9px;margin-bottom:8px;background:linear-gradient(135deg,#16212d,#151e2b)}
+  .right-panel h3{margin:0 0 4px;line-height:18px;font-size:13px;font-weight:700}
+  .right-panel section:nth-of-type(1){min-height:123px;height:123px}
+  .right-panel section:nth-of-type(1)>b{line-height:18px;font-size:13px}
+  .right-panel dl{grid-template-columns:60px minmax(0,1fr);column-gap:8px;row-gap:2px;margin-top:5px;font-size:12px;line-height:17px}
+  .right-panel dt{white-space:nowrap}
+  .right-panel section:nth-of-type(2){min-height:132px;height:132px}
+  .right-panel section:nth-of-type(2) dl{margin-top:6px;padding-top:6px;grid-template-columns:86px minmax(0,1fr)}
+  .ci-state{min-height:40px;padding:3px 0;gap:9px}.ci-state small{margin-top:2px}
+  .right-panel section:nth-of-type(3){min-height:106px;height:106px}
+  .wide-progress{margin-top:7px}.right-panel p{margin:6px 0}.summary{font-size:12px}
+  .right-panel section:nth-of-type(4){min-height:147px;height:147px}
+  .right-panel section:nth-of-type(4) dl{grid-template-columns:89px minmax(0,1fr);gap:9px 8px;margin-top:12px}
+  .right-panel section:nth-of-type(5){min-height:144px;height:144px;margin-bottom:0}
+  .right-panel ol{line-height:25px;font-size:12px;padding-left:21px}
+  .shell footer{background:#121b26;grid-template-columns:21.3% 12% 8% 18% minmax(0,1fr) auto auto auto;gap:8px;padding:0 20px}
+  .shell footer span{font-weight:500;white-space:nowrap}
+}
+.project-status-dot,.tab-status-dot,.footer-status-dot,.remote-status-dot{display:inline-block;flex-shrink:0;width:9px;height:9px;border-radius:50%;background:currentColor;vertical-align:1px}
+.tab-status-dot{width:11px;height:11px;vertical-align:0}.footer-status-dot{width:14px;height:14px}.remote-status-dot{width:10px;height:10px;vertical-align:0;margin-right:3px}

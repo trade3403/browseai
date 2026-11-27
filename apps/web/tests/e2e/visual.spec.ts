@@ -53,7 +53,14 @@ test('authoritative desktop visual baseline',async({page},info)=>{
   const shellDiff=pixelmatch(ca,cb,null,a.width,a.height,{threshold:manifest.visual_ci.threshold,includeAA:true})
   const bound=await page.locator('.browser-grid').boundingBox()
   const boundaryError=bound?Math.max(Math.abs(bound.x-remote[0]),Math.abs(bound.y-remote[1]),Math.abs(bound.width-remote[2]),Math.abs(bound.height-remote[3])):null
-  const report={entireRatio:entire/(a.width*a.height),shellRatio:shellDiff/shellPixels,excluded:remote,scores,boundaryError}
+  const geometry=await page.evaluate(()=>{
+    const selectors=['.global-header','.sidebar','.sidebar nav','.section-heading','.project','.workspace-toolbar','.tab','.remote-status','.browser-grid','.controls','.right-panel section','.shell footer','.shell footer span']
+    return Object.fromEntries(selectors.map(selector=>[selector,Array.from(document.querySelectorAll(selector)).map(el=>{
+      const {x,y,width,height}=el.getBoundingClientRect()
+      return {x,y,width,height}
+    })]))
+  })
+  const report={entireRatio:entire/(a.width*a.height),shellRatio:shellDiff/shellPixels,excluded:remote,scores,boundaryError,geometry}
   await writeFile(path.join(out,'report.json'),JSON.stringify(report,null,2))
   expect.soft(report.shellRatio).toBeLessThanOrEqual(manifest.visual_ci.max_diff_ratio)
   for(const [name,score] of Object.entries(scores))if(name!=='remote_viewport')expect.soft(score.ratio,name).toBeLessThanOrEqual(manifest.visual_ci.max_diff_ratio)
