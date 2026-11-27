@@ -105,3 +105,17 @@ test('desktop selection highlight follows the selected project, not the first ca
   expect(inactive).not.toBe(initial)
   await expect(page.locator('.tab.active button').first()).toHaveAttribute('aria-pressed','true')
 })
+
+test('development progress remains data-driven and sample tasks are explicitly scoped',async({page})=>{
+  await page.setViewportSize({width:1536,height:864})
+  await page.goto('/')
+  await expect(page.locator('.project')).toHaveCount(6)
+  const progress=page.getByRole('progressbar',{name:'模拟开发进度'})
+  await expect(progress).toHaveAttribute('aria-valuenow','75')
+  const ratio=await progress.evaluate(el=>el.firstElementChild!.getBoundingClientRect().width/el.getBoundingClientRect().width)
+  expect(ratio).toBeCloseTo(.75,2)
+  await expect(page.locator('.next-actions')).toHaveAttribute('aria-label','本地示例任务（不会自动执行）')
+  await page.locator('.project').filter({hasText:'GlobalChat'}).click()
+  await expect(page.locator('.next-actions')).toHaveAttribute('aria-label','待确认任务')
+  await expect(page.locator('.next-actions')).not.toContainText('progress.json')
+})
