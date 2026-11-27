@@ -19,6 +19,27 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  dependency-probe:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff
+        with:
+          go-version-file: services/controller/go.mod
+          cache: false
+      - name: Verify candidate Go dependency checksums
+        working-directory: tests/dependency-probe
+        env:
+          GOTOOLCHAIN: local
+          GOPROXY: https://proxy.golang.org
+          GOSUMDB: sum.golang.org
+        run: |
+          go mod download all
+          go mod verify
+          go list -m all
+          echo 'BEGIN_DEPENDENCY_SUMS'
+          cat go.sum
+          echo 'END_DEPENDENCY_SUMS'
   database:
     runs-on: ubuntu-24.04
     services:
@@ -258,7 +279,7 @@ jobs:
   gate:
     runs-on: ubuntu-24.04
     if: always()
-    needs: [database, schema, backend, web, functional, visual-desktop, compose, windows-foundation]
+    needs: [dependency-probe, database, schema, backend, web, functional, visual-desktop, compose, windows-foundation]
     steps:
       - name: Require all checks
         env:
