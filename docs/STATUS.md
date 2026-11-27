@@ -264,3 +264,7 @@ Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified pus
 
 ### V0.3 离线构建材料已验收；镜像构建及签发待 CI
 实际提交 f158f6440edce76d9763ed20a2f300e1f5ffc42a，Push 46074590629、PR 46074596980 均 completed/success，20/20。新增固定构建命令、基础镜像预检、实际产物 ID 验证及构建签名编排；CI mock，不代表真实 Docker 构建、隔离或部署验收。新 CI 待验收。
+
+
+### V0.3 镜像构建及签发已验收；镜像归档交接待 CI
+实际提交 163d4a4261b1ae8a1b0eb6842b6ed7ee8259a85a，Push 46076848408、PR 46076856478 均 completed/success，20/20。新增镜像归档签名、安全暂存、导入前完整性及导入后配置复核。实际独立主机部署和传输仍待验证。新 CI 待验收。

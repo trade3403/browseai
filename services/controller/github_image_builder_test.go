@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"io"
 	"os"
@@ -92,6 +94,61 @@ func TestGitHubBuildSandboxImage(t *testing.T) {
 	if err != nil || built.image != id || verifyGitHubSandboxBuild(built, policy, proof, time.Now()) != nil {
 		t.Fatal("valid build rejected", err)
 	}
+	t.Run("archive", func(t *testing.T) {
+		var output bytes.Buffer
+		archiveBackend := &githubMockArchiveBackend{inspect: []byte(inspect)}
+		archive, err := githubExportImage(ctx, built, policy, proof, private, &output, archiveBackend)
+		if err != nil || output.String() != "image archive" {
+			t.Fatal("export failed", err)
+		}
+		importImage := func(a githubImageArchiveProof, data string) error {
+			return githubImportImage(ctx, built, policy, proof, a, strings.NewReader(data), dir, archiveBackend)
+		}
+		if err := importImage(archive, output.String()); err != nil || archiveBackend.loads != 1 {
+			t.Fatal("import failed", err)
+		}
+		for _, data := range []string{"image archiv", "image archive!", "image archivE"} {
+			if err := importImage(archive, data); err == nil || archiveBackend.loads != 1 {
+				t.Fatal("invalid bytes reached importer")
+			}
+		}
+		for _, mutate := range []func(*githubImageArchiveReceipt){
+			func(r *githubImageArchiveReceipt) { r.BuildDigest = strings.Repeat("d", 64) },
+			func(r *githubImageArchiveReceipt) { r.Image = "sha256:" + strings.Repeat("d", 64) },
+			func(r *githubImageArchiveReceipt) { r.ArchiveBytes = githubImageArchiveLimit + 1 },
+			func(r *githubImageArchiveReceipt) { r.Domain = "other" },
+		} {
+			bad := archive.receipt
+			mutate(&bad)
+			raw, err := json.Marshal(bad)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := importImage(githubImageArchiveProof{bad, ed25519.Sign(private, raw)}, output.String()); err == nil || archiveBackend.loads != 1 {
+				t.Fatal("invalid manifest reached importer")
+			}
+		}
+		bad := archive
+		bad.signature = make([]byte, ed25519.SignatureSize)
+		if err := importImage(bad, output.String()); err == nil || archiveBackend.loads != 1 {
+			t.Fatal("invalid signature reached importer")
+		}
+		archiveBackend.inspect = []byte(strings.Replace(inspect, "65532:65532", "0", 1))
+		if err := importImage(archive, output.String()); err == nil || archiveBackend.loads != 2 {
+			t.Fatal("unsafe imported image accepted")
+		}
+		archiveBackend.fail = true
+		if _, err := githubExportImage(ctx, built, policy, proof, private, io.Discard, archiveBackend); err == nil {
+			t.Fatal("failed export signed")
+		}
+		w := &githubImageArchiveWriter{w: io.Discard, n: githubImageArchiveLimit}
+		if _, err := w.Write([]byte("x")); err == nil {
+			t.Fatal("oversized archive accepted")
+		}
+		if _, err := newGitHubDockerArchiveBackend("docker", "/run/docker.sock"); err == nil {
+			t.Fatal("relative runtime accepted")
+		}
+	})
 	for _, bad := range []string{"failed", "bad config", "bad id"} {
 		mode = bad
 		if _, p, err := githubBuildSandboxImage(ctx, plan, materials, policy, private, dir, backend); err == nil || len(p.signature) != 0 {
@@ -122,4 +179,27 @@ func TestGitHubBuildSandboxImage(t *testing.T) {
 	if _, err := newGitHubDockerImageBuilder("docker", "/run/docker.sock", dir); err == nil {
 		t.Fatal("relative runtime accepted")
 	}
+}
+
+type githubMockArchiveBackend struct {
+	inspect []byte
+	loads   int
+	fail    bool
+}
+
+func (b *githubMockArchiveBackend) save(ctx context.Context, image string, out io.Writer) error {
+	if b.fail {
+		return errors.New("save failed")
+	}
+	_, err := io.WriteString(out, "image archive")
+	return err
+}
+
+func (b *githubMockArchiveBackend) load(ctx context.Context, image string, input io.Reader) ([]byte, error) {
+	b.loads++
+	raw, err := io.ReadAll(input)
+	if err != nil || string(raw) != "image archive" {
+		return nil, errors.New("wrong archive")
+	}
+	return b.inspect, nil
 }
