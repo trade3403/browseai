@@ -188,3 +188,5 @@ Batch 6b-1 803e2c7894d2020aacd012fae5216d1cf6905d9b verified push https://github
 Batch 6b-2a 31dfd8107f7e83b31cec691fd4a8360437a966af push 46019164151 and PR 46019172830 failed database coverage gate at 72.8% (<75%); Go tests passed. Added synthetic HTTP end-to-end tests for push and PR evidence snapshots, re-read changes, missing PR, ambiguous runs, foreign links and read failures. No threshold change. New CI pending.
 
 Batch 6b-2a remote-test fix bb40ae569abbf92b8573287be480bcc549a009f8 verified push https://github.com/trade3403/browseai/actions/runs/46020858069 and PR https://github.com/trade3403/browseai/actions/runs/46020867566 both 10/10 success. Batch 6b-2b adds independently pinned workflow SHA-256 verification at immutable revisions and synthetic remote tests. New CI pending. Next source policy wiring and explicit execution proof; no task transition.
+
+Batch 6b-2b initial push 46021436379 and PR 46021445784 failed backend gofmt (github_workflow_source_test.go multiline function literal) and dependent gate; other eight jobs each passed, including database. Applied exact gofmt correction without changing test semantics or CI rules. New CI pending.

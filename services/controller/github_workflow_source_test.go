@@ -32,7 +32,9 @@ func TestGitHubWorkflowSource(t *testing.T) {
 		func(s *githubWorkflowSource) { s.Size++ },
 		func(s *githubWorkflowSource) { s.Size = githubWorkflowSourceLimit + 1 },
 		func(s *githubWorkflowSource) { s.Content = "invalid" },
-		func(s *githubWorkflowSource) { s.Content = base64.StdEncoding.EncodeToString([]byte(strings.Repeat("x", len(content)))) },
+		func(s *githubWorkflowSource) {
+			s.Content = base64.StdEncoding.EncodeToString([]byte(strings.Repeat("x", len(content))))
+		},
 	} {
 		bad := source
 		change(&bad)
