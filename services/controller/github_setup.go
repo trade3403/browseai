@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -19,7 +20,7 @@ import (
 // be trusted and inaccessible to untrusted writers. Windows ACL provisioning
 // is not implemented; fail closed rather than interpreting POSIX mode bits.
 func loadGitHubAppKey(path string) (*rsa.PrivateKey, error) {
-	if !filepath.IsAbs(path) {
+	if runtime.GOOS == "windows" || !filepath.IsAbs(path) {
 		return nil, errGitHubAuthorization
 	}
 	before, err := os.Lstat(path)
@@ -38,6 +39,9 @@ func loadGitHubAppKey(path string) (*rsa.PrivateKey, error) {
 	const limit = 64 * 1024
 	raw, err := io.ReadAll(io.LimitReader(f, limit+1))
 	if err != nil || len(raw) > limit {
+		return nil, errGitHubAuthorization
+	}
+	if !strings.HasPrefix(string(raw), "-----BEGIN ") {
 		return nil, errGitHubAuthorization
 	}
 	block, rest := pem.Decode(raw)

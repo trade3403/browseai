@@ -110,7 +110,7 @@ func (a *githubApp) mint(ctx context.Context, binding githubBinding, now time.Ti
 	}
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusCreated {
-		return githubToken{}, errGitHubAuthorization
+		return githubToken{}, githubAppResponseError(res, now)
 	}
 	const maxBody = 256 * 1024
 	raw, err := io.ReadAll(io.LimitReader(res.Body, maxBody+1))

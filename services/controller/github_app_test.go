@@ -103,7 +103,16 @@ func TestGitHubAppTokenContract(t *testing.T) {
 	for _, code := range []int{302, 401, 403, 429, 500} {
 		status = code
 		before := calls
-		if _, err := a.mint(context.Background(), binding, now); !errors.Is(err, errGitHubAuthorization) || calls != before+1 {
+		_, err := a.mint(context.Background(), binding, now)
+		if calls != before+1 {
+			t.Fatal("unexpected retry", code)
+		}
+		if code == 429 || code == 500 {
+			var retry githubReadError
+			if !errors.As(err, &retry) || !retry.retryAt.Equal(now.Add(time.Minute)) {
+				t.Fatal("missing retry deadline", code, err)
+			}
+		} else if !errors.Is(err, errGitHubAuthorization) {
 			t.Fatal("redirect or non-success accepted", code)
 		}
 	}

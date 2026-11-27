@@ -22,3 +22,6 @@ The internal observer derives the immutable project branch and enabled installat
 
 ## Batch 3a: operator verification primitives
 Protected absolute-path PEM loading (PKCS#1 or PKCS#8 RSA) and App JWT identity, installation account/target, suspension and scoped repository validation are implemented as internal primitives. Use a trusted directory and restrictive POSIX file permissions; Windows ACL support and the actual privileged provisioning command are pending. Operator approval must be independently obtained, not inferred from App access. No HTTP self-binding is exposed. No live credentials configured. CI pending.
+
+## Batch 3b
+Key loading explicitly rejects Windows until ACL verification is implemented, rejects leading non-PEM content, and has generated-key tests for both RSA encodings, unsafe paths, permissions and malformed content. Token issuance now returns the same typed retry deadline as read requests on 429, explicit rate-limit 403 and 5xx; no inline retry. The strict scoped token response contract remains unchanged pending live compatibility validation. Privileged binding persistence remains pending.
