@@ -16,11 +16,13 @@ func projectDatabaseReady(ctx context.Context, db *sql.DB) error {
 	err := db.QueryRowContext(ctx, `SELECT current_user='browseai_app'
 AND NOT r.rolsuper AND NOT r.rolbypassrls
 AND has_table_privilege(current_user,'browseai.projects','SELECT,INSERT,UPDATE,DELETE')
+AND has_table_privilege(current_user,'browseai.tasks','SELECT,INSERT,UPDATE,DELETE')
+AND has_table_privilege(current_user,'browseai.stages','SELECT,INSERT,UPDATE,DELETE')
 AND NOT has_table_privilege(current_user,'browseai.users','SELECT')
 AND NOT has_table_privilege(current_user,'browseai.auth_sessions','SELECT')
 AND NOT has_function_privilege(current_user,'browseai.issue_session(uuid,uuid,bytea)','EXECUTE')
-AND EXISTS (SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
-WHERE n.nspname='browseai' AND c.relname='projects' AND c.relrowsecurity AND c.relforcerowsecurity AND c.relowner<>r.oid)
+AND (SELECT count(*) FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+WHERE n.nspname='browseai' AND c.relname IN ('projects','tasks','stages') AND c.relrowsecurity AND c.relforcerowsecurity AND c.relowner<>r.oid)=3
 FROM pg_catalog.pg_roles r WHERE r.rolname=current_user`).Scan(&ok)
 	if err != nil || !ok {
 		return errors.New("project database role or schema invalid")
@@ -58,6 +60,9 @@ func projectRoutes(a *authHTTP, authDB, appDB *sql.DB) http.Handler {
 	h := projectHTTP{auth: a, store: projectStore{db: appDB}}.handler()
 	mux.Handle("/api/projects", h)
 	mux.Handle("/api/projects/", h)
+	tasks := taskHTTP{auth: a, store: taskStore{db: appDB}}.handler()
+	mux.Handle("/api/tasks", tasks)
+	mux.Handle("/api/tasks/", tasks)
 	mux.Handle("/", authenticatedRoutes(a, func(ctx context.Context) error {
 		if err := authDatabaseReady(ctx, authDB); err != nil {
 			return err
