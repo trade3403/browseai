@@ -200,3 +200,7 @@ Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified pus
 
 ### V0.3 6c-1a 已通过；6c-1b 待 CI
 实际提交 dda23ee291d5aebe2b7f90b51510a658ff39925d，Push 46028420091、PR 46028429227 均 completed/success，20/20。新增注册公钥查询与复合验签入口，真实 PostgreSQL 独立角色及 mock GitHub 测试；当前提交尚未验收。独立签名服务、证据持久化及原子消费未完成。
+
+
+### V0.3 6c-1b 已验收；6c-2a 待 CI
+实际提交 ebf354c897a1d97a89e96c7786d146a2a05aba90，Push 46032121952、PR 46032129357 均 completed/success，20/20。新增 0015 封闭证据表、身份/有效期/去重约束与插入保护、迁移重建测试。普通运行角色全部无权访问。待实现任务绑定签名、可信 Go 写入、原子消费；没有生产验证器或任务推进。新提交 CI 待验收。

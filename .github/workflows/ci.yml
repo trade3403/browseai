@@ -102,6 +102,9 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f tests/database/github_monitor_coordination.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0014_github_verifier_keys.up.sql
           psql -X -v ON_ERROR_STOP=1 -f tests/database/github_verifier_keys.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0015_github_ci_evidence.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f tests/database/github_ci_evidence.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0015_github_ci_evidence.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0014_github_verifier_keys.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0013_github_monitor_coordination.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0012_github_monitor_repository.down.sql
@@ -139,6 +142,8 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f tests/database/github_monitor_coordination.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0014_github_verifier_keys.up.sql
           psql -X -v ON_ERROR_STOP=1 -f tests/database/github_verifier_keys.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0015_github_ci_evidence.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f tests/database/github_ci_evidence.sql
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_admin LOGIN PASSWORD 'ci-admin-only'"
           export BROWSEAI_TEST_ADMIN_DSN="postgres://browseai_admin:ci-admin-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_auth LOGIN PASSWORD 'ci-auth-only'"
