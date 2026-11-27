@@ -249,11 +249,62 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 		if err := s.verifyObserved(ctx, p.push, e, digest, nil, githubPRRelationship{}, registeredPush, func() time.Time { return now.Add(githubEvidenceLifetime) }); err == nil {
 			t.Fatal("stale evidence accepted")
 		}
+		task := githubEvidenceTask{"00000000-0000-4000-8000-000000009954", "00000000-0000-4000-8000-000000009955", 4}
+		signTask := func(ev githubCIEvidence, policy *githubPRPolicy, rel githubPRRelationship) githubRegisteredProof {
+			t.Helper()
+			proof := githubRegisteredProof{verifierID, keyID, githubExecutionProof{issuedUnix: now.Unix()}}
+			raw, err := json.Marshal(githubTaskExecutionMessage(task, p.push, ev, digest, policy, rel, proof))
+			if err != nil {
+				t.Fatal(err)
+			}
+			proof.proof.signature = ed25519.Sign(private, raw)
+			return proof
+		}
+		taskPush := signTask(e, nil, githubPRRelationship{})
+		taskPR := signTask(prEvidence, &p, candidate.relationship)
+		verified, err := s.verifyTaskPush(ctx, a, task, p.push, digest, taskPush, clock)
+		if err != nil || verified.digest != sha256.Sum256(append(append([]byte(nil), verified.statement...), verified.signature...)) ||
+			!verified.expires.Equal(now.Add(githubEvidenceLifetime)) || !verified.issued.Equal(now) {
+			t.Fatal("task push proof rejected", err)
+		}
+		mode = ""
+		if _, err := s.verifyTaskPR(ctx, a, task, p, digest, taskPR, clock); err != nil {
+			t.Fatal("task PR proof rejected", err)
+		}
+		mode = "source-changed"
+		if _, err := s.verifyTaskPR(ctx, a, task, p, digest, taskPR, clock); err == nil {
+			t.Fatal("changed workflow accepted")
+		}
+		mode = "push"
+		for _, changed := range []githubEvidenceTask{
+			{task.projectID, task.taskID, task.revision + 1},
+			{task.taskID, task.taskID, task.revision},
+			{task.projectID, task.projectID, task.revision},
+			{task.projectID, task.taskID, -1},
+		} {
+			if _, err := s.verifyTaskPush(ctx, a, changed, p.push, digest, taskPush, clock); err == nil {
+				t.Fatal("changed task scope accepted")
+			}
+		}
+		if _, err := s.verifyTaskPush(ctx, a, task, p.push, digest, registeredPush, clock); err == nil {
+			t.Fatal("legacy v1 accepted as task proof")
+		}
+		if _, err := s.verifyTaskPush(ctx, a, task, p.push, digest, taskPR, clock); err == nil {
+			t.Fatal("PR proof accepted as push")
+		}
+		badProof := taskPush
+		badProof.keyID = "00000000-0000-4000-8000-000000009999"
+		if _, err := s.verifyTaskPush(ctx, a, task, p.push, digest, badProof, clock); err == nil {
+			t.Fatal("unregistered signer accepted")
+		}
 		if _, err := operator.ExecContext(ctx, "SELECT browseai.revoke_github_verifier($1,$2,$3,$4,gen_random_uuid())", b.tenantID, b.installationID, b.repositoryID, keyID); err != nil {
 			t.Fatal(err)
 		}
 		if err := s.verifyPushExecution(ctx, a, p.push, digest, registeredPush, clock); err == nil {
 			t.Fatal("revoked signer accepted")
+		}
+		if _, err := s.verifyTaskPush(ctx, a, task, p.push, digest, taskPush, clock); err == nil {
+			t.Fatal("revoked task signer accepted")
 		}
 	})
 }

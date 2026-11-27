@@ -58,7 +58,7 @@ func githubExecutionMessage(p githubEvidencePolicy, e githubCIEvidence, digest s
 	return s
 }
 
-func verifyGitHubExecution(p githubEvidencePolicy, e githubCIEvidence, digest string, pr *githubPRPolicy, rel githubPRRelationship, proof githubExecutionProof, key ed25519.PublicKey, now time.Time) error {
+func validateGitHubExecution(p githubEvidencePolicy, e githubCIEvidence, digest string, pr *githubPRPolicy, rel githubPRRelationship, proof githubExecutionProof, key ed25519.PublicKey, now time.Time) error {
 	if !e.freshFor(p, now) || !githubWorkflowDigestValid(digest) ||
 		len(key) != ed25519.PublicKeySize || len(proof.signature) != ed25519.SignatureSize || proof.issuedUnix <= 0 {
 		return errGitHubAuthorization
@@ -76,6 +76,14 @@ func verifyGitHubExecution(p githubEvidencePolicy, e githubCIEvidence, digest st
 		if id <= 0 || (i > 0 && id <= e.jobIDs[i-1]) {
 			return errGitHubAuthorization
 		}
+	}
+	return nil
+}
+
+// Legacy v1 verifies execution only. It must never authorize ledger writes.
+func verifyGitHubExecution(p githubEvidencePolicy, e githubCIEvidence, digest string, pr *githubPRPolicy, rel githubPRRelationship, proof githubExecutionProof, key ed25519.PublicKey, now time.Time) error {
+	if err := validateGitHubExecution(p, e, digest, pr, rel, proof, key, now); err != nil {
+		return err
 	}
 	raw, err := json.Marshal(githubExecutionMessage(p, e, digest, pr, rel, proof.issuedUnix))
 	if err != nil || !ed25519.Verify(key, raw, proof.signature) {
