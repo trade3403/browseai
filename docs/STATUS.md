@@ -33,3 +33,6 @@ PR #1，上一轮证据 SHA 8b55da9691810d3c6263689a871ecb4fc799510e，运行 ht
 ## 原始图和 lockfile 已解决
 证据 SHA fbab00814a24fde55bcb56f81c7ffa50d74750ac，PR CI https://github.com/trade3403/browseai/actions/runs/45922396803：backend（含75%覆盖率门禁）、web、functional、compose、Windows foundation 均通过；visual-desktop 因缺失原图失败，gate 失败。以上旧记录保留。
 本次从经本地验证的 Git 二进制补丁无损解码原始图并调用 GitHub create_blob(base64)，返回 SHA cf3eca7dd025ca45b430980bdf203e3cdd8a8812，与本地原图 Git SHA 完全一致。原始 WebP 路径 design/screens/browseai-desktop.webp；103632 bytes，1536×864，SHA-256 cbbcf34029c6fff16e8ac2449da923a80e83eff8cb980bb531dcd32de3a59c05。CI lockfile 从同一补丁恢复，Git SHA 7f4f6bdde077acb1c65877a8bc23c3ca03ce6c19，与 CI 产物一致；一并入库。CI 和 Docker 改用 npm ci，禁止缺锁回退。原图上传及依赖锁定阻塞已解决；视觉差异仍待新 CI 实测，严禁改阈值，仍在 V0.1，不进入 V0.2。
+
+## 原图入库后首次真实视觉测量
+证据 SHA 67c88a53b75c5460ed0ad5f0998c9800087bbd9e；PR CI https://github.com/trade3403/browseai/actions/runs/45922696654。backend、web、functional、compose、Windows foundation 均通过；visual-desktop 和 gate 失败。报告 artifact 15165421705：整图差异14.2137%，外壳16.0748%（不含远程画面），header15.6817%、sidebar14.0646%、workspace_toolbar18.2910%、right_panel19.5277%、footer11.1146%，远程边界误差1.453125 CSS px（已通过2px）。已实际查看 reference/actual 图。首次外壳修订：按原图采样颜色及定位调节导航/项目卡片、标签、右侧卡片及底栏布局，保持真实未连接提示、禁用状态和响应式功能。新差异须由新 CI 测量；基准与1%门槛不变。不进入V0.2。
