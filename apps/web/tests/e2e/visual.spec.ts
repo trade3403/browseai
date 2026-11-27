@@ -154,3 +154,69 @@ test('diagnostic font stack comparison',async({page},info)=>{
   await writeFile(path.join(out,'font-report.json'),JSON.stringify({diagnosticOnly:true,baseline:'current',results:result,ranking:[...result].sort((a,b)=>a.shellRatio-b.shellRatio).map(x=>({name:x.name,shellRatio:x.shellRatio,boundaryError:x.boundaryError}))},null,2))
   console.log('FONT_DIAGNOSTICS',JSON.stringify(result.map(x=>({name:x.name,shellRatio:x.shellRatio,boundaryError:x.boundaryError}))))
 })
+
+/* Region-level layout experiments. These are diagnostic only: the original
+ * baseline test, reference, threshold and exclusion are never modified.
+ * All candidates render the same functional application and mock data. */
+test('diagnostic layout comparison by region',async({page},info)=>{
+  test.setTimeout(120000)
+  const manifest=JSON.parse(await readFile(path.join(root,'design/visual-baseline.json'),'utf8'))
+  const bytes=await readFile(path.join(root,manifest.reference))
+  expect(createHash('sha256').update(bytes).digest('hex')).toBe(manifest.sha256)
+  const reference=PNG.sync.read(await sharp(bytes).png().toBuffer())
+  const out=info.outputPath('layout-diagnostics')
+  await mkdir(out,{recursive:true})
+  await page.goto('/')
+  await expect(page.locator('.project')).toHaveCount(6)
+  const candidates=[
+    {name:'current',css:''},
+    {name:'header-type-1',css:'.brand strong{font-size:19px;letter-spacing:0}.tagline{font-size:13.5px;letter-spacing:-.1px}'},
+    {name:'header-type-2',css:'.brand strong{font-size:18px;letter-spacing:.55px}.tagline{font-size:12.5px;letter-spacing:0}'},
+    {name:'header-spacing',css:'.header-actions{gap:12px}.header-actions .online{min-width:97px}.user-avatar{width:26px;height:26px}.global-header{gap:34px}'},
+    {name:'sidebar-type-1',css:'.sidebar nav button{font-size:13.5px;font-weight:600}.sidebar .section-heading{font-size:14px;font-weight:500}.project-head b{font-size:14px}'},
+    {name:'sidebar-type-2',css:'.sidebar nav button{font-size:14px;font-weight:600}.sidebar .section-heading{font-size:15px;font-weight:500}.project-head b{font-size:14.5px}'},
+    {name:'toolbar-type-1',css:'.workspace-toolbar strong{font-size:14px;font-weight:700}.tab button{font-size:13.5px}.toolbar-buttons button{font-size:12px}.remote-status>span{font-size:12px}'},
+    {name:'toolbar-type-2',css:'.workspace-toolbar strong{font-size:13.5px}.tab button{font-size:13px}.toolbar-buttons button{font-size:11.5px}.remote-status>span{font-size:12px;font-weight:600}'},
+    {name:'right-type-1',css:'.right-panel h3{font-size:13.5px}.right-panel dl{font-size:12.5px}.right-panel .next-actions li{font-size:12.5px}.right-panel .task-details dd{font-size:12px}'},
+    {name:'right-type-2',css:'.right-panel h3{font-size:13px}.right-panel dl{font-size:13px}.right-panel .next-actions li{font-size:13px}.right-panel .task-details dd{font-size:12px}'},
+    {name:'footer-type-1',css:'.shell footer>span{font-size:13px}.shell footer>span:nth-of-type(8){font-size:12px}'},
+    {name:'footer-type-2',css:'.shell footer>span{font-size:12.5px;font-weight:500}.shell footer>span:nth-of-type(8){font-size:11.5px}'}
+  ]
+  const [rx,ry,rw,rh]=manifest.visual_ci.regions.remote_viewport as number[]
+  const fixed=Buffer.from(reference.data)
+  for(let y=ry;y<ry+rh;y++)fixed.fill(0,(y*reference.width+rx)*4,(y*reference.width+rx+rw)*4)
+  const result=[]
+  for(const candidate of candidates){
+    const style=candidate.css?await page.addStyleTag({content:candidate.css}):null
+    await page.evaluate(()=>document.fonts.ready)
+    const screenshot=await page.screenshot({animations:'disabled',path:path.join(out,candidate.name+'.png')})
+    const actual=PNG.sync.read(screenshot)
+    expect([actual.width,actual.height]).toEqual([reference.width,reference.height])
+    const masked=Buffer.from(actual.data)
+    for(let y=ry;y<ry+rh;y++)masked.fill(0,(y*actual.width+rx)*4,(y*actual.width+rx+rw)*4)
+    const shellRatio=pixelmatch(masked,fixed,null,actual.width,actual.height,{threshold:manifest.visual_ci.threshold,includeAA:true})/(actual.width*actual.height-rw*rh)
+    const regions:Record<string,number>={}
+    for(const [name,box] of Object.entries(manifest.visual_ci.regions)){
+      if(name==='remote_viewport')continue
+      const [x,y,w,h]=box as number[]
+      const a=Buffer.alloc(w*h*4),b=Buffer.alloc(w*h*4)
+      for(let j=0;j<h;j++){
+        const start=((y+j)*actual.width+x)*4
+        actual.data.copy(a,j*w*4,start,start+w*4)
+        reference.data.copy(b,j*w*4,start,start+w*4)
+      }
+      regions[name]=pixelmatch(a,b,null,w,h,{threshold:manifest.visual_ci.threshold,includeAA:true})/(w*h)
+    }
+    const bounds=await page.locator('.browser-grid').boundingBox()
+    const boundaryError=bounds?Math.max(Math.abs(bounds.x-rx),Math.abs(bounds.y-ry),Math.abs(bounds.width-rw),Math.abs(bounds.height-rh)):null
+    const overflow=await page.evaluate(()=>{
+      const sections=Array.from(document.querySelectorAll('.right-panel section'))
+      return sections.some(section=>section.scrollHeight>section.clientHeight+2)||document.documentElement.scrollWidth>innerWidth+1
+    })
+    result.push({name:candidate.name,css:candidate.css,shellRatio,regions,boundaryError,overflow})
+    if(style)await style.evaluate(el=>el.remove())
+  }
+  const ranking=Object.fromEntries(Object.keys(result[0].regions).map(name=>[name,[...result].sort((a,b)=>a.regions[name]-b.regions[name]).map(x=>({name:x.name,ratio:x.regions[name],shellRatio:x.shellRatio,boundaryError:x.boundaryError,overflow:x.overflow}))]))
+  await writeFile(path.join(out,'layout-report.json'),JSON.stringify({diagnosticOnly:true,results:result,ranking},null,2))
+  console.log('LAYOUT_DIAGNOSTICS',JSON.stringify(result.map(x=>({name:x.name,shellRatio:x.shellRatio,regions:x.regions,boundaryError:x.boundaryError,overflow:x.overflow}))))
+})

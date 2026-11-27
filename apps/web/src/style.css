@@ -216,3 +216,13 @@
  .remote-status>span{font-weight:500}
  .remote-status .live{gap:4px}
 }
+
+/* Reference revision 10: measured 1536px toolbar / task-card positions.
+   Avoid changing dynamic progress values and mock-status labels. */
+@media(min-width:1401px){
+ .workspace-toolbar strong{gap:12px;margin-right:21px}
+ .remote-status>div{gap:6px}
+ .remote-status button{padding-inline:9px}
+ .right-panel .task-details{row-gap:5px}
+ .right-panel section:nth-of-type(4){min-height:147px}
+}
