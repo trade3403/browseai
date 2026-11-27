@@ -196,3 +196,7 @@ Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified pus
 
 ### V0.3 6b-2c CI 已验收；6c-1a 开发提交待验收
 实际 HEAD e41b3b83b42fd13312dce6cabff385059c0b5617，Push 46027678234、PR 46027689998 均 completed/success，20/20 jobs。新增 0014 可信公钥注册/轮换/吊销、独立最小权限角色、授权作用域及 SQL 测试，当前提交 CI 待查询。Go 调用集成及真实签名服务尚未实现，不允许推进任务。
+
+
+### V0.3 6c-1a 已通过；6c-1b 待 CI
+实际提交 dda23ee291d5aebe2b7f90b51510a658ff39925d，Push 46028420091、PR 46028429227 均 completed/success，20/20。新增注册公钥查询与复合验签入口，真实 PostgreSQL 独立角色及 mock GitHub 测试；当前提交尚未验收。独立签名服务、证据持久化及原子消费未完成。

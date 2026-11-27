@@ -6,11 +6,13 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -21,21 +23,21 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	now := time.Date(2026, 11, 27, 0, 0, 0, 0, time.UTC)
+	now := time.Now().UTC().Truncate(time.Second)
 	head, base, merge := strings.Repeat("a", 40), strings.Repeat("b", 40), strings.Repeat("c", 40)
 	p := githubPRPolicy{
 		push: githubEvidencePolicy{
-			binding: githubBinding{"00000000-0000-4000-8000-000000000001", 123, 456, "owner/repo"},
+			binding: githubBinding{"00000000-0000-4000-8000-000000000001", 99532, 99533, "owner/repo"},
 			branch:  "feat/demo", sha: head, workflowID: 2,
 			name: "CI", path: ".github/workflows/ci.yml", required: []string{"gate"},
 		},
 		number: 3, baseBranch: "main", baseSHA: base,
 	}
-	headRef := `{"ref":"feat/demo","sha":"` + head + `","repo":{"id":456}}`
-	baseRef := `{"ref":"main","sha":"` + base + `","repo":{"id":456}}`
+	headRef := `{"ref":"feat/demo","sha":"` + head + `","repo":{"id":99533}}`
+	baseRef := `{"ref":"main","sha":"` + base + `","repo":{"id":99533}}`
 	pr := `{"number":3,"state":"open","merged":false,"mergeable":true,"merge_commit_sha":"` + merge + `","head":` + headRef + `,"base":` + baseRef + `}`
 	link := `{"number":3,"head":` + headRef + `,"base":` + baseRef + `}`
-	run := `{"id":81,"workflow_id":2,"run_attempt":2,"head_sha":"` + head + `","head_branch":"feat/demo","event":"pull_request","status":"completed","conclusion":"success","repository":{"id":456},"head_repository":{"id":456},"path":".github/workflows/ci.yml","pull_requests":[` + link + `]}`
+	run := `{"id":81,"workflow_id":2,"run_attempt":2,"head_sha":"` + head + `","head_branch":"feat/demo","event":"pull_request","status":"completed","conclusion":"success","repository":{"id":99533},"head_repository":{"id":99533},"path":".github/workflows/ci.yml","pull_requests":[` + link + `]}`
 	workflow := `{"total_count":1,"workflows":[{"id":2,"name":"CI","path":".github/workflows/ci.yml","state":"active"}]}`
 	job := `{"total_count":1,"jobs":[{"id":91,"run_id":81,"run_attempt":2,"head_sha":"` + head + `","name":"gate","status":"completed","conclusion":"success"}]}`
 	const source = "name: CI\non: push\n"
@@ -47,11 +49,11 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 		var body string
 		status := 200
 		switch r.URL.Path {
-		case "/app/installations/123/access_tokens":
+		case "/app/installations/99532/access_tokens":
 			status = 201
-			body = `{"token":"synthetic","expires_at":"2026-11-27T01:00:00Z","repositories":[{"id":456}],"permissions":{"actions":"read","checks":"read","contents":"read","pull_requests":"read","metadata":"read"}}`
+			body = `{"token":"synthetic","expires_at":"` + now.Add(time.Hour).Format(time.RFC3339) + `","repositories":[{"id":99533}],"permissions":{"actions":"read","checks":"read","contents":"read","pull_requests":"read","metadata":"read"}}`
 		case "/repos/owner/repo":
-			body = `{"id":456,"full_name":"owner/repo"}`
+			body = `{"id":99533,"full_name":"owner/repo"}`
 		case "/repos/owner/repo/contents/.github/workflows/ci.yml":
 			text := source
 			if mode == "source-changed" {
@@ -166,22 +168,92 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 	}
 	prEvidence := githubCIEvidence{candidate.policy.push, candidate.runID, candidate.attempt, candidate.jobIDs, candidate.observedAt}
 	prProof := sign(githubExecutionMessage(p.push, prEvidence, digest, &p, candidate.relationship, now.Unix()))
-	if err := a.verifyPRExecution(ctx, p, digest, prProof, public, clock); err != nil {
-		t.Fatal("composite PR proof rejected", err)
-	}
-	mode = "source-changed"
-	if err := a.verifyPRExecution(ctx, p, digest, prProof, public, clock); err == nil {
-		t.Fatal("changed source accepted")
+	if err := verifyGitHubExecution(p.push, prEvidence, digest, &p, candidate.relationship, prProof, public, now); err != nil {
+		t.Fatal("PR proof rejected", err)
 	}
 	mode = "push"
 	pushProof := sign(githubExecutionMessage(p.push, e, digest, nil, githubPRRelationship{}, now.Unix()))
-	if err := a.verifyPushExecution(ctx, p.push, digest, pushProof, public, clock); err != nil {
-		t.Fatal("composite push proof rejected", err)
-	}
-	if err := a.verifyPushExecution(ctx, p.push, digest, githubExecutionProof{}, public, clock); err == nil {
-		t.Fatal("unsigned execution accepted")
+	if err := verifyGitHubExecution(p.push, e, digest, nil, githubPRRelationship{}, pushProof, public, now); err != nil {
+		t.Fatal("push proof rejected", err)
 	}
 	if _, err := a.observePushEvidence(ctx, p.push, nil); err == nil {
 		t.Fatal("nil push clock accepted")
 	}
+	t.Run("registered execution", func(t *testing.T) {
+		ownerDSN := os.Getenv("BROWSEAI_TEST_OWNER_DSN")
+		readerDSN := os.Getenv("BROWSEAI_TEST_VERIFIER_READER_DSN")
+		operatorDSN := os.Getenv("BROWSEAI_TEST_VERIFIER_OPERATOR_DSN")
+		if ownerDSN == "" && readerDSN == "" && operatorDSN == "" {
+			t.Skip("isolated PostgreSQL integration only")
+		}
+		if ownerDSN == "" || readerDSN == "" || operatorDSN == "" {
+			t.Fatal("incomplete verifier database configuration")
+		}
+		open := func(dsn string) *sql.DB {
+			t.Helper()
+			db, err := sql.Open("postgres", dsn)
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { db.Close() })
+			return db
+		}
+		owner, operator, reader := open(ownerDSN), open(operatorDSN), open(readerDSN)
+		b := p.push.binding
+		if _, err := owner.ExecContext(ctx, "SELECT browseai.provision_github_binding($1,$2,$3,$4,12,34)", b.tenantID, b.installationID, b.repositoryID, b.fullName); err != nil {
+			t.Fatal(err)
+		}
+		const verifierID = "00000000-0000-4000-8000-000000009951"
+		const keyID = "00000000-0000-4000-8000-000000009952"
+		const approvalID = "00000000-0000-4000-8000-000000009953"
+		if _, err := operator.ExecContext(ctx, "SELECT browseai.register_github_verifier($1,$2,$3,$4,$5,$6,$7,$8,$9)",
+			b.tenantID, b.installationID, b.repositoryID, verifierID, keyID, []byte(public), now.Add(-time.Minute), now.Add(time.Hour), approvalID); err != nil {
+			t.Fatal(err)
+		}
+		s := githubVerifierStore{reader}
+		registeredPR := githubRegisteredProof{verifierID, keyID, prProof}
+		registeredPush := githubRegisteredProof{verifierID, keyID, pushProof}
+		mode = ""
+		if err := s.verifyPRExecution(ctx, a, p, digest, registeredPR, clock); err != nil {
+			t.Fatal("registered PR rejected", err)
+		}
+		mode = "source-changed"
+		if err := s.verifyPRExecution(ctx, a, p, digest, registeredPR, clock); err == nil {
+			t.Fatal("changed source accepted")
+		}
+		mode = "push"
+		if err := s.verifyPushExecution(ctx, a, p.push, digest, registeredPush, clock); err != nil {
+			t.Fatal("registered push rejected", err)
+		}
+		for _, bad := range []githubRegisteredProof{
+			{},
+			{verifierID, "00000000-0000-4000-8000-000000009999", pushProof},
+			{"00000000-0000-4000-8000-000000009999", keyID, pushProof},
+			{verifierID, keyID, githubExecutionProof{now.Unix(), make([]byte, ed25519.SignatureSize)}},
+			{verifierID, keyID, githubExecutionProof{now.Add(-25 * time.Hour).Unix(), pushProof.signature}},
+		} {
+			if err := s.verifyPushExecution(ctx, a, p.push, digest, bad, clock); err == nil {
+				t.Fatal("invalid registered proof accepted")
+			}
+		}
+		for _, wrong := range []githubVerifierStore{{}, {owner}, {operator}} {
+			if _, err := wrong.key(ctx, b, registeredPush); err == nil {
+				t.Fatal("invalid role accepted")
+			}
+		}
+		foreign := b
+		foreign.tenantID = "00000000-0000-4000-8000-000000000002"
+		if _, err := s.key(ctx, foreign, registeredPush); err == nil {
+			t.Fatal("foreign key resolved")
+		}
+		if err := s.verifyObserved(ctx, p.push, e, digest, nil, githubPRRelationship{}, registeredPush, func() time.Time { return now.Add(githubEvidenceLifetime) }); err == nil {
+			t.Fatal("stale evidence accepted")
+		}
+		if _, err := operator.ExecContext(ctx, "SELECT browseai.revoke_github_verifier($1,$2,$3,$4,gen_random_uuid())", b.tenantID, b.installationID, b.repositoryID, keyID); err != nil {
+			t.Fatal(err)
+		}
+		if err := s.verifyPushExecution(ctx, a, p.push, digest, registeredPush, clock); err == nil {
+			t.Fatal("revoked signer accepted")
+		}
+	})
 }

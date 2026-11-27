@@ -152,6 +152,10 @@ jobs:
           export BROWSEAI_TEST_WEBHOOK_DSN="postgres://browseai_webhook:ci-webhook-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_monitor LOGIN PASSWORD 'ci-monitor-only'"
           export BROWSEAI_TEST_MONITOR_DSN="postgres://browseai_monitor:ci-monitor-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
+          psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_verifier_reader LOGIN PASSWORD 'ci-verifier-reader-only'"
+          export BROWSEAI_TEST_VERIFIER_READER_DSN="postgres://browseai_verifier_reader:ci-verifier-reader-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
+          psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_verifier_operator LOGIN PASSWORD 'ci-verifier-operator-only'"
+          export BROWSEAI_TEST_VERIFIER_OPERATOR_DSN="postgres://browseai_verifier_operator:ci-verifier-operator-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           cd services/controller
           go test -mod=readonly -race -coverprofile=coverage.out -count=1 -v ./...
           go tool cover -func=coverage.out | tee coverage-summary.txt

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"crypto/ed25519"
 	"encoding/json"
 	"sort"
@@ -83,29 +82,4 @@ func verifyGitHubExecution(p githubEvidencePolicy, e githubCIEvidence, digest st
 		return errGitHubAuthorization
 	}
 	return nil
-}
-
-// Only these composite checks combine remote observations, source pinning
-// and independent execution proof. No state transition or persistence here.
-func (a *githubApp) verifyPushExecution(ctx context.Context, p githubEvidencePolicy, digest string, proof githubExecutionProof, key ed25519.PublicKey, clock func() time.Time) error {
-	e, err := a.observePushEvidence(ctx, p, clock)
-	if err != nil {
-		return err
-	}
-	if err := a.verifyPushWorkflowSource(ctx, p, digest, clock()); err != nil {
-		return err
-	}
-	return verifyGitHubExecution(p, e, digest, nil, githubPRRelationship{}, proof, key, clock())
-}
-
-func (a *githubApp) verifyPRExecution(ctx context.Context, p githubPRPolicy, digest string, proof githubExecutionProof, key ed25519.PublicKey, clock func() time.Time) error {
-	c, err := a.observePRCandidate(ctx, p, clock)
-	if err != nil {
-		return err
-	}
-	if err := a.verifyPRWorkflowSource(ctx, p, c.relationship, digest, clock()); err != nil {
-		return err
-	}
-	e := githubCIEvidence{c.policy.push, c.runID, c.attempt, c.jobIDs, c.observedAt}
-	return verifyGitHubExecution(p.push, e, digest, &p, c.relationship, proof, key, clock())
 }
