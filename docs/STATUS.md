@@ -87,3 +87,5 @@ PR #1，上一轮证据 SHA 8b55da9691810d3c6263689a871ecb4fc799510e，运行 ht
 
 ### 数据库批次工作流配置修复
 SHA fa04258af5d42a975f3f61c15cc6db49b1e54ce4 push CI https://github.com/trade3403/browseai/actions/runs/45943338934 已失败，API 返回 0 jobs，未执行数据库测试。check-suite 详细错误接口无法访问；静态检查发现 job.services.postgres.ports 动态端口引用错误地位于 job env，改至实际 psql 步骤 env（允许 job context），其余测试与门槛不变。此为工作流配置修复，待新 CI 证实，尚不开始下一批。
+
+静态复查另发现回滚断言中的 SQL 双引号被多余转义，修正为独立 remaining 变量并显式 ON_ERROR_STOP；不修改测试预期，待新 CI。
