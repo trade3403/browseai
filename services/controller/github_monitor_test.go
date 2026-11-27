@@ -29,6 +29,12 @@ func TestPostgresGitHubMonitorStep(t *testing.T) {
 		return db
 	}
 	owner, worker := open(ownerDSN), open(monitorDSN)
+	if err := githubMonitorReady(context.Background(), worker); err != nil {
+		t.Fatal("monitor role rejected", err)
+	}
+	if err := githubMonitorReady(context.Background(), owner); err == nil {
+		t.Fatal("owner accepted as monitor")
+	}
 	tenant := "00000000-0000-4000-8000-000000000001"
 	project := "00000000-0000-4000-8000-000000009201"
 	task := "00000000-0000-4000-8000-000000009202"

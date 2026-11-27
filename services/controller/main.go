@@ -71,6 +71,12 @@ func newServer(addr string) *http.Server {
 
 func main() {
 	if len(os.Args) > 1 {
+		if os.Args[1] == "github-monitor" {
+			if len(os.Args) != 2 || githubMonitorCommand() != nil {
+				log.Fatal("GitHub monitor unavailable")
+			}
+			return
+		}
 		if os.Args[1] == "github-webhook" {
 			if len(os.Args) != 2 || !githubRoleDSNValid(os.Getenv("BROWSEAI_WEBHOOK_DSN"), "browseai_webhook") {
 				log.Fatal("invalid webhook database configuration")
