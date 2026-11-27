@@ -1,0 +1,15 @@
+{
+  "protocol_version": "1.0",
+  "task_id": "DEMO-001",
+  "stages": [
+    {
+      "id": "S1",
+      "dependencies": [],
+      "instruction": "Run unit and integration tests.",
+      "acceptance": [
+        "unit",
+        "integration"
+      ]
+    }
+  ]
+}

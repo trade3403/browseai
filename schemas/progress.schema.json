@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://browseai.invalid/schemas/progress.schema.json",
+  "title": "BrowseAI Git control progress",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "protocol_version": {
+      "const": "1.0"
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "stage_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"
+    },
+    "status": {
+      "enum": [
+        "QUEUED",
+        "READY",
+        "AWAIT_APPROVAL",
+        "DEVELOPING",
+        "WAIT_CI",
+        "CI_FAILED",
+        "STAGE_PASSED",
+        "HANDOFF_REQUIRED",
+        "HANDOFF_READY",
+        "PAUSED",
+        "OFFLINE",
+        "NEED_HUMAN",
+        "COMPLETED",
+        "STOPPED"
+      ]
+    },
+    "code_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "dispatch_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"
+    },
+    "completed_stage_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"
+      },
+      "minItems": 0,
+      "maxItems": 100,
+      "uniqueItems": true
+    },
+    "handoff_ready": {
+      "type": "boolean"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    }
+  },
+  "required": [
+    "protocol_version",
+    "task_id",
+    "revision",
+    "stage_id",
+    "status",
+    "code_sha",
+    "dispatch_id",
+    "completed_stage_ids",
+    "handoff_ready",
+    "updated_at"
+  ]
+}

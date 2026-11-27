@@ -1,7 +1,7 @@
-name: V0.1 CI
+name: BrowseAI development CI
 on:
   pull_request:
-    branches: [main]
+    branches: [main, 'feat/**']
   push:
     branches: [main, 'feat/**']
     tags: ['v1.*']
@@ -19,6 +19,15 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  schema:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Validate Git control protocol and negative samples
+        run: |
+          python3 -m venv "$RUNNER_TEMP/schema-venv"
+          "$RUNNER_TEMP/schema-venv/bin/python" -m pip install -r tests/schema/requirements.txt
+          "$RUNNER_TEMP/schema-venv/bin/python" -m unittest discover -s tests/schema -v
   backend:
     runs-on: ubuntu-24.04
     defaults:
@@ -195,7 +204,7 @@ jobs:
   gate:
     runs-on: ubuntu-24.04
     if: always()
-    needs: [backend, web, functional, visual-desktop, compose, windows-foundation]
+    needs: [schema, backend, web, functional, visual-desktop, compose, windows-foundation]
     steps:
       - name: Require all checks
         env:

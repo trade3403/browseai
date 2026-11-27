@@ -1,0 +1,12 @@
+{
+  "protocol_version": "1.0",
+  "task_id": "DEMO-001",
+  "revision": 12,
+  "stage_id": "S1",
+  "code_sha": "0123456789abcdef0123456789abcdef01234567",
+  "dispatch_id": "DEMO-001-S1-003",
+  "updated_at": "2026-11-27T00:00:00Z",
+  "status": "WAIT_CI",
+  "completed_stage_ids": [],
+  "handoff_ready": false
+}
