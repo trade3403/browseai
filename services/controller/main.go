@@ -57,15 +57,18 @@ func routes() http.Handler {
 	return mux
 }
 
-func main() {
-	addr := os.Getenv("LISTEN_ADDR")
+func newServer(addr string) *http.Server {
 	if addr == "" {
 		addr = "127.0.0.1:8080"
 	}
-	server := &http.Server{
+	return &http.Server{
 		Addr: addr, Handler: routes(), ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second, IdleTimeout: 30 * time.Second,
 	}
-	log.Printf("BrowseAI mock controller listening on %s", addr)
+}
+
+func main() {
+	server := newServer(os.Getenv("LISTEN_ADDR"))
+	log.Printf("BrowseAI mock controller listening on %s", server.Addr)
 	log.Fatal(server.ListenAndServe())
 }

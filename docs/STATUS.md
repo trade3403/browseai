@@ -25,3 +25,7 @@
 ## 2026-11-27 CI 修复记录
 PR #1，上一轮证据 SHA 8b55da9691810d3c6263689a871ecb4fc799510e，运行 https://github.com/trade3403/browseai/actions/runs/45921782957：backend、compose 通过；web 因 ESLint Vue 解析器被 TypeScript 解析器覆盖失败；functional 因 Playwright 1.50.1 不支持 Ubuntu 26.04 失败；visual-desktop 缺失原始图失败；gate 失败。
 本次修复 Vue ESLint parser 配置顺序、固定 Ubuntu 24.04，调整跨平台 E2E 启动目录与移动端最小宽度；新增 windows-foundation 实际 Windows Go EXE 测试、共用前端构建与 Chromium 功能测试；新增依赖锁文件 CI 产物用于后续固化。尚未完成 Electron，不得宣称 Windows 安装包已生成；完整客户端阶段门禁见 CI-ROADMAP §9。原始二进制、lockfile、视觉差异和覆盖率仍未达验收。新提交 CI 待核实，不进入 V0.2。
+
+## V0.1 第二轮 CI 与覆盖率修复
+证据 SHA 929fc80c6984a208cb1d3e2f8378a580267d3d53，PR CI https://github.com/trade3403/browseai/actions/runs/45922087583：backend、web、functional、compose、Windows foundation 全部通过；visual-desktop 缺失原图失败，gate 失败。Windows 已实际执行 Go EXE 编译/启动和 Chromium 功能测试，非 Electron 安装包验收。
+本次增加 HTTP 服务配置、响应头、JSON 编码错误测试；本地 go test -race、go vet、go build 通过，覆盖率 85.3%，新增 CI 75% 硬门槛。视觉测试调整为先保存实际截图，再校验原图存在及 SHA，缺失/不符仍必定失败并保留 BLOCKED 报告，不变更阈值。锁文件已从上述 CI 的 artifact 15165390426 下载并验证；原始图与 lockfile 已生成并验证可应用的 Git 二进制补丁，尚待实际入库。当前连接器无法将本地二进制文件或完整锁文件直接传到 GitHub；须通过用户 Git 上传或其他已授权文件传输方式解决。正式验收前 npm ci 与 Docker 依赖锁定仍待处理。新提交 CI 待核实，不进入 V0.2。

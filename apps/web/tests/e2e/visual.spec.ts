@@ -10,16 +10,17 @@ test('authoritative desktop visual baseline',async({page},info)=>{
   const manifest=JSON.parse(await readFile(path.join(root,'design/visual-baseline.json'),'utf8'))
   const out=info.outputPath('visual')
   await mkdir(out,{recursive:true})
-  let source:Buffer
-  try{source=await readFile(path.join(root,manifest.reference))}
-  catch{await writeFile(path.join(out,'report.json'),JSON.stringify({status:'BLOCKED',reason:'missing authoritative reference'},null,2));throw new Error('BLOCKED: missing original binary reference '+manifest.reference)}
-  expect(createHash('sha256').update(source).digest('hex')).toBe(manifest.sha256)
-  const meta=await sharp(source).metadata()
-  expect([meta.width,meta.height,meta.format]).toEqual([1536,864,'webp'])
   await page.goto('/')
   await expect(page.locator('.project')).toHaveCount(6)
   await page.evaluate(()=>document.fonts.ready)
   const actual=await page.screenshot({animations:'disabled',path:path.join(out,'actual.png')})
+  let source:Buffer
+  try{source=await readFile(path.join(root,manifest.reference))}
+  catch{await writeFile(path.join(out,'report.json'),JSON.stringify({status:'BLOCKED',reason:'missing authoritative reference'},null,2));throw new Error('BLOCKED: missing original binary reference '+manifest.reference)}
+  const actualHash=createHash('sha256').update(source).digest('hex')
+  if(actualHash!==manifest.sha256){await writeFile(path.join(out,'report.json'),JSON.stringify({status:'BLOCKED',reason:'reference hash mismatch',expected:manifest.sha256,actual:actualHash},null,2));throw new Error('BLOCKED: reference hash mismatch')}
+  const meta=await sharp(source).metadata()
+  expect([meta.width,meta.height,meta.format]).toEqual([1536,864,'webp'])
   const ref=await sharp(source).png().toBuffer()
   await writeFile(path.join(out,'reference.png'),ref)
   const a=PNG.sync.read(actual),b=PNG.sync.read(ref)
