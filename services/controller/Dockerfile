@@ -1,6 +1,6 @@
 FROM golang:1.23-alpine AS build
 WORKDIR /src
-COPY go.mod main.go ./
+COPY go.mod main.go tenant.go ./
 RUN CGO_ENABLED=0 go build -trimpath -o /controller .
 FROM alpine:3.21
 RUN adduser -D -u 10001 app
