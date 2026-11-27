@@ -79,3 +79,14 @@ test('desktop footer labels do not overlap adjacent status fields',async({page})
   }
   await expect(page.locator('.footer-duration')).toContainText('示例')
 })
+
+test('local notification badge reflects actual local log count',async({page})=>{
+  await page.goto('/')
+  await expect(page.locator('.project')).toHaveCount(6)
+  await expect(page.locator('.notice-count')).toHaveText('1')
+  await page.getByRole('button',{name:'暂停任务'}).click()
+  await expect(page.locator('.notice-count')).toHaveText('2')
+  await page.getByRole('button',{name:'通知，2条本地日志'}).click()
+  await expect(page.locator('.notice')).toBeVisible()
+  await expect(page.locator('.notice p')).toHaveCount(2)
+})

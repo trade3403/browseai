@@ -152,3 +152,38 @@
  .shell footer>span{font-size:12px;gap:6px}.shell footer>span:nth-of-type(8){font-size:11px;gap:4px}
  .shell footer>span:nth-of-type(8)>svg{width:13px}
 }
+
+/* Reference revision 6: text baselines and vector icon details; no raster UI overlay. */
+.brand-mark{color:#538ef4;filter:none}
+.notification-button{position:relative}.notice-count{position:absolute;top:-4px;right:-5px;background:#c83d47;color:white;font-size:9px;font-weight:700;border-radius:50%;min-width:14px;height:14px;display:grid;place-items:center;padding:0 2px;line-height:14px}
+.sidebar nav button svg{width:17px;height:17px}.project-head>svg{width:19px;height:19px}
+.ci-state.ci-demo-passed>svg{width:29px;height:29px}
+@media(min-width:1401px){
+ .global-header{padding-left:21px;gap:29px}
+ .brand{gap:9px}.brand strong{font-size:18px;letter-spacing:.1px;font-weight:700}.brand>svg{width:40px;height:32px}
+ .tagline{font-size:13px;font-weight:500;letter-spacing:-.12px}
+ .header-actions{gap:15px}.header-actions .online{padding:5px 10px;font-size:12px}
+ .sidebar nav button{font-size:14px;gap:11px;height:35px}.sidebar nav button.active{height:38px}
+ .sidebar nav button svg{stroke-width:1.8}
+ .project-head{gap:10px}.project-head b{font-size:14px;line-height:20px}.project-head>span{font-size:11px;gap:3px}
+ .project-list{gap:7px}.project:first-child{background:linear-gradient(110deg,#173a74,#1b3e76)}
+ .project:first-child .project-progress{margin-top:23px}.project:nth-child(2) .project-progress{margin-top:22px}
+ .project:nth-child(3) .project-progress{margin-top:21px}.project:nth-child(n+4) .project-progress{margin-top:19px}
+ .project-progress .track{height:9px}.project-progress .track>div{background:linear-gradient(90deg,#79adf6,#8abbfb)}
+ .project-progress .track>div.complete{background:#82cdd2}
+ .workspace-toolbar strong{gap:9px}.tab{height:37px}.tab button{font-size:13px}
+ .tab:nth-child(2) button:first-child{min-width:108px}.tab:nth-child(3) button:first-child{min-width:95px}
+ .tab button:last-child{padding-right:9px}.toolbar-buttons button{height:29px;padding:4px 8px}
+ .remote-status>div{gap:5px}.remote-status .live{padding:5px 7px}.remote-status button{padding:5px 6px}
+ .right-panel .controls button{font-weight:700;gap:4px}
+ .right-panel .controls .resume:disabled{background:#236b38;opacity:.75;color:#d0d8d1}
+ .right-panel section{padding-top:9px;padding-bottom:8px}
+ .right-panel section:nth-of-type(1) dl{grid-template-columns:60px minmax(0,1fr);row-gap:3px}
+ .right-panel section:nth-of-type(2) dl{grid-template-columns:86px minmax(0,1fr);row-gap:2px}
+ .right-panel .ci-state{min-height:42px;padding:3px 0;gap:9px}.ci-state small{font-size:11px}
+ .right-panel .wide-progress .track{height:11px}.right-panel .summary{margin-top:4px}
+ .right-panel .task-details dt{font-size:12px}.right-panel .task-details dd{font-size:12px}
+ .right-panel .next-actions li{font-size:12px;line-height:25px}
+ .shell footer{background:#101a25}.shell footer>span{font-size:12px}
+ .shell footer>span:nth-of-type(6){color:#aebdcc}.shell footer>span:nth-of-type(7) svg{color:#6cbd89}
+}

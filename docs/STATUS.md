@@ -48,3 +48,6 @@ PR #1，上一轮证据 SHA 8b55da9691810d3c6263689a871ecb4fc799510e，运行 ht
 
 ## 第五次真实视觉测量与修订
 证据 SHA 447f3e4a2ec1578369866c1b06b93ffe2dfed1c0；PR CI https://github.com/trade3403/browseai/actions/runs/45927408523，push CI https://github.com/trade3403/browseai/actions/runs/45927402733，均结束失败。backend/web/functional/compose/windows-foundation 五项通过。artifact 15167525318：外壳13.0587%（前13.3510%），整图12.5877%，header14.2916%、sidebar12.2230%、workspace_toolbar15.0006%、right_panel14.4690%、footer10.4948%，边界1.453125px。读取原图/实际图、JSON及像素颜色，发现底栏时长文本溢出与窗口字段重叠；新增底栏约束、缩短示例文字、真实 GitHub 图标组件和已完成状态图标，调整面板颜色和字体重量，新增底栏相邻元素不重叠断言。仍保留明确的模拟标记，不复制用户头像或伪造线上信息。新效果待 CI 测量，原图与1%门槛不变，不进入V0.2。
+
+## 第六次真实视觉测量及修订
+证据 SHA 4220e976a0164d12ac8ac7ef9595339dbab40fe3；PR CI https://github.com/trade3403/browseai/actions/runs/45928100111 和 push CI https://github.com/trade3403/browseai/actions/runs/45928093726 均完成失败。backend/web/functional/compose/windows-foundation 五项通过。artifact 15167232876：整图12.4919%，外壳12.8806%（前13.0587%），header14.3048%、sidebar11.7724%、workspace_toolbar14.9678%、right_panel14.4048%、footer10.1406%，边界1.453125px。已读取真实 reference/actual/diff 和几何报告；主要剩余差异集中在文字、图标、原图示例文案以及原图边缘模糊，布局边界已达标。修订6：矢量品牌标识、真实本地通知计数、导航GitHub标识、工具栏和卡片字体基线及进度位置微调，新增本地日志计数测试。保留模拟提示和禁用状态，不伪造真实服务在线、账户或CI。尚未达到1%验收，新效果待CI，不进入V0.2。
