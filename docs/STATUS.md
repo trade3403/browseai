@@ -192,3 +192,7 @@ Batch 6b-2a remote-test fix bb40ae569abbf92b8573287be480bcc549a009f8 verified pu
 Batch 6b-2b initial push 46021436379 and PR 46021445784 failed backend gofmt (github_workflow_source_test.go multiline function literal) and dependent gate; other eight jobs each passed, including database. Applied exact gofmt correction without changing test semantics or CI rules. New CI pending.
 
 Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified push https://github.com/trade3403/browseai/actions/runs/46022356142 and PR https://github.com/trade3403/browseai/actions/runs/46022362232 both 10/10 success. Batch 6b-2c adds composite verification and independent signed execution statement contract, synthetic tests. New CI pending. External trusted verifier/signing infrastructure not implemented; no autonomous advancement. Next durable evidence policy/consumption.
+
+
+### V0.3 6b-2c CI 已验收；6c-1a 开发提交待验收
+实际 HEAD e41b3b83b42fd13312dce6cabff385059c0b5617，Push 46027678234、PR 46027689998 均 completed/success，20/20 jobs。新增 0014 可信公钥注册/轮换/吊销、独立最小权限角色、授权作用域及 SQL 测试，当前提交 CI 待查询。Go 调用集成及真实签名服务尚未实现，不允许推进任务。
