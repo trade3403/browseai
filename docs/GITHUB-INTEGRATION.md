@@ -46,3 +46,6 @@ Run `controller github-webhook` as a separate process with BROWSEAI_WEBHOOK_DSN 
 
 ## Batch 4d: receiver hardening tests
 Adds protected webhook secret file boundary tests, Windows fail-closed test, eight-slot saturation and recovery tests, unknown-length oversized body rejection, request cancellation and secret-copy isolation tests. PostgreSQL integration exercises twelve concurrent duplicate deliveries and requires exactly one acceptance. These are synthetic and isolated database tests, not live GitHub or production load validation. Per-IP rate control remains the HTTPS proxy's responsibility. Polling and reconciliation must compensate for failed or missed webhook deliveries.
+
+## Batch 5a: Actions listings
+Read-only workflow and run listing via a fresh scoped installation token, stable repository identity verification, locally constructed pagination (30 per page, at most 10 pages), exact branch/head SHA filters and response checks. Missing totals, duplicates, inconsistent totals, partial pages and foreign head repositories fail closed. A bounded listing may reject busy repositories rather than truncate. These are observations only; PR merge-SHA relationship validation, per-attempt job evidence, scheduling and persistence remain pending. Synthetic HTTP transport tests only; no real GitHub App credentials.
