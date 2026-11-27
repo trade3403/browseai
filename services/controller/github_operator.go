@@ -12,8 +12,12 @@ import (
 )
 
 func githubOperatorDSNValid(dsn string) bool {
+	return githubRoleDSNValid(dsn, "browseai_github_operator")
+}
+
+func githubRoleDSNValid(dsn, role string) bool {
 	u, err := url.Parse(dsn)
-	if err != nil || (u.Scheme != "postgres" && u.Scheme != "postgresql") || u.Hostname() == "" || u.User == nil || u.User.Username() != "browseai_github_operator" {
+	if err != nil || (u.Scheme != "postgres" && u.Scheme != "postgresql") || u.Hostname() == "" || u.User == nil || u.User.Username() != role {
 		return false
 	}
 	q, err := url.ParseQuery(u.RawQuery)

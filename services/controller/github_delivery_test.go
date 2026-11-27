@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/sha256"
 	"database/sql"
+	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -30,6 +32,12 @@ func TestPostgresGitHubDelivery(t *testing.T) {
 	}
 	owner, operator, receiver, app := open(ownerDSN), open(operatorDSN), open(webhookDSN), open(appDSN)
 	ctx := context.Background()
+	if err := githubWebhookReady(ctx, receiver); err != nil {
+		t.Fatal("receiver role rejected", err)
+	}
+	if err := githubWebhookReady(ctx, app); err == nil {
+		t.Fatal("runtime accepted as receiver")
+	}
 	tenant := "00000000-0000-4000-8000-000000000001"
 	var ok bool
 	if err := operator.QueryRow("SELECT browseai.provision_github_binding($1,9123,9456,'owner/delivery',12,34)", tenant).Scan(&ok); err != nil || !ok {
@@ -50,7 +58,16 @@ func TestPostgresGitHubDelivery(t *testing.T) {
 			t.Fatal("unexpected delivery result", got, err)
 		}
 	}
-	check(d, "accepted")
+	key := []byte(strings.Repeat("s", 32))
+	body := `{"installation":{"id":9123},"repository":{"id":9456}}`
+	d.bodyDigest = sha256.Sum256([]byte(body))
+	handler := newGitHubWebhookHandler(key, store)
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, signedWebhookRequest(key, body))
+	if w.Code != 202 {
+		t.Fatal("HTTP delivery rejected", w.Code)
+	}
+	check(d, "duplicate")
 	check(d, "duplicate")
 	replay := d
 	replay.deliveryID = "12345678-1234-1234-1234-123456789abd"

@@ -19,7 +19,7 @@ import (
 // Only operator-controlled files are accepted. The containing directory must
 // be trusted and inaccessible to untrusted writers. Windows ACL provisioning
 // is not implemented; fail closed rather than interpreting POSIX mode bits.
-func loadGitHubAppKey(path string) (*rsa.PrivateKey, error) {
+func readProtectedGitHubFile(path string, limit int) ([]byte, error) {
 	if runtime.GOOS == "windows" || !filepath.IsAbs(path) {
 		return nil, errGitHubAuthorization
 	}
@@ -36,10 +36,17 @@ func loadGitHubAppKey(path string) (*rsa.PrivateKey, error) {
 	if err != nil || !os.SameFile(before, info) || !info.Mode().IsRegular() || info.Mode().Perm()&0077 != 0 {
 		return nil, errGitHubAuthorization
 	}
-	const limit = 64 * 1024
 	raw, err := io.ReadAll(io.LimitReader(f, limit+1))
 	if err != nil || len(raw) > limit {
 		return nil, errGitHubAuthorization
+	}
+	return raw, nil
+}
+
+func loadGitHubAppKey(path string) (*rsa.PrivateKey, error) {
+	raw, err := readProtectedGitHubFile(path, 64*1024)
+	if err != nil {
+		return nil, err
 	}
 	if !strings.HasPrefix(string(raw), "-----BEGIN ") {
 		return nil, errGitHubAuthorization

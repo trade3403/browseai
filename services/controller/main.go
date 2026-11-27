@@ -71,6 +71,36 @@ func newServer(addr string) *http.Server {
 
 func main() {
 	if len(os.Args) > 1 {
+		if os.Args[1] == "github-webhook" {
+			if len(os.Args) != 2 || !githubRoleDSNValid(os.Getenv("BROWSEAI_WEBHOOK_DSN"), "browseai_webhook") {
+				log.Fatal("invalid webhook database configuration")
+			}
+			secret, err := loadGitHubWebhookSecret(os.Getenv("BROWSEAI_WEBHOOK_SECRET_FILE"))
+			if err != nil {
+				log.Fatal("webhook secret unavailable")
+			}
+			db, err := sql.Open("postgres", os.Getenv("BROWSEAI_WEBHOOK_DSN"))
+			if err != nil {
+				log.Fatal("webhook database unavailable")
+			}
+			defer db.Close()
+			db.SetMaxOpenConns(8)
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			err = githubWebhookReady(ctx, db)
+			cancel()
+			if err != nil {
+				log.Fatal("webhook database role invalid")
+			}
+			addr := os.Getenv("BROWSEAI_WEBHOOK_ADDR")
+			if addr == "" {
+				addr = "127.0.0.1:8081"
+			}
+			server, err := newGitHubWebhookServer(addr, secret, githubDeliveryStore{db})
+			if err != nil {
+				log.Fatal("invalid webhook listener configuration")
+			}
+			log.Fatal(server.ListenAndServe())
+		}
 		if os.Args[1] == "github-bind" {
 			dsn := os.Getenv("BROWSEAI_GITHUB_OPERATOR_DSN")
 			if !githubOperatorDSNValid(dsn) {
