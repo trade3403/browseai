@@ -89,3 +89,6 @@ PR #1，上一轮证据 SHA 8b55da9691810d3c6263689a871ecb4fc799510e，运行 ht
 SHA fa04258af5d42a975f3f61c15cc6db49b1e54ce4 push CI https://github.com/trade3403/browseai/actions/runs/45943338934 已失败，API 返回 0 jobs，未执行数据库测试。check-suite 详细错误接口无法访问；静态检查发现 job.services.postgres.ports 动态端口引用错误地位于 job env，改至实际 psql 步骤 env（允许 job context），其余测试与门槛不变。此为工作流配置修复，待新 CI 证实，尚不开始下一批。
 
 静态复查另发现回滚断言中的 SQL 双引号被多余转义，修正为独立 remaining 变量并显式 ON_ERROR_STOP；不修改测试预期，待新 CI。
+
+## V0.2 第四批：会话认证及最小权限数据库接口
+证据 SHA eba29ec693e9d057ea9424ec653ebd947a58d642；PR CI https://github.com/trade3403/browseai/actions/runs/45943420860 与 push CI https://github.com/trade3403/browseai/actions/runs/45943415212 均 success，九项必需检查全部通过，数据库迁移、隔离及全局租约约束通过真实 PostgreSQL 测试。新增 0002_auth up/down，独立 browseai_auth 角色只能调用受控会话函数，无直接身份或项目表权限；8 小时会话、32 字节随机令牌、SHA-256 摘要、会话撤销、禁用及过期检查。Go 增加 sessionService 和 database/sql 参数化 adapter，以及领域单测；真实 PostgreSQL 测试检查双租户身份、权限、过期、撤销和回滚。当前容器无法连接 Go proxy，未引入未验证依赖，尚未配置 PostgreSQL Go driver/连接池 bootstrap、Argon2id/OIDC 真实身份验证、登录 HTTP 接口、Cookie/CSRF、限流或项目任务 CRUD；issueVerified 仅允许认证成功后的可信调用，不对 HTTP 暴露；运行仍 mock。新 CI 待验证，不进入下一批。
