@@ -140,3 +140,5 @@ V0.2 最终文档证据 SHA a1aea68e21deee039b6d1ab06dc77eb8fa2ecbe2，PR CI htt
 
 ## V0.3 third batch — initial security primitives
 Previous HEAD 26c0915b186f3ce4b99d0cce824786497c8c5ed4 verified: push https://github.com/trade3403/browseai/actions/runs/45967086759 and PR https://github.com/trade3403/browseai/actions/runs/45967093399 both success. Added internal protected PEM loader and remote App/installation/account/repository verification with synthetic contract tests. New commit CI pending; third batch not yet accepted. Remaining: privileged provisioning, key loader tests, token response compatibility and retry, integration tests. No live App credentials.
+
+Batch 3a CI for 765c15d5867ffca6abbc18d67d64017283b5c8ab: push https://github.com/trade3403/browseai/actions/runs/45971034894 and PR https://github.com/trade3403/browseai/actions/runs/45971041816 failed backend gofmt (github_setup_test.go field alignment); other eight jobs passed; gate failed. Applied exact gofmt log correction. New CI pending; no acceptance claimed.

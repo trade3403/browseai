@@ -19,7 +19,7 @@ func TestGitHubInstallationVerification(t *testing.T) {
 	now := time.Date(2026, 11, 27, 0, 0, 0, 0, time.UTC)
 	approval := githubInstallationApproval{
 		binding: githubBinding{"00000000-0000-4000-8000-000000000001", 123, 456, "owner/repo"},
-		appID: 12, accountID: 34,
+		appID:   12, accountID: 34,
 	}
 	installation := `{"id":123,"app_id":12,"account":{"id":34},"target_id":34,"suspended_at":null}`
 	response := installation
