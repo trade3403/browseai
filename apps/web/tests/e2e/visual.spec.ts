@@ -86,3 +86,71 @@ test('authoritative desktop visual baseline',async({page},info)=>{
   expect(boundaryError).not.toBeNull()
   expect(boundaryError!).toBeLessThanOrEqual(manifest.visual_ci.max_boundary_error_css_px)
 })
+
+/* Diagnostics are deliberately separate from the authoritative test above.
+ * Never substitute a candidate image for actual.png or use its score as the gate. */
+test('diagnostic font stack comparison',async({page},info)=>{
+  test.setTimeout(120000)
+  const manifest=JSON.parse(await readFile(path.join(root,'design/visual-baseline.json'),'utf8'))
+  const original=await readFile(path.join(root,manifest.reference))
+  expect(createHash('sha256').update(original).digest('hex')).toBe(manifest.sha256)
+  const reference=PNG.sync.read(await sharp(original).png().toBuffer())
+  const out=info.outputPath('font-diagnostics')
+  await mkdir(out,{recursive:true})
+  await page.goto('/')
+  await expect(page.locator('.project')).toHaveCount(6)
+  const remote=manifest.visual_ci.regions.remote_viewport as number[]
+  const [rx,ry,rw,rh]=remote
+  const shellPixels=reference.width*reference.height-rw*rh
+  const fixed=Buffer.from(reference.data)
+  for(let y=ry;y<ry+rh;y++)fixed.fill(0,(y*reference.width+rx)*4,(y*reference.width+rx+rw)*4)
+  const candidates=[
+    {name:'current',css:''},
+    {name:'noto-first',css:'html,body,#app{font-family:"Noto Sans CJK SC",Arial,sans-serif}'},
+    {name:'system-first',css:'html,body,#app{font-family:system-ui,"Noto Sans CJK SC",sans-serif}'},
+    {name:'liberation-first',css:'html,body,#app{font-family:"Liberation Sans","Noto Sans CJK SC",sans-serif}'},
+    {name:'yahei-first',css:'html,body,#app{font-family:"Microsoft YaHei","Noto Sans CJK SC",Arial,sans-serif}'}
+  ]
+  const session=await page.context().newCDPSession(page)
+  await session.send('DOM.enable')
+  await session.send('CSS.enable')
+  const result=[]
+  for(const candidate of candidates){
+    const style=candidate.css?await page.addStyleTag({content:candidate.css}):null
+    await page.evaluate(()=>document.fonts.ready)
+    const shot=await page.screenshot({animations:'disabled',path:path.join(out,candidate.name+'.png')})
+    const actual=PNG.sync.read(shot)
+    expect([actual.width,actual.height]).toEqual([reference.width,reference.height])
+    const masked=Buffer.from(actual.data)
+    for(let y=ry;y<ry+rh;y++)masked.fill(0,(y*actual.width+rx)*4,(y*actual.width+rx+rw)*4)
+    const ratio=pixelmatch(masked,fixed,null,actual.width,actual.height,{threshold:manifest.visual_ci.threshold,includeAA:true})/shellPixels
+    const regions:Record<string,number>={}
+    for(const [name,box] of Object.entries(manifest.visual_ci.regions)){
+      if(name==='remote_viewport')continue
+      const [x,y,w,h]=box as number[]
+      const a=Buffer.alloc(w*h*4),b=Buffer.alloc(w*h*4)
+      for(let j=0;j<h;j++){
+        const start=((y+j)*actual.width+x)*4
+        actual.data.copy(a,j*w*4,start,start+w*4)
+        reference.data.copy(b,j*w*4,start,start+w*4)
+      }
+      regions[name]=pixelmatch(a,b,null,w,h,{threshold:manifest.visual_ci.threshold,includeAA:true})/(w*h)
+    }
+    const platformFonts:Record<string,unknown>={}
+    const {root:dom}=await session.send('DOM.getDocument')
+    for(const selector of ['.brand strong','.tagline','.project-head b','.tab button','.right-panel h3','.right-panel dd','.shell footer']){
+      const {nodeId}=await session.send('DOM.querySelector',{nodeId:dom.nodeId,selector})
+      if(nodeId){
+        try{platformFonts[selector]=(await session.send('CSS.getPlatformFontsForNode',{nodeId})).fonts}
+        catch{platformFonts[selector]=null}
+      }
+    }
+    const bounds=await page.locator('.browser-grid').boundingBox()
+    const boundaryError=bounds?Math.max(Math.abs(bounds.x-rx),Math.abs(bounds.y-ry),Math.abs(bounds.width-rw),Math.abs(bounds.height-rh)):null
+    result.push({name:candidate.name,css:candidate.css,shellRatio:ratio,regions,platformFonts,boundaryError})
+    if(style)await style.evaluate(el=>el.remove())
+  }
+  await session.detach()
+  await writeFile(path.join(out,'font-report.json'),JSON.stringify({diagnosticOnly:true,baseline:'current',results:result,ranking:[...result].sort((a,b)=>a.shellRatio-b.shellRatio).map(x=>({name:x.name,shellRatio:x.shellRatio,boundaryError:x.boundaryError}))},null,2))
+  console.log('FONT_DIAGNOSTICS',JSON.stringify(result.map(x=>({name:x.name,shellRatio:x.shellRatio,boundaryError:x.boundaryError}))))
+})
