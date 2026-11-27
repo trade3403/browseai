@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -68,7 +69,38 @@ func TestPostgresGitHubDelivery(t *testing.T) {
 		t.Fatal("HTTP delivery rejected", w.Code)
 	}
 	check(d, "duplicate")
-	check(d, "duplicate")
+	// Simultaneous retries must coalesce into one durable row.
+	concurrent := d
+	concurrent.deliveryID = "12345678-1234-1234-1234-123456789abe"
+	concurrent.bodyDigest = sha256.Sum256([]byte("new concurrent body"))
+	type outcome struct {
+		status string
+		err    error
+	}
+	results := make(chan outcome, 12)
+	var wg sync.WaitGroup
+	for i := 0; i < 12; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			got, err := store.record(ctx, concurrent)
+			results <- outcome{got, err}
+		}()
+	}
+	wg.Wait()
+	close(results)
+	accepted := 0
+	for result := range results {
+		if result.err != nil || (result.status != "accepted" && result.status != "duplicate") {
+			t.Fatal("concurrent delivery failed", result)
+		}
+		if result.status == "accepted" {
+			accepted++
+		}
+	}
+	if accepted != 1 {
+		t.Fatal("concurrent delivery was not unique", accepted)
+	}
 	replay := d
 	replay.deliveryID = "12345678-1234-1234-1234-123456789abd"
 	replay.event = "push"
@@ -89,7 +121,7 @@ func TestPostgresGitHubDelivery(t *testing.T) {
 		t.Fatal("receiver can read ledger")
 	}
 	var n int
-	if err := owner.QueryRow("SELECT count(*) FROM browseai.github_deliveries WHERE tenant_id=$1 AND installation_id=9123 AND repository_id=9456", tenant).Scan(&n); err != nil || n != 1 {
+	if err := owner.QueryRow("SELECT count(*) FROM browseai.github_deliveries WHERE tenant_id=$1 AND installation_id=9123 AND repository_id=9456", tenant).Scan(&n); err != nil || n != 2 {
 		t.Fatal("unexpected ledger rows", n, err)
 	}
 	if _, err := owner.Exec("UPDATE browseai.github_installations SET enabled=false WHERE installation_id=9123"); err != nil {
