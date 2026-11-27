@@ -101,6 +101,9 @@ func TestPostgresGitHubMonitorStep(t *testing.T) {
 	if _, err := owner.Exec("UPDATE browseai.github_monitors SET next_at=clock_timestamp()-interval '1 second' WHERE id=$1", id); err != nil {
 		t.Fatal(err)
 	}
+	if _, err := owner.Exec("UPDATE browseai.github_installation_cooldowns SET next_at=clock_timestamp()-interval '1 second' WHERE installation_id=99202"); err != nil {
+		t.Fatal(err)
+	}
 	found, err = s.step(ctx, func(context.Context, githubMonitorClaim, time.Time) (githubCIState, error) {
 		return githubCIPending, errGitHubAuthorization
 	})

@@ -1,0 +1,12 @@
+BEGIN;
+DROP TRIGGER github_delivery_wakeup ON browseai.github_deliveries;
+DROP FUNCTION browseai.wake_github_monitors();
+DROP FUNCTION browseai.publish_github_monitor(uuid,uuid,text,integer,timestamptz);
+DROP FUNCTION browseai.claim_github_monitor();
+ALTER FUNCTION browseai.claim_github_monitor_v1() RENAME TO claim_github_monitor;
+ALTER FUNCTION browseai.publish_github_monitor_v1(uuid,uuid,text,integer,timestamptz) RENAME TO publish_github_monitor;
+GRANT EXECUTE ON FUNCTION browseai.claim_github_monitor(),browseai.publish_github_monitor(uuid,uuid,text,integer,timestamptz) TO browseai_monitor;
+DROP INDEX browseai.github_monitors_repository_idx;
+DROP INDEX browseai.github_monitors_installation_idx;
+DROP TABLE browseai.github_installation_cooldowns;
+COMMIT;
