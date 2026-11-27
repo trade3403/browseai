@@ -98,3 +98,6 @@ SHA fa04258af5d42a975f3f61c15cc6db49b1e54ce4 push CI https://github.com/trade340
 
 ## V0.2 第六批：真实 Argon2id 与 PostgreSQL 登录接入
 证据 SHA a7592f3b7c3f1c1c1b6633ae39fd3f5cca5e313f，PR CI https://github.com/trade3403/browseai/actions/runs/45946338279 与 push CI https://github.com/trade3403/browseai/actions/runs/45946333829 均 success，10 项检查全部通过。依赖校验 job 140331786350 通过官方 sumdb，读取真实 go.sum 日志并写入 controller，固定 lib/pq v1.10.9、x/crypto v0.36.0、x/sys v0.31.0；发布前仍需安全审计及升级。新增 0003 credential migration、Argon2id 固定参数及随机盐/恒时比较/未知账号 dummy KDF、真实 SQL verifier、认证独立运行模式与数据库权限/就绪检查。Docker 构建包含实际 Go 源码与锁定依赖。新增真实 PostgreSQL 两账号登录/me/撤销/禁用与错误密码测试；CI 使用一次性测试密码及非 TLS 测试 DSN，实际运行强制 verify-full 与 loopback/TLS 代理。当前仅认证 API 接入，默认 Compose 和视觉仍 mock；用户开通工具、登录页面、项目任务 CRUD、事务级租约、密码变更及重新启用时的彻底撤销、生产部署等未完成。本批新增代码未在本地执行完整测试，新 CI 待验证。V0.2 不视为完成。
+
+### 第六批 CI 工作流修复（2026-11-27）
+证据 SHA 40dc5611c0d33134844a52dfc28c8b5ac10a97db；push CI https://github.com/trade3403/browseai/actions/runs/45947817007 已结束失败，API 返回 0 jobs，未执行 Go/数据库/前端等测试。直接读取该 SHA 的 ci.yml 确认编辑时 JavaScript replace 的特殊替换符导致测试正则尾部美元符号与单引号被展开为原工作流后缀，造成命令截断及重复 job 块。恢复唯一完整 workflow，使用完整的 go test -mod=readonly -run '^TestPostgresAuthIntegration$' -count=1 -v 命令，保留所有 9 个必需子 job 及 gate、go mod verify 和只读 vet。提交前核对 job/trigger 名称唯一性及完整测试命令；未运行真实 Runner，待新 CI。尚不进入 CRUD 开发。
