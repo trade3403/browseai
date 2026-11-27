@@ -1,21 +1,21 @@
 # BrowseAI 分阶段开发与 CI 验收
 
-当前仓库初始化，仅设计文档，所有阶段均 NOT_STARTED。以下是必须实施的 CI 计划，非已运行工作流。默认 Ubuntu GitHub-hosted runner；可选专用隔离自建 runner 做 Docker/远程显示验收。不得将真实 ChatGPT 登录 profile、账号、私有仓库令牌传给 CI。
+V0.1 正在开发，其余阶段尚未开始。以下是必须实施的 CI 计划，非已运行工作流。默认 Ubuntu GitHub-hosted runner；可选专用隔离自建 runner 做 Docker/远程显示验收。不得将真实 ChatGPT 登录 profile、账号、私有仓库令牌传给 CI。
 
 ## 1. 阶段顺序（每阶段独立 PR、当前 SHA 验收后才进入下一阶段）
 
 | 版本 | 工作内容 | CI/验收门槛 |
 |---|---|---|
-| V0.1 | Monorepo、Go/Vue 初始化、Docker 基础、三栏 UI | gofmt/vet/test、前端 lint/typecheck/test/build、模拟界面 E2E；桌面 1920/1366 截图，移动布局 |
-| V0.2 | Git 控制 JSON Schema、任务 CRUD、PostgreSQL 迁移、状态机 | schema 正负样本、迁移 up/down、所有合法/非法状态边测试；repo+branch 唯一租约 |
-| V0.3 | GitHub App、Webhook、CI 轮询 | HMAC/重复/乱序/分页/限流；SHA 绑定、PR merge SHA、必需 job、缺失/取消/失败测试 |
-| V0.4 | 云端 Chrome/noVNC、标签及窗口管理、本地远程查看 | 本地模拟站点多窗、刷新/分屏/全屏、输入、权限、重连；真实登录只做本人手动验收 |
+| V0.1 | Monorepo、Go/Vue 初始化、Docker、三栏 UI、租户边界基础 | gofmt/vet/test、前端 lint/typecheck/test/build、模拟界面 E2E；桌面 1920/1366 截图，移动布局 |
+| V0.2 | Git 控制 JSON Schema、多租户认证/授权、任务 CRUD、PostgreSQL 迁移、状态机 | schema 正负样本、迁移 up/down、状态边、跨租户读写拒绝、全局 repo+branch 唯一租约 |
+| V0.3 | 租户独立 GitHub App 授权、Webhook、CI 轮询 | HMAC/重复/乱序/分页/限流；SHA 绑定、PR merge SHA、必需 job、缺失/取消/失败测试 |
+| V0.4 | 独立浏览器节点、租户 profile 隔离、Chrome/noVNC、窗口、远程查看 | 本地模拟站点多窗、刷新/分屏/全屏、输入、权限、重连；真实登录只做本人手动验收 |
 | V0.5 | 指令队列、人工确认、暂停/恢复/停止、调度并发 | 不确认不发送、独占接管、任务隔离、重复事件只建一条指令、STOPPED 无后续派发 |
 | V0.6 | Git 交接、新聊天、历史窗口、网络和重启恢复 | mock 交接完整/缺失/冲突；断网/重启/浏览器崩溃/发送结果未知测试，不能盲目重发 |
-| V0.7 | 多项目、日志、通知、WebSocket、响应式细节 | 3 活跃项目+10 排队；CI 等待释放槽；跨项目权限；事件补偿；视觉及可访问性 |
-| V0.8 | 安全加固、备份/恢复、Docker 部署、本地模式 | secret scan、依赖/SBOM/容器扫描、CSRF/鉴权/远程桌面访问、备份恢复、升级回滚 |
-| V0.9 | 全流程及性能、24h soak、文档、发布预演 | mock 全流程 10 次；故障注入；延迟与恢复时间实测；全套矩阵、无严重未关闭问题 |
-| V1.0 | 发布验收、版本标签、镜像、安装指南 | 所有必需检查成功、用户签收、发布产物校验、可复现部署和回滚 |
+| V0.7 | 多用户管理员、配额、多项目、日志、通知、WebSocket、Electron 共享 UI | 3 活跃项目+10 排队；CI 等待释放槽；跨项目权限；事件补偿；视觉及可访问性 |
+| V0.8 | 安全加固、跨租户隔离、备份/恢复、Docker 单机/多节点、本地模式 | secret scan、依赖/SBOM/容器扫描、CSRF/鉴权/远程桌面访问、备份恢复、升级回滚 |
+| V0.9 | 双租户 E2E、Windows 安装/便携打包、性能、24h soak、发布预演 | mock 全流程 10 次；故障注入；延迟与恢复时间实测；全套矩阵、无严重未关闭问题 |
+| V1.0 | 发布验收、版本标签、Windows EXE、Web ZIP、Linux 二进制、镜像、安装指南 | 所有必需检查成功、用户签收、发布产物校验、可复现部署和回滚 |
 
 ## 2. CI 工作流规划
 - .github/workflows/ci.yml：pull_request、main push；concurrency 按 PR 或分支取消过时运行；permissions contents: read；外部 Actions 固定可信完整 SHA，定期更新。
@@ -56,3 +56,6 @@ V0.2 后加入 schema 校验；V0.3 后加入模拟 GitHub 合约测试；V0.4 �
 
 ## 7. 1:1 UI 必需门禁
 V0.1 必须新增 visual-desktop 检查：验证原图 SHA、固定 1536×864/DPR1、截图差异与关键区域统计、差异图归档、功能断言。参考 design/visual-baseline.json；原图缺失不得跳过或假报成功。后续各阶段持续回归。
+
+## 8. 多用户和 Windows CI
+遵循 docs/MULTI-USER.md。V0.2 起每项 API 均加入跨租户负向测试；V0.4 验证两租户的浏览器/显示/存储隔离与节点故障恢复；V0.7 共享 UI 及管理员权限；V0.9 Windows runner 构建和运行安装/便携版本，并验证两个 mock 用户的完整链路。V1.0 不允许以单用户预览代替正式多租户验收。
