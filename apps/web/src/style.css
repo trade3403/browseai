@@ -130,3 +130,25 @@
  .shell footer>span:nth-of-type(6){justify-content:flex-start}.shell footer>span:nth-of-type(7){justify-content:flex-start}
 }
 @media(max-width:900px){.right-panel dd a{max-width:100%;overflow-wrap:anywhere}}
+
+/* Reference revision 5: actual CI a0/c2/447 geometry; retain real UI components. */
+.project-head>svg{color:#edf2f8}.project-head>span{display:inline-flex;align-items:center;gap:4px}
+.project-check{color:#53c86b}.right-panel h3>svg{flex-shrink:0}.right-panel h3>svg[fill="currentColor"]{color:#e8eef5}
+.footer-duration{min-width:0}.shell footer .footer-duration .footer-value{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shell footer>span:not(.footer-spacer){min-width:0}
+@media(min-width:1401px){
+ .brand strong{font-size:19px;font-weight:700}.global-header{background:#101722}.global-header .tagline{font-size:13px;font-weight:500}
+ .project-head b{font-size:14px;line-height:20px}.project-head>span{font-size:11px}.project-progress{font-size:12px}
+ .project-progress .track>div{background:linear-gradient(90deg,#76aef5,#86befa)}
+ .project-progress .track>div.complete{background:#8ad2d9}
+ .sidebar nav button{font-weight:500}.sidebar nav button.active{font-weight:600}.sidebar nav button svg{stroke-width:2.2}
+ .workspace-toolbar strong{font-weight:700}.tab button{font-weight:500}.tab.active button:first-child{font-weight:600}
+ .toolbar-buttons button{font-weight:500}.remote-status{font-size:12px}
+ .right-panel section{background:#151e2b}.right-panel h3{font-size:13px;font-weight:700}
+ .right-panel section:nth-of-type(1)>b{font-weight:600}.right-panel dl{font-size:12px}
+ .right-panel .ci-state b{font-weight:700}.right-panel .summary,.right-panel p{font-size:12px}
+ .right-panel section:nth-of-type(5){height:144px;min-height:144px}
+ .shell footer{background:#121b26;grid-template-columns:21.5% 12.3% 8.2% 14% minmax(0,1fr) 165px 110px 126px}
+ .shell footer>span{font-size:12px;gap:6px}.shell footer>span:nth-of-type(8){font-size:11px;gap:4px}
+ .shell footer>span:nth-of-type(8)>svg{width:13px}
+}

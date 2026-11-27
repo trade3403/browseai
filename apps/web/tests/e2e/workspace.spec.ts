@@ -61,3 +61,21 @@ test('reference sample fields stay scoped to the mock project and details are la
   await expect(page.getByText('未连接真实任务计划',{exact:false})).toBeVisible()
   await expect(page.locator('.ci-demo-passed')).toHaveCount(0)
 })
+
+test('desktop footer labels do not overlap adjacent status fields',async({page})=>{
+  await page.setViewportSize({width:1536,height:864})
+  await page.goto('/')
+  await expect(page.locator('.project')).toHaveCount(6)
+  const fields=await page.locator('.shell footer > span:not(.footer-spacer)').evaluateAll(nodes=>nodes.map(node=>{
+    const rect=node.getBoundingClientRect()
+    const range=document.createRange()
+    range.selectNodeContents(node)
+    const content=range.getBoundingClientRect()
+    return {left:rect.left,right:rect.right,contentRight:content.right}
+  }))
+  for(let i=0;i<fields.length-1;i++){
+    expect(fields[i].right).toBeLessThanOrEqual(fields[i+1].left+1)
+    expect(fields[i].contentRight).toBeLessThanOrEqual(fields[i+1].left+1)
+  }
+  await expect(page.locator('.footer-duration')).toContainText('示例')
+})
