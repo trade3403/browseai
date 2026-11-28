@@ -82,4 +82,5 @@ func testGitHubCIService(t *testing.T, ctx context.Context, owner, writer *sql.D
 	if err := tx.Rollback(); err != nil {
 		t.Fatal(err)
 	}
+	testGitHubCIAcceptanceGrant(t, ctx, owner, plan, clock)
 }

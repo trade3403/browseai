@@ -84,6 +84,8 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_evidence_writer NOLOGIN NOSUPERUSER NOBYPASSRLS'
           psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_failure_observer NOLOGIN NOSUPERUSER NOBYPASSRLS'
           psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_failure_grant_operator NOLOGIN NOSUPERUSER NOBYPASSRLS'
+          psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_ci_acceptor NOLOGIN NOSUPERUSER NOBYPASSRLS'
+          psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_ci_approval_operator NOLOGIN NOSUPERUSER NOBYPASSRLS'
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0001_initial.up.sql
           psql -X -v ON_ERROR_STOP=1 -f tests/database/fixtures.sql
           psql -X -v ON_ERROR_STOP=1 -f tests/database/isolation.sql
@@ -118,6 +120,8 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0024_github_monitor_schedule.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0025_github_failure_observer.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0026_github_failure_grant_operator.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0027_github_acceptance_grants.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0027_github_acceptance_grants.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0026_github_failure_grant_operator.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0025_github_failure_observer.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0024_github_monitor_schedule.down.sql
@@ -180,6 +184,7 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0024_github_monitor_schedule.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0025_github_failure_observer.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0026_github_failure_grant_operator.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0027_github_acceptance_grants.up.sql
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_admin LOGIN PASSWORD 'ci-admin-only'"
           export BROWSEAI_TEST_ADMIN_DSN="postgres://browseai_admin:ci-admin-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_auth LOGIN PASSWORD 'ci-auth-only'"
@@ -203,6 +208,10 @@ jobs:
           export BROWSEAI_TEST_FAILURE_OBSERVER_DSN="postgres://browseai_failure_observer:ci-failure-observer-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_failure_grant_operator LOGIN PASSWORD 'ci-failure-grant-only'"
           export BROWSEAI_TEST_FAILURE_GRANT_DSN="postgres://browseai_failure_grant_operator:ci-failure-grant-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
+          psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_ci_acceptor LOGIN PASSWORD 'ci-acceptor-only'"
+          export BROWSEAI_TEST_CI_ACCEPTOR_DSN="postgres://browseai_ci_acceptor:ci-acceptor-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
+          psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_ci_approval_operator LOGIN PASSWORD 'ci-approval-only'"
+          export BROWSEAI_TEST_CI_APPROVAL_DSN="postgres://browseai_ci_approval_operator:ci-approval-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           cd services/controller
           go test -mod=readonly -race -coverprofile=coverage.out -count=1 -v ./...
           go tool cover -func=coverage.out | tee coverage-summary.txt

@@ -368,3 +368,7 @@ Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified pus
 
 ### V0.3 8c-1 已验收；8c-2 失败观察启动及运维授权待 CI
 证据 SHA c5e0eb4db5bf7ffa379df22d95d2ba28b5b4f00b，Push 46131983860、PR 46131990480 均 completed/success，20/20。迁移 0026 新增独立 NOLOGIN browseai_failure_grant_operator，仅签发/撤销固定 WAIT_CI 任务限时授权，复验审计绑定，记录 session_user，拒绝重复/过期。Linux 非 root 一次性 controller github-failure issue|revoke|observe DIR，受保护 canonical failure.json，签发/撤销需人工输入动作与 SHA256 审批行，observe 使用独立角色与 App 只读 HTTPS、无代理、限时，不监听 HTTP、不发送、不预留修复。CI 测试独立运维角色、配置篡改、拒绝过期/旧版本、撤销及并发消费。新 CI 待验收；真实环境、签发者身份由独立运维凭据管理，不等于用户级认证；成功验收服务和部署仍待完成。
+
+
+### V0.3 8c-2 已验收；8c-3a 独立成功验收授权待 CI
+证据 SHA 01050501a58e1998a0e56b19104e5200b2fcfcfc，Push 46134176241、PR 46134179918 均 completed/success，20/20。迁移 0027 新增独立 NOLOGIN browseai_ci_acceptor / browseai_ci_approval_operator，专用限时双证据审批授权、撤销、原子消费，绑定 task revision/actor/Push PR IDs/digests/workflow/source，授权不得超过原证据有效期或30秒。原 owner 函数仍封闭；Go prepared plan 专用 applyAuthorized 及最小权限检查；测试实际两个独立数据库登录、未签发/摘要不符/重复/撤销、事务回滚和权限矩阵。运维 attestation 非用户会话认证，SQL 不能独立核实 GitHub 观察；成功服务实际启动/可信配置、审批交互和部署仍待完成，新 CI 待验收。

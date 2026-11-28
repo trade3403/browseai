@@ -13,8 +13,8 @@ import (
 // No runtime identity may directly touch these sealed tables or functions.
 func testGitHubSealedPrivileges(t *testing.T, ctx context.Context, db *sql.DB) {
 	t.Helper()
-	roles := []string{"browseai_app", "browseai_auth", "browseai_admin", "browseai_github_operator", "browseai_webhook", "browseai_monitor", "browseai_verifier_operator", "browseai_verifier_reader", "browseai_evidence_writer"}
-	tables := []string{"github_ci_evidence", "github_ci_acceptance", "github_ci_failures", "github_ci_repair_audit", "github_ci_repair_approvals", "github_stage_decisions", "github_ci_repair_confirmations"}
+	roles := []string{"browseai_app", "browseai_auth", "browseai_admin", "browseai_github_operator", "browseai_webhook", "browseai_monitor", "browseai_verifier_operator", "browseai_verifier_reader", "browseai_evidence_writer", "browseai_failure_observer", "browseai_failure_grant_operator", "browseai_ci_acceptor", "browseai_ci_approval_operator"}
+	tables := []string{"github_ci_evidence", "github_ci_acceptance", "github_ci_failures", "github_ci_repair_audit", "github_ci_repair_approvals", "github_stage_decisions", "github_ci_repair_confirmations", "github_failure_observer_grants", "github_ci_acceptance_grants"}
 	functions := []string{
 		"consume_github_ci_evidence(uuid,uuid,bigint,uuid,bytea)",
 		"accept_github_ci(uuid,uuid,bigint,uuid,uuid,uuid,bytea,uuid,bytea,bigint,text)",
