@@ -146,4 +146,36 @@ func testGitHubCommittedAcceptance(t *testing.T, ctx context.Context, owner *sql
 	if err := owner.QueryRowContext(ctx, "SELECT t.state,t.revision,(SELECT count(*) FROM browseai.github_ci_evidence WHERE id IN($2,$3) AND consumed_at IS NOT NULL),g.acceptance_id=g.id FROM browseai.tasks t JOIN browseai.github_ci_acceptance_grants g ON g.task_id=t.id WHERE t.id=$1 AND g.id=$4", a.task.taskID, a.pushID, a.prID, a.approvalID).Scan(&state, &revision, &count, &linked); err != nil || state != "STAGE_PASSED" || revision != a.task.revision+1 || count != 2 || !linked {
 		t.Fatal("committed acceptance not durable", state, revision, count, linked, err)
 	}
+	// Complete the accepted single-stage task only through the separate
+	// historical decision, not through a monitor flag or a new CI read.
+	if _, err := owner.ExecContext(ctx, "INSERT INTO browseai.stages(tenant_id,task_id,stage_id,ordinal,weight,instruction,acceptance) VALUES($1,$2,'stage',0,1,'committed fixture',ARRAY['CI'])", a.tenantID, a.task.taskID); err != nil {
+		t.Fatal(err)
+	}
+	const decision = "00000000-0000-4000-8000-000000009980"
+	query := "SELECT browseai.decide_github_stage($1,$2,$3,$4,$5,$6,$7)"
+	args := []any{a.tenantID, a.task.taskID, revision, a.approvalID, a.actorID, decision, "complete"}
+	tx, err := owner.BeginTx(ctx, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tx.Rollback()
+	if _, err := tx.ExecContext(ctx, "UPDATE browseai.projects SET code_branch='feat/drift' WHERE id=$1", a.task.projectID); err != nil {
+		t.Fatal(err)
+	}
+	var ok bool
+	if err := tx.QueryRowContext(ctx, query, args...).Scan(&ok); err != nil || ok {
+		t.Fatal("historical stage accepted on changed branch", ok, err)
+	}
+	if err := tx.Rollback(); err != nil {
+		t.Fatal(err)
+	}
+	if err := owner.QueryRowContext(ctx, query, args...).Scan(&ok); err != nil || !ok {
+		t.Fatal("committed stage decision failed", ok, err)
+	}
+	if err := owner.QueryRowContext(ctx, query, args...).Scan(&ok); err != nil || ok {
+		t.Fatal("committed decision replayed", ok, err)
+	}
+	if err := owner.QueryRowContext(ctx, "SELECT state,revision FROM browseai.tasks WHERE id=$1", a.task.taskID).Scan(&state, &revision); err != nil || state != "COMPLETED" || revision != a.task.revision+2 {
+		t.Fatal("complete decision not durable", state, revision, err)
+	}
 }

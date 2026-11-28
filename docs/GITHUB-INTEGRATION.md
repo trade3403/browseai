@@ -257,3 +257,7 @@ Migration 0028 permits the acceptor to read only the two original envelopes refe
 
 ## 8c-3b coverage repair (CI pending)
 Previous exact SHA 8f50d3f98efb50d60724c2732a5aac4030cfde8d Push 46138550811 / PR 46138554959 failed solely at the database coverage threshold (73.8%, all Go assertions passed). Exercise canonical acceptance configuration, startup rejection, poll observations, operator grant action and committed dual-evidence acceptance using a separate synthetic attempt. No coverage threshold, evidence freshness or permission gate is relaxed. New CI pending.
+
+
+## Batch 8d-1: historical scope and committed end-to-end decision (CI pending)
+Migration 0029 records the original project and branch for new failure rows. Reserve, approve and manual confirmation reject changed scope even if the repository, task, SHA and fence are unchanged. Old rows without immutable scope remain NULL and fail closed; do not backfill from mutable current settings. Historical stage decisions additionally require a live audited repository binding. Integration fixtures exercise branch drift in each repair phase and committed acceptance followed by a distinct complete decision, including replay denial. This does not grant the owner-only repair/stage decision primitives to production identities. Actual user-authenticated approval and independent execution deployment remain unverified.

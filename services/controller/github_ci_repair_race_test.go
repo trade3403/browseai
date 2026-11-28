@@ -139,6 +139,40 @@ func testGitHubRepairRace(t *testing.T, ctx context.Context, db *sql.DB, c githu
 	if err := db.QueryRowContext(ctx, "SELECT failure_id=$2 FROM browseai.github_failure_observer_grants WHERE id=$1", grant, failure).Scan(&linked); err != nil || !linked {
 		t.Fatal("grant consumption missing", linked, err)
 	}
+	// Temporarily move both the project and lease, keeping the same
+	// task, SHA, repository and fence. No old failure may authorize it.
+	rejectBranchDrift := func(action string, call func(*sql.Tx) (bool, error)) {
+		t.Helper()
+		tx, err := db.BeginTx(ctx, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer tx.Rollback()
+		if _, err := tx.ExecContext(ctx, "DELETE FROM browseai.leases WHERE fence=$1", fence); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := tx.ExecContext(ctx, "UPDATE browseai.projects SET code_branch='feat/drift' WHERE id=$1", c.task.projectID); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := tx.ExecContext(ctx, "INSERT INTO browseai.leases(repository_id,code_branch,tenant_id,task_id,project_id,fence,expires_at) VALUES($1,'feat/drift',$2,$3,$4,$5,clock_timestamp()+interval '60 seconds')", c.policy.binding.repositoryID, tenant, task, c.task.projectID, fence); err != nil {
+			t.Fatal(err)
+		}
+		if ok, err := call(tx); err != nil || ok {
+			t.Fatal("branch drift", action, ok, err)
+		}
+		if err := tx.Rollback(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var branch, project string
+	if err := db.QueryRowContext(ctx, "SELECT code_branch,project_id::text FROM browseai.github_ci_failures WHERE id=$1", failure).Scan(&branch, &project); err != nil || branch != c.policy.branch || project != c.task.projectID {
+		t.Fatal("original failure scope lost", branch, project, err)
+	}
+	rejectBranchDrift("reserve", func(tx *sql.Tx) (bool, error) {
+		var target sql.NullString
+		err := tx.QueryRowContext(ctx, "SELECT browseai.reserve_github_ci_repair($1,$2,$3,$4,$5)", tenant, task, c.task.revision+1, failure, fence).Scan(&target)
+		return target.Valid, err
+	})
 	race("reserve repair", func() (bool, error) {
 		var target sql.NullString
 		err := db.QueryRowContext(ctx, "SELECT browseai.reserve_github_ci_repair($1,$2,$3,$4,$5)", tenant, task, c.task.revision+1, failure, fence).Scan(&target)
@@ -148,10 +182,20 @@ func testGitHubRepairRace(t *testing.T, ctx context.Context, db *sql.DB, c githu
 		return target.Valid, err
 	})
 	instruction := []byte("Review and repair race fixture")
+	rejectBranchDrift("approve", func(tx *sql.Tx) (bool, error) {
+		var ok bool
+		err := tx.QueryRowContext(ctx, "SELECT browseai.approve_github_ci_repair($1,$2,$3,$4,$5,$6,$7,$8)", tenant, task, c.task.revision+2, failure, actor, approval, fence, instruction).Scan(&ok)
+		return ok, err
+	})
 	race("approve repair", func() (bool, error) {
 		var ok bool
 		err := db.QueryRowContext(ctx, "SELECT browseai.approve_github_ci_repair($1,$2,$3,$4,$5,$6,$7,$8)",
 			tenant, task, c.task.revision+2, failure, actor, approval, fence, instruction).Scan(&ok)
+		return ok, err
+	})
+	rejectBranchDrift("confirm", func(tx *sql.Tx) (bool, error) {
+		var ok bool
+		err := tx.QueryRowContext(ctx, "SELECT browseai.confirm_github_ci_repair($1,$2,$3,$4,$5,$6,$7,$8)", tenant, task, c.task.revision+2, approval, actor, confirmation, fence, instruction).Scan(&ok)
 		return ok, err
 	})
 	race("confirm repair", func() (bool, error) {
