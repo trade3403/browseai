@@ -54,4 +54,5 @@ func testGitHubRepairApproval(t *testing.T, ctx context.Context, tx *sql.Tx, ten
 	if err := tx.QueryRowContext(ctx, "SELECT state,revision FROM browseai.tasks WHERE id=$1", task).Scan(&state, &current); err != nil || state != "AWAIT_APPROVAL" || current != revision {
 		t.Fatal("approval moved task", state, current, err)
 	}
+	testGitHubRepairConfirmation(t, ctx, tx, tenant, task, approval, actor, uint64(revision), fence, args[7].([]byte))
 }

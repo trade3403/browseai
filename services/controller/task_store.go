@@ -176,6 +176,11 @@ func (s taskStore) transition(ctx context.Context, p principal, id string, revis
 			}
 		}
 		if action == actionConfirmSent {
+			// Repairs require an exact-byte confirmation through the sealed
+			// repair-specific adapter, never a generic task approval.
+			if r.Repairs > 0 {
+				return taskRecord{}, errResourceConflict
+			}
 			if err := requireTaskApproval(ctx, tx, p, r, evidence.LeaseFence); err != nil {
 				return taskRecord{}, err
 			}
