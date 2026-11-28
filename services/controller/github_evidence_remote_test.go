@@ -56,7 +56,7 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 			body = `{"id":99533,"full_name":"owner/repo"}`
 		case "/repos/owner/repo/contents/.github/workflows/ci.yml":
 			text := source
-			if mode == "source-changed" {
+			if mode == "source-changed" || mode == "failure-source-changed" {
 				text = "changed"
 			}
 			raw, err := json.Marshal(githubWorkflowSource{Type: "file", Path: p.push.path, Size: len(text), Encoding: "base64", Content: base64.StdEncoding.EncodeToString([]byte(text))})
@@ -86,8 +86,11 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 				t.Fatal("wrong run query")
 			}
 			item := run
-			if mode == "push" {
+			if mode == "push" || mode == "push-failure" {
 				item = strings.Replace(item, `"pull_request"`, `"push"`, 1)
+			}
+			if mode == "push-failure" || mode == "pr-failure" || mode == "failure-source-changed" {
+				item = strings.Replace(item, `"conclusion":"success"`, `"conclusion":"failure"`, 1)
 			}
 			body = `{"total_count":1,"workflow_runs":[` + item + `]}`
 			if mode == "ambiguous" || (mode == "new-run" && listReads == 2) {
@@ -96,8 +99,11 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 		case "/repos/owner/repo/actions/runs/81":
 			detailReads++
 			body = run
-			if mode == "push" {
+			if mode == "push" || mode == "push-failure" {
 				body = strings.Replace(body, `"pull_request"`, `"push"`, 1)
+			}
+			if mode == "push-failure" || mode == "pr-failure" || mode == "failure-source-changed" {
+				body = strings.Replace(body, `"conclusion":"success"`, `"conclusion":"failure"`, 1)
 			}
 			if mode == "foreign-link" {
 				body = strings.Replace(body, `"number":3`, `"number":4`, 1)
@@ -110,6 +116,9 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 			}
 		case "/repos/owner/repo/actions/runs/81/attempts/2/jobs":
 			body = job
+			if mode == "push-failure" || mode == "pr-failure" || mode == "failure-source-changed" {
+				body = strings.Replace(body, `"conclusion":"success"`, `"conclusion":"failure"`, 1)
+			}
 			if mode == "jobs-error" {
 				status = 503
 			}
@@ -263,6 +272,31 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 		mode = ""
 		if _, _, err := expiring(ctx); err == nil {
 			t.Fatal("expired observation accepted")
+		}
+		mode = "push"
+	})
+	t.Run("strict failure candidate", func(t *testing.T) {
+		policy := githubIndependentPolicy{}
+		policy.task = githubEvidenceTask{"00000000-0000-4000-8000-000000009954", "00000000-0000-4000-8000-000000009955", 4}
+		policy.execution, policy.sourceDigest = p.push, digest
+		mode = "push-failure"
+		failed, err := a.observeCIFailure(ctx, policy, clock)
+		if err != nil || failed.event != "push" || failed.runID != 81 || failed.attempt != 2 || len(failed.failedIDs) != 1 || failed.failedIDs[0] != 91 {
+			t.Fatal("valid push failure rejected", err)
+		}
+		mode = "push"
+		if _, err := a.observeCIFailure(ctx, policy, clock); err == nil {
+			t.Fatal("success classified as repairable failure")
+		}
+		policy.pr = &p
+		mode = "pr-failure"
+		failed, err = a.observeCIFailure(ctx, policy, clock)
+		if err != nil || failed.event != "pull_request" || failed.task != policy.task {
+			t.Fatal("valid PR failure rejected", err)
+		}
+		mode = "failure-source-changed"
+		if _, err := a.observeCIFailure(ctx, policy, clock); err == nil {
+			t.Fatal("untrusted workflow failure accepted")
 		}
 		mode = "push"
 	})

@@ -201,3 +201,7 @@ Migration 0018 adds an owner-only transaction primitive for exactly one Push and
 
 ## Batch 7b: dual-evidence service preparation (CI pending)
 The internal Go service binds the exact human approval reference, actor, task revision, two evidence row IDs and digests, independently pinned Push/PR policy, and original envelopes. It re-observes and re-verifies both events, bounds the prepared plan by the earlier original expiry, then calls the sealed SQL acceptance primitive in a caller-owned transaction. Integration tests use synthetic GitHub and real PostgreSQL; owner-side transactions are rollback-only. No runtime role, external API, trusted human approval channel or production scheduler is wired yet. The service must never be exposed to callers who can construct arbitrary approvals or supply privileged database credentials.
+
+
+## Batch 7c-1: strict CI failure candidate (CI pending)
+Distinguish a completed failure with at least one explicitly failed required job from cancelled, timed-out, incomplete, infrastructure or ambiguous results. The read-only adapter checks a fixed workflow, exact attempt jobs, immutable source, PR association when needed and re-reads the run listing under a freshness bound. It binds a task revision but is not a signed execution attestation, persisted failure authorization or repair dispatch. Only synthetic HTTP and unit tests in this increment; no runtime grants or task movement.
