@@ -71,6 +71,13 @@ func newServer(addr string) *http.Server {
 
 func main() {
 	if len(os.Args) > 1 {
+		if os.Args[1] == "github-ci-acceptance" {
+			if githubCIAcceptanceCommand(os.Args[2:], os.Stdin) != nil {
+				log.Fatal("GitHub CI acceptance operation rejected")
+			}
+			log.Print("GitHub CI acceptance operation recorded")
+			return
+		}
 		if os.Args[1] == "github-failure" {
 			if githubFailureCommand(os.Args[2:], os.Stdin) != nil {
 				log.Fatal("GitHub failure operation rejected")

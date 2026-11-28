@@ -42,11 +42,12 @@ AND NOT r.rolsuper AND NOT r.rolbypassrls AND NOT r.rolcreaterole AND NOT r.rolc
 AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_auth_members WHERE member=r.oid)
 AND CASE WHEN $1='browseai_ci_acceptor' THEN
 has_function_privilege(current_user,'browseai.accept_authorized_github_ci(uuid,uuid,uuid,bigint,uuid,uuid,bytea,uuid,bytea,bigint,text)','EXECUTE')
+AND has_function_privilege(current_user,'browseai.read_github_acceptance_evidence(uuid,uuid,uuid,bigint,uuid)','EXECUTE')
 ELSE has_function_privilege(current_user,'browseai.issue_github_ci_acceptance_grant(uuid,uuid,uuid,bigint,uuid,uuid,bytea,uuid,bytea,bigint,text)','EXECUTE')
 AND has_function_privilege(current_user,'browseai.revoke_github_ci_acceptance_grant(uuid,uuid)','EXECUTE') END
 AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace
 WHERE n.nspname='browseai' AND has_function_privilege(current_user,p.oid,'EXECUTE')
-AND NOT (($1='browseai_ci_acceptor' AND p.proname='accept_authorized_github_ci')
+AND NOT (($1='browseai_ci_acceptor' AND p.proname IN ('accept_authorized_github_ci','read_github_acceptance_evidence'))
 OR ($1='browseai_ci_approval_operator' AND p.proname IN ('issue_github_ci_acceptance_grant','revoke_github_ci_acceptance_grant'))))
 AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
 WHERE n.nspname='browseai' AND c.relkind IN ('r','p','v','m','f')

@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func testGitHubCIAcceptanceGrant(t *testing.T, ctx context.Context, owner *sql.DB, p githubCIAcceptancePlan, clock func() time.Time) {
+func testGitHubCIAcceptanceGrant(t *testing.T, ctx context.Context, owner *sql.DB, p githubCIAcceptancePlan, clock func() time.Time, verifier githubVerifierStore, pushApp, prApp, badApp *githubApp, policy githubIndependentPolicy) {
 	t.Helper()
 	open := func(env, role string) *sql.DB {
 		t.Helper()
@@ -51,6 +51,30 @@ func testGitHubCIAcceptanceGrant(t *testing.T, ctx context.Context, owner *sql.D
 	bad[8] = make([]byte, 32)
 	check(operator, githubCIGrantSQL, false, bad)
 	check(operator, githubCIGrantSQL, true, args)
+	if _, _, err := loadGitHubCIAcceptanceEvidence(ctx, operator, a, clock); err == nil {
+		t.Fatal("operator could read evidence")
+	}
+	if _, _, err := loadGitHubCIAcceptanceEvidence(ctx, acceptor, a, clock); err != nil {
+		t.Fatal("authorized pair not readable", err)
+	}
+	wrong := a
+	wrong.actorID = "00000000-0000-4000-8000-000000009999"
+	if _, _, err := loadGitHubCIAcceptanceEvidence(ctx, acceptor, wrong, clock); err == nil {
+		t.Fatal("foreign actor could read evidence")
+	}
+	if err := runGitHubCIAuthorizedAcceptance(ctx, acceptor, verifier, pushApp, badApp, policy, a, clock); err == nil {
+		t.Fatal("changed source accepted")
+	}
+	// Exercise the successful runtime verification path but preserve the
+	// fixture for the subsequent rollback and competing-outcome tests.
+	push, pr, err := loadGitHubCIAcceptanceEvidence(ctx, acceptor, a, clock)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err = verifier.prepareCIAcceptance(ctx, pushApp, prApp, policy, a, push, pr, clock)
+	if err != nil {
+		t.Fatal("authorized preflight failed", err)
+	}
 	check(operator, githubCIGrantSQL, false, args)
 	check(acceptor, githubCIAuthorizedSQL, false, bad)
 	// A rollback must undo both evidence marks and grant consumption.
@@ -74,6 +98,9 @@ func testGitHubCIAcceptanceGrant(t *testing.T, ctx context.Context, owner *sql.D
 	}
 	check(operator, "SELECT browseai.revoke_github_ci_acceptance_grant($1,$2)", true, []any{a.approvalID, a.tenantID})
 	check(acceptor, githubCIAuthorizedSQL, false, args)
+	if _, _, err := loadGitHubCIAcceptanceEvidence(ctx, acceptor, a, clock); err == nil {
+		t.Fatal("revoked grant could read evidence")
+	}
 	var count int
 	if err := owner.QueryRowContext(ctx, "SELECT count(*) FROM browseai.github_ci_evidence WHERE id IN($1,$2) AND consumed_at IS NOT NULL", a.pushID, a.prID).Scan(&count); err != nil || count != 0 {
 		t.Fatal("partial evidence consumption", count, err)

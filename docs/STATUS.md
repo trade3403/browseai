@@ -372,3 +372,7 @@ Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified pus
 
 ### V0.3 8c-2 已验收；8c-3a 独立成功验收授权待 CI
 证据 SHA 01050501a58e1998a0e56b19104e5200b2fcfcfc，Push 46134176241、PR 46134179918 均 completed/success，20/20。迁移 0027 新增独立 NOLOGIN browseai_ci_acceptor / browseai_ci_approval_operator，专用限时双证据审批授权、撤销、原子消费，绑定 task revision/actor/Push PR IDs/digests/workflow/source，授权不得超过原证据有效期或30秒。原 owner 函数仍封闭；Go prepared plan 专用 applyAuthorized 及最小权限检查；测试实际两个独立数据库登录、未签发/摘要不符/重复/撤销、事务回滚和权限矩阵。运维 attestation 非用户会话认证，SQL 不能独立核实 GitHub 观察；成功服务实际启动/可信配置、审批交互和部署仍待完成，新 CI 待验收。
+
+
+### V0.3 8c-3a 已验收；8c-3b 可信成功验收命令待 CI
+证据 SHA c3a937ddd46e32be7d56fea698df9ba0df2972b9，Push 46136372076、PR 46136376228 均 completed/success，20/20。迁移 0028 仅允许独立 acceptor 通过有效授权读取两条原始证据，拒绝跨 actor/撤销/过期/摘要不符。Linux 非 root 一次性 controller github-ci-acceptance issue|revoke|accept DIR，受保护 canonical acceptance.json、独立审批角色、人工 SHA256 确认、独立 verifier reader TLS DSN、GitHub 无代理只读二次验证、原子提交。测试 scoped read/错误 actor/撤销/修改源码及原子预检和回滚。仍未提供自动化证据生产与用户认证审批链路，30 秒证据窗口可能需要交互式编排，实际部署未验收；新 CI 待验收。
