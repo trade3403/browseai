@@ -169,3 +169,7 @@ A single-policy handler accepts only canonical bounded supervisor receipts over 
 
 ## Signing client and receipt transfer (CI pending)
 The protected client posts only the supervisor receipt and signature to a configured HTTPS signing endpoint, verifies TLS 1.3 CA and server SPKI, disables redirects and request replay, and bounds the response. It reconstructs the exact task/attempt statement from independently observed evidence and verifies the returned proof against the pinned signing key and receipt digest/time. The loopback tests use generated CA/client/server certificates and simulated evidence observation. This is not a deployed independent signing process or ledger authorization; downstream registered-key and freshness verification remain mandatory.
+
+
+## Trusted signer observation adapter (CI pending)
+The signer/supervisor can now use a fixed-policy observer backed by the existing read-only GitHub App: exact Push or PR run/attempt snapshots followed by pinned immutable workflow source verification, under a single evidence freshness deadline. PR policy must agree with the execution policy; copied slices prevent caller mutation. Observation failures never produce evidence. Tests use synthetic GitHub HTTP transport; actual App provisioning, process startup and production deployment remain outstanding.

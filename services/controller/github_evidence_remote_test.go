@@ -179,6 +179,93 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 	if _, err := a.observePushEvidence(ctx, p.push, nil); err == nil {
 		t.Fatal("nil push clock accepted")
 	}
+
+	t.Run("trusted signer observer", func(t *testing.T) {
+		policy := githubIndependentPolicy{}
+		policy.execution = p.push
+		policy.sourceDigest = digest
+		observe, err := newGitHubTrustedSignerObserver(a, policy, clock)
+		if err != nil {
+			t.Fatal(err)
+		}
+		mode = "push"
+		ev, rel, err := observe(ctx)
+		if err != nil || !ev.freshFor(p.push, now) || rel != (githubPRRelationship{}) {
+			t.Fatal("trusted push observation failed", err)
+		}
+		ev.policy.required[0] = "changed"
+		if _, _, err := observe(ctx); err != nil {
+			t.Fatal("caller mutated observer policy", err)
+		}
+		mode = "jobs-error"
+		if _, _, err := observe(ctx); err == nil {
+			t.Fatal("failed push observation accepted")
+		}
+		policy.pr = &p
+		prObserver, err := newGitHubTrustedSignerObserver(a, policy, clock)
+		if err != nil {
+			t.Fatal(err)
+		}
+		mode = ""
+		ev, rel, err = prObserver(ctx)
+		if err != nil || !ev.freshFor(p.push, now) || rel.mergeSHA != merge {
+			t.Fatal("trusted PR observation failed", err)
+		}
+		mode = "source-changed"
+		if _, _, err := prObserver(ctx); err == nil {
+			t.Fatal("untrusted workflow source accepted")
+		}
+		mode = "pr-missing"
+		if _, _, err := prObserver(ctx); err == nil {
+			t.Fatal("missing PR accepted")
+		}
+		mode = ""
+		other := p
+		other.push.sha = strings.Repeat("d", 40)
+		bad := policy
+		bad.pr = &other
+		if _, err := newGitHubTrustedSignerObserver(a, bad, clock); err == nil {
+			t.Fatal("inconsistent PR policy accepted")
+		}
+		if _, err := newGitHubTrustedSignerObserver(nil, policy, clock); err == nil {
+			t.Fatal("missing app accepted")
+		}
+		if _, err := newGitHubTrustedSignerObserver(a, policy, nil); err == nil {
+			t.Fatal("missing clock accepted")
+		}
+		cancelled, cancel := context.WithCancel(ctx)
+		cancel()
+		if _, _, err := prObserver(cancelled); err == nil {
+			t.Fatal("cancelled observation accepted")
+		}
+		bad = policy
+		bad.pr = nil
+		bad.sourceDigest = strings.Repeat("f", 64)
+		observe, err = newGitHubTrustedSignerObserver(a, bad, clock)
+		if err != nil {
+			t.Fatal(err)
+		}
+		mode = "push"
+		if _, _, err := observe(ctx); err == nil {
+			t.Fatal("incorrect pinned workflow digest accepted")
+		}
+		ticks := 0
+		expiring, err := newGitHubTrustedSignerObserver(a, policy, func() time.Time {
+			ticks++
+			if ticks > 3 {
+				return now.Add(githubEvidenceLifetime)
+			}
+			return now
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		mode = ""
+		if _, _, err := expiring(ctx); err == nil {
+			t.Fatal("expired observation accepted")
+		}
+		mode = "push"
+	})
 	t.Run("registered execution", func(t *testing.T) {
 		ownerDSN := os.Getenv("BROWSEAI_TEST_OWNER_DSN")
 		readerDSN := os.Getenv("BROWSEAI_TEST_VERIFIER_READER_DSN")
