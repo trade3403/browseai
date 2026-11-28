@@ -76,6 +76,19 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_app NOLOGIN NOSUPERUSER NOBYPASSRLS'
           psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_auth NOLOGIN NOSUPERUSER NOBYPASSRLS'
           psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_admin NOLOGIN NOSUPERUSER NOBYPASSRLS'
+          psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_github_operator NOLOGIN NOSUPERUSER NOBYPASSRLS'
+          psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_webhook NOLOGIN NOSUPERUSER NOBYPASSRLS'
+          psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_monitor NOLOGIN NOSUPERUSER NOBYPASSRLS'
+          psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_verifier_operator NOLOGIN NOSUPERUSER NOBYPASSRLS'
+          psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_verifier_reader NOLOGIN NOSUPERUSER NOBYPASSRLS'
+          psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_evidence_writer NOLOGIN NOSUPERUSER NOBYPASSRLS'
+          psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_failure_observer NOLOGIN NOSUPERUSER NOBYPASSRLS'
+          psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_failure_grant_operator NOLOGIN NOSUPERUSER NOBYPASSRLS'
+          psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_ci_acceptor NOLOGIN NOSUPERUSER NOBYPASSRLS'
+          psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_ci_approval_operator NOLOGIN NOSUPERUSER NOBYPASSRLS'
+          psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_repair_reserver NOLOGIN NOSUPERUSER NOBYPASSRLS'
+          psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_repair_human NOLOGIN NOSUPERUSER NOBYPASSRLS'
+          psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_stage_human NOLOGIN NOSUPERUSER NOBYPASSRLS'
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0001_initial.up.sql
           psql -X -v ON_ERROR_STOP=1 -f tests/database/fixtures.sql
           psql -X -v ON_ERROR_STOP=1 -f tests/database/isolation.sql
@@ -87,6 +100,64 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0005_accounts.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0006_approvals.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0007_stage_plan.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0008_github_bindings.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0009_github_operator.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0010_github_deliveries.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0011_github_monitors.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f tests/database/github_monitors.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0012_github_monitor_repository.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0013_github_monitor_coordination.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f tests/database/github_monitor_coordination.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0014_github_verifier_keys.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f tests/database/github_verifier_keys.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0015_github_ci_evidence.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f tests/database/github_ci_evidence.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0016_github_evidence_writer.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0017_github_evidence_consumption.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0018_github_ci_transition.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0019_github_ci_repair.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0020_github_repair_approval.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0021_github_stage_decision.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0022_github_repair_confirmation.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0023_github_monitor_status.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0024_github_monitor_schedule.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0025_github_failure_observer.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0026_github_failure_grant_operator.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0027_github_acceptance_grants.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0028_github_acceptance_read.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0029_github_historical_scope.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0030_github_repair_reserver.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0031_github_repair_human.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0032_github_stage_human.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0033_github_stage_handoff.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0034_github_repair_handoff.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0034_github_repair_handoff.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0033_github_stage_handoff.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0032_github_stage_human.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0031_github_repair_human.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0030_github_repair_reserver.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0029_github_historical_scope.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0028_github_acceptance_read.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0027_github_acceptance_grants.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0026_github_failure_grant_operator.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0025_github_failure_observer.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0024_github_monitor_schedule.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0023_github_monitor_status.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0022_github_repair_confirmation.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0021_github_stage_decision.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0020_github_repair_approval.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0019_github_ci_repair.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0018_github_ci_transition.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0017_github_evidence_consumption.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0016_github_evidence_writer.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0015_github_ci_evidence.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0014_github_verifier_keys.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0013_github_monitor_coordination.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0012_github_monitor_repository.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0011_github_monitors.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0010_github_deliveries.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0009_github_operator.down.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0008_github_bindings.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0007_stage_plan.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0006_approvals.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0005_accounts.down.sql
@@ -107,6 +178,37 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0005_accounts.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0006_approvals.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0007_stage_plan.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0008_github_bindings.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0009_github_operator.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0010_github_deliveries.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0011_github_monitors.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f tests/database/github_monitors.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0012_github_monitor_repository.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0013_github_monitor_coordination.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f tests/database/github_monitor_coordination.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0014_github_verifier_keys.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f tests/database/github_verifier_keys.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0015_github_ci_evidence.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f tests/database/github_ci_evidence.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0016_github_evidence_writer.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0017_github_evidence_consumption.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0018_github_ci_transition.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0019_github_ci_repair.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0020_github_repair_approval.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0021_github_stage_decision.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0022_github_repair_confirmation.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0023_github_monitor_status.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0024_github_monitor_schedule.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0025_github_failure_observer.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0026_github_failure_grant_operator.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0027_github_acceptance_grants.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0028_github_acceptance_read.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0029_github_historical_scope.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0030_github_repair_reserver.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0031_github_repair_human.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0032_github_stage_human.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0033_github_stage_handoff.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0034_github_repair_handoff.up.sql
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_admin LOGIN PASSWORD 'ci-admin-only'"
           export BROWSEAI_TEST_ADMIN_DSN="postgres://browseai_admin:ci-admin-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_auth LOGIN PASSWORD 'ci-auth-only'"
@@ -114,6 +216,32 @@ jobs:
           export BROWSEAI_TEST_AUTH_DSN="postgres://browseai_auth:ci-auth-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_app LOGIN PASSWORD 'ci-app-only'"
           export BROWSEAI_TEST_APP_DSN="postgres://browseai_app:ci-app-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
+          psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_github_operator LOGIN PASSWORD 'ci-github-only'"
+          export BROWSEAI_TEST_GITHUB_OPERATOR_DSN="postgres://browseai_github_operator:ci-github-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
+          psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_webhook LOGIN PASSWORD 'ci-webhook-only'"
+          export BROWSEAI_TEST_WEBHOOK_DSN="postgres://browseai_webhook:ci-webhook-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
+          psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_monitor LOGIN PASSWORD 'ci-monitor-only'"
+          export BROWSEAI_TEST_MONITOR_DSN="postgres://browseai_monitor:ci-monitor-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
+          psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_verifier_reader LOGIN PASSWORD 'ci-verifier-reader-only'"
+          export BROWSEAI_TEST_VERIFIER_READER_DSN="postgres://browseai_verifier_reader:ci-verifier-reader-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
+          psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_verifier_operator LOGIN PASSWORD 'ci-verifier-operator-only'"
+          export BROWSEAI_TEST_VERIFIER_OPERATOR_DSN="postgres://browseai_verifier_operator:ci-verifier-operator-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
+          psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_evidence_writer LOGIN PASSWORD 'ci-evidence-writer-only'"
+          export BROWSEAI_TEST_EVIDENCE_WRITER_DSN="postgres://browseai_evidence_writer:ci-evidence-writer-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
+          psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_failure_observer LOGIN PASSWORD 'ci-failure-observer-only'"
+          export BROWSEAI_TEST_FAILURE_OBSERVER_DSN="postgres://browseai_failure_observer:ci-failure-observer-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
+          psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_failure_grant_operator LOGIN PASSWORD 'ci-failure-grant-only'"
+          export BROWSEAI_TEST_FAILURE_GRANT_DSN="postgres://browseai_failure_grant_operator:ci-failure-grant-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
+          psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_ci_acceptor LOGIN PASSWORD 'ci-acceptor-only'"
+          export BROWSEAI_TEST_CI_ACCEPTOR_DSN="postgres://browseai_ci_acceptor:ci-acceptor-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
+          psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_ci_approval_operator LOGIN PASSWORD 'ci-approval-only'"
+          export BROWSEAI_TEST_CI_APPROVAL_DSN="postgres://browseai_ci_approval_operator:ci-approval-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
+          psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_repair_reserver LOGIN PASSWORD 'ci-repair-reserver-only'"
+          export BROWSEAI_TEST_REPAIR_RESERVER_DSN="postgres://browseai_repair_reserver:ci-repair-reserver-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
+          psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_repair_human LOGIN PASSWORD 'ci-repair-human-only'"
+          psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_stage_human LOGIN PASSWORD 'ci-stage-human-only'"
+          export BROWSEAI_TEST_REPAIR_HUMAN_DSN="postgres://browseai_repair_human:ci-repair-human-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
+          export BROWSEAI_TEST_STAGE_HUMAN_DSN="postgres://browseai_stage_human:ci-stage-human-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           cd services/controller
           go test -mod=readonly -race -coverprofile=coverage.out -count=1 -v ./...
           go tool cover -func=coverage.out | tee coverage-summary.txt

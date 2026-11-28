@@ -1,0 +1,25 @@
+# BrowseAI 开发交接（2026-11-27）
+
+## 当前事实
+仓库 https://github.com/trade3403/browseai；分支 feat/v0.3-github-integration；草稿 PR #3 https://github.com/trade3403/browseai/pull/3，base feat/v0.2-task-control，未合并。最新已验证代码 SHA 7aa1bb593231125d4000b881bc70f7698489dac3，push https://github.com/trade3403/browseai/actions/runs/45965857888、PR https://github.com/trade3403/browseai/actions/runs/45965865818 均 completed/success。PR 10 个 job 全成功；database job 140394270051 真实 PostgreSQL 与 race 全套覆盖率 80.9%，TestGitHubAppTokenContract、TestPostgresGitHubBinding、TestGitHubBranchObservation、TestGitHubRetryAt 均 PASS；visual job 140394269977 shell 11.7364%、边界 1.453125px、各核心区域 <=15%，developmentPassed=true、releasePassed=false。交接文档提交会触发新 CI；必须按当前真实 head 重新查询，不把上述代码 SHA 的 CI 当成新文档提交 CI。
+
+## 已完成
+V0.1 PR #1 基础 mock UI、Go/Vue、Compose、Windows 实际 Go EXE 运行及浏览器功能检查，未实现 Electron。V0.2 PR #2 多租户认证、Argon2id、会话、项目任务 CRUD、状态机、全局分支租约、幂等/事务审计、账号生命周期、局部安全恢复、审批意向、阶段计划；0001–0007 migration、真实双租户 PostgreSQL 测试。详细证据 docs/V0.2-ACCEPTANCE.md；最终文档 SHA a1aea68e21deee039b6d1ab06dc77eb8fa2ecbe2 的 PR 45962133276 和 push 45962126324 均 success。
+V0.3 第一批 af1cd53da3311cd83dce4aac428e1e5c6c476d86，两套 CI 45963975601/45963967551 success。0008_github_bindings migration：github_installations 全局 installation ID 主键、tenant；github_repositories tenant+repo ID 主键、复合 FK；forced RLS、browseai_app 只读、无客户端自绑定。github_app.go RS256 JWT、iat -60s/exp +5min、RSA >=2048、固定 api.github.com、禁止 redirect、15s timeout、单 repo token、明确 actions/checks/contents/pull_requests/metadata read；验证响应 repo/permissions/expiry，内存 token，不记录。github_binding.go forProject 从 principal 与本地可信映射解析，拒绝禁用/不匹配。
+V0.3 第二批 7aa1bb593231125d4000b881bc70f7698489dac3：github_read.go 固定 HTTPS GET、2MiB 限制、generic errors、429/明确限流403/5xx retryAt（Retry-After/RateLimit-Reset），不循环重试；observeBranch 新 token + repo ID/name/archive/disabled + exact branch/40 hex SHA，返回 githubBranchObservation{target verifiedBranch,headSHA string}；github_observer.go githubProjectObserver 从项目和租户映射取目标，网络读取后再次复查本地绑定。测试仅 mock transport + PostgreSQL；API version 2026-03-10，真实 GitHub 合约未现场核实。
+## 下一批 V0.3 第三批
+可信安装归属验证、安全授权配置与私钥加载。先读现有实现和官方 GitHub App API 文档，设计独立受信任运维流程（不是允许普通用户随意提交 installation ID 即完成绑定）；需验证 App identity、安装归属/真实账户授权、选定 repo ID、权限、租户独占，默认拒绝，不将 GitHub App 私钥/用户 token 写入 Git、日志或数据库明文。真实 app 未配置，不虚构真实授权；可使用受保护 secret file/secret manager 和 mock 测试。补 mint 429/403/5xx 限流错误、必要 retryAt，安全配置后再接入只读 API。githubProjectObserver 尚无集成测试/实际 runtime wiring；后续补齐。具体 token response 必须参考官方真实字段，注意当前要求恰好一个 repositories 及五项 permissions 属保守 mock 合约，真实兼容性待核实。安装归属不能仅凭 app 能访问安装判断用户拥有它；需要可信人工验证或经过认证绑定的授权流程。不提前打开公开安装绑定入口。
+然后依次：Webhook HMAC 原始体/大小/delivery ID/安装租户映射/去重及乱序，最小权限；CI 分页与限流/退避、轮询补偿，真实 repo ID/ref/当前 SHA 与 PR merge SHA、最新有效 run attempt、全部 required workflows/jobs（缺失、取消、跳过、失败和歧义不算成功），持久化证据与任务状态机联动，V0.3 综合验收。Git/CI 证据不可由用户 JSON 伪造。后续 V0.4 浏览器节点；V0.5 指令队列/内容绑定人工审批/发送；V0.6 交接和故障恢复；V0.7 管理员/Electron；V0.8 安全/部署；V0.9 打包/性能；V1.0 发布。
+## 规则
+先读 AGENTS.md、README.md、docs/PRD.md、docs/MULTI-USER.md、docs/GIT-CONTROL.md、docs/CI-ROADMAP.md、docs/STATUS.md、docs/DATABASE.md、docs/GITHUB-INTEGRATION.md、docs/V0.2-ACCEPTANCE.md、design/UI-SPEC.md、design/visual-baseline.json。通过 GitHub 工具实际操作现有仓库，每批测试与文档同提交；先查最新分支 head 与该 SHA PR/push CI。正在运行只报告；失败读具体 job 日志，修复或合理重跑失败 job；全部通过才开始新批次。每阶段独立草稿 PR，不合并、force push、发布或部署。上下文不足写交接并停止；所有开发完成停止。若本地缺 Go 依赖/数据库，诚实说明以 CI 为准。Go1.23、Vue3/TS、PostgreSQL、net/http；PRD 原 Gin/Ant Design Vue 与现状差异见验收报告，不擅自重做 UI。Linux ubuntu-24.04、Windows 标准 windows-latest、gofmt/vet/race/build、web lint/typecheck/test/build、schema、DB up/down、真实 PG、Compose、functional、visual-desktop、dependency-probe、gate。覆盖率 >=75%（关键包目标85%不虚报），视觉开发每核心区域及整体 <=15%、边界 <=2px、最终 <=1%。原图不得替换或跳过。
+产品：用户本人独立 ChatGPT 账号/profile/订阅、独立 GitHub 授权；只用官方网页的人工操作，不用 OpenAI API，不抓聊天、OCR、私有接口、凭证、绕限制；默认人工确认并手动发送，无明确平台授权不得无人值守；所有 CI mock。公开仓库不得含秘密、私人会话地址或聊天内容。无真实发送/生产部署/真实 GitHub App 授权。
+## GitHub 操作
+通过可用 GitHub connector fetch branch /branches/feat/v0.3-github-integration，/actions/runs?head_sha=当前SHA，/actions/runs/{id}/jobs；失败查 job logs。读取当前文件后基于现有 tree atomic create_tree/create_commit/update_ref(expected_sha,force=false)。每次修改后验证 head，检查 CI。JS replace 使用 callback 防止特殊美元符号展开，Go import 按 gofmt 字典序。上阶段曾出现 apt 微软源 HTTP403，确认是安装失败后 rerun_failed_workflow_run_jobs 成功，不改视觉阈值。文档记录证据 SHA 与文档 SHA 区分。当前交接后停止开发。
+
+
+## 最新补充（2026-11-28）
+第七批 7a–7e-2 已完成开发 CI，证据 SHA b11ccc7a293411e8b72ce0369fbf3fbbb7658845，Push 46125432804 / PR 46125437562 均 10/10。后续 8a 为认证只读 CI 状态接口及迁移 0023，新提交 CI 待验收。当前 head 以 GitHub PR #3 查询为准。真实 GitHub App、独立执行节点与可信人工操作入口仍未验收，禁止生产自动推进。优先完成 V0.3 综合剩余功能及安全验收，不合并分支。此补充覆盖上方旧交接的进度与下一批说明。
+
+
+## 最新进度（2026-11-28）
+8a–8c-3b 均已通过开发 CI；最新已验收 SHA 35636785ad44142905e0b3c4bc70d04d6fba176c，Push 46140825092、PR 46140828600 均 10/10，PR database 实测76.1%。本次 8d-1 历史分支范围修复（0029）和综合联动测试新提交待 CI，以 PR #3 当前 head 为准。下一步先查 CI，若通过继续 8d 剩余真实入口与证据交接/开发验收；真实 GitHub App、独立主机、用户认证人工批准、修复及阶段决策的专用运行入口、生产证据交接尚未验收；不得称生产完成。保持官方网页版人工发送，不合并。

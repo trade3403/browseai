@@ -16,6 +16,7 @@ func (h taskHTTP) handler() http.Handler {
 	mux.HandleFunc("POST /api/tasks", h.create)
 	mux.HandleFunc("GET /api/tasks/{id}", h.get)
 	mux.HandleFunc("GET /api/tasks/{id}/stages", h.stages)
+	mux.HandleFunc("GET /api/tasks/{id}/github-ci", h.githubCIStatus)
 	mux.HandleFunc("PATCH /api/tasks/{id}", h.rename)
 	mux.HandleFunc("DELETE /api/tasks/{id}", h.remove)
 	mux.HandleFunc("POST /api/tasks/{id}/pause", h.command(actionPause))

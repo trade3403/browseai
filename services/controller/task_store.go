@@ -155,6 +155,12 @@ func (s taskStore) rename(ctx context.Context, p principal, id, name string, rev
 // Only trusted service code may supply evidence. Public HTTP handlers expose
 // pause, stop and locally safe resume; CI, dispatch and leases are not public flags.
 func (s taskStore) transition(ctx context.Context, p principal, id string, revision uint64, action taskAction, evidence taskEvidence) (taskRecord, error) {
+	// CI and stage decisions must use the sealed evidence transactions,
+	// not legacy boolean flags supplied to the generic persistence adapter.
+	switch action {
+	case actionCIPass, actionCIFail, actionRepair, actionNext, actionComplete:
+		return taskRecord{}, errResourceConflict
+	}
 	return mutationTx(ctx, s.db, p, "task."+string(action), id, revision, nil, func(tx *sql.Tx) (taskRecord, error) {
 		r, err := lockedTask(ctx, tx, p, id, revision)
 		if err != nil {
@@ -167,7 +173,7 @@ func (s taskStore) transition(ctx context.Context, p principal, id string, revis
 			}
 		}
 		switch action {
-		case actionReady, actionPrepare, actionConfirmSent, actionRepair:
+		case actionReady, actionPrepare, actionConfirmSent:
 			if err := requireLiveLease(ctx, tx, p, id, evidence.LeaseFence); err != nil {
 				return taskRecord{}, err
 			}
@@ -176,6 +182,11 @@ func (s taskStore) transition(ctx context.Context, p principal, id string, revis
 			}
 		}
 		if action == actionConfirmSent {
+			// Repairs require an exact-byte confirmation through the sealed
+			// repair-specific adapter, never a generic task approval.
+			if r.Repairs > 0 {
+				return taskRecord{}, errResourceConflict
+			}
 			if err := requireTaskApproval(ctx, tx, p, r, evidence.LeaseFence); err != nil {
 				return taskRecord{}, err
 			}

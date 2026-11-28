@@ -71,6 +71,113 @@ func newServer(addr string) *http.Server {
 
 func main() {
 	if len(os.Args) > 1 {
+		if os.Args[1] == "github-ci-acceptance" {
+			if githubCIAcceptanceCommand(os.Args[2:], os.Stdin) != nil {
+				log.Fatal("GitHub CI acceptance operation rejected")
+			}
+			log.Print("GitHub CI acceptance operation recorded")
+			return
+		}
+		if os.Args[1] == "github-failure" {
+			if githubFailureCommand(os.Args[2:], os.Stdin) != nil {
+				log.Fatal("GitHub failure operation rejected")
+			}
+			log.Print("GitHub failure operation recorded")
+			return
+		}
+		if os.Args[1] == "github-verifier-register" {
+			dsn := os.Getenv("BROWSEAI_VERIFIER_OPERATOR_DSN")
+			if !githubRoleDSNValid(dsn, "browseai_verifier_operator") {
+				log.Fatal("invalid verifier operator TLS DSN")
+			}
+			v, err := githubVerifierRegistrationInput(os.Args[2:], os.Stdin)
+			if err != nil {
+				log.Fatal("verifier approval rejected")
+			}
+			db, err := sql.Open("postgres", dsn)
+			if err != nil {
+				log.Fatal("verifier database unavailable")
+			}
+			defer db.Close()
+			if err := registerGitHubVerifier(context.Background(), db, v); err != nil {
+				log.Fatal("verifier registration rejected")
+			}
+			log.Print("GitHub verifier registered")
+			return
+		}
+		if os.Args[1] == "github-signer-preview" {
+			if len(os.Args) != 3 || githubSignerPreviewCommand(os.Args[2]) != nil {
+				log.Fatal("GitHub signer preview unavailable")
+			}
+			return
+		}
+		if os.Args[1] == "github-execution-node-preview" {
+			if len(os.Args) != 3 || githubExecutionNodePreviewCommand(os.Args[2]) != nil {
+				log.Fatal("GitHub execution node preview unavailable")
+			}
+			return
+		}
+		if os.Args[1] == "github-monitor" {
+			if len(os.Args) != 2 || githubMonitorCommand() != nil {
+				log.Fatal("GitHub monitor unavailable")
+			}
+			return
+		}
+		if os.Args[1] == "github-webhook" {
+			if len(os.Args) != 2 || !githubRoleDSNValid(os.Getenv("BROWSEAI_WEBHOOK_DSN"), "browseai_webhook") {
+				log.Fatal("invalid webhook database configuration")
+			}
+			secret, err := loadGitHubWebhookSecret(os.Getenv("BROWSEAI_WEBHOOK_SECRET_FILE"))
+			if err != nil {
+				log.Fatal("webhook secret unavailable")
+			}
+			db, err := sql.Open("postgres", os.Getenv("BROWSEAI_WEBHOOK_DSN"))
+			if err != nil {
+				log.Fatal("webhook database unavailable")
+			}
+			defer db.Close()
+			db.SetMaxOpenConns(8)
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			err = githubWebhookReady(ctx, db)
+			cancel()
+			if err != nil {
+				log.Fatal("webhook database role invalid")
+			}
+			addr := os.Getenv("BROWSEAI_WEBHOOK_ADDR")
+			if addr == "" {
+				addr = "127.0.0.1:8081"
+			}
+			server, err := newGitHubWebhookServer(addr, secret, githubDeliveryStore{db})
+			if err != nil {
+				log.Fatal("invalid webhook listener configuration")
+			}
+			log.Fatal(server.ListenAndServe())
+		}
+		if os.Args[1] == "github-bind" {
+			dsn := os.Getenv("BROWSEAI_GITHUB_OPERATOR_DSN")
+			if !githubOperatorDSNValid(dsn) {
+				log.Fatal("GitHub binding requires explicit operator TLS DSN")
+			}
+			key, err := loadGitHubAppKey(os.Getenv("BROWSEAI_GITHUB_KEY_FILE"))
+			if err != nil {
+				log.Fatal("GitHub key unavailable")
+			}
+			app, err := newGitHubApp(os.Getenv("BROWSEAI_GITHUB_APP_ISSUER"), key, nil)
+			if err != nil {
+				log.Fatal("GitHub App configuration invalid")
+			}
+			db, err := sql.Open("postgres", dsn)
+			if err != nil {
+				log.Fatal("GitHub operator database unavailable")
+			}
+			defer db.Close()
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			defer cancel()
+			if err := githubOperatorCommand(ctx, db, app, os.Args[2:], os.Stdin, os.Stdout, time.Now()); err != nil {
+				log.Fatal("GitHub binding rejected")
+			}
+			return
+		}
 		if os.Args[1] != "account" || !adminDSNValid(os.Getenv("BROWSEAI_ADMIN_DSN")) {
 			log.Fatal("account command requires explicit browseai_admin TLS DSN")
 		}
@@ -102,6 +209,20 @@ func main() {
 			log.Fatal("project startup failed: ", err)
 		}
 		defer appDB.Close()
+		if dsn := os.Getenv("BROWSEAI_REPAIR_HUMAN_DSN"); dsn != "" {
+			reviewDB, err := openGitHubRepairReviewRuntime(context.Background(), server, db, dsn, os.Getenv("BROWSEAI_ORIGIN"))
+			if err != nil {
+				log.Fatal("repair review startup failed")
+			}
+			defer reviewDB.Close()
+		}
+		if dsn := os.Getenv("BROWSEAI_STAGE_HUMAN_DSN"); dsn != "" {
+			stageDB, err := openGitHubStageReviewRuntime(context.Background(), server, db, dsn, os.Getenv("BROWSEAI_ORIGIN"))
+			if err != nil {
+				log.Fatal("stage review startup failed")
+			}
+			defer stageDB.Close()
+		}
 	default:
 		log.Fatal("invalid BROWSEAI_MODE")
 	}

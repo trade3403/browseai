@@ -128,3 +128,311 @@ SHA fa04258af5d42a975f3f61c15cc6db49b1e54ce4 push CI https://github.com/trade340
 
 ## V0.2 代码阶段综合验收（2026-11-27）
 证据 SHA 2f80cf2af22483c78e61e4018cea3a6e66b8d85c；PR CI https://github.com/trade3403/browseai/actions/runs/45960638615 与 push CI https://github.com/trade3403/browseai/actions/runs/45960630219 均 completed/success，逐项检查 10+10 jobs。实际 database job 140377364013 七项 TestPostgres* 集成均 PASS，完整语句覆盖率 81.3%；schema 6 tests OK；functional Linux 10 passed、Windows 10 passed；visual-desktop 3 passed，shell 11.7364%、边界 1.453125 px、核心区域均 <=15%，releasePassed=false。详见 docs/V0.2-ACCEPTANCE.md（含遗留边界和技术选型差异）。按路线图 V0.2 代码范围通过；文档提交待自己的双套 CI，不替代证据 SHA。V0.3 尚未开发，下一步从验收通过的分支建立独立草稿 PR；不得未经批准合并/部署。
+
+## V0.3 第一批：GitHub App 授权基础及租户绑定
+V0.2 最终文档证据 SHA a1aea68e21deee039b6d1ab06dc77eb8fa2ecbe2，PR CI https://github.com/trade3403/browseai/actions/runs/45962133276 与 push CI https://github.com/trade3403/browseai/actions/runs/45962126324 均 completed/success。基于该 SHA 建立独立分支 feat/v0.3-github-integration，不合并 PR #1/#2。新增 0008 迁移：安装 ID 全局独占租户、仓库 stable ID 白名单、RLS 强制隔离、应用角色只读绑定，拒绝客户端自行绑定；项目必须匹配已授权 repo ID 和名称。GitHub App RS256 JWT 五分钟有效期，安装 token 请求固定 HTTPS API、禁止重定向、只读 actions/checks/contents/pull_requests/metadata、单仓库 scope，验证响应权限、repo ID 和期限；token 只在内存，不记录响应内容。mock transport 合约测试签名、scope、异常与重定向；真实 PG 测试跨租户、禁用、未授权和 runtime 自绑定拒绝。当前仅内部代码及运维预置映射，无生产私钥加载、OAuth/安装归属验证流程、外部 token 使用、缓存、Webhook/CI 轮询或自动派发；真实安装尚未授权。新 CI 待验收。下一批：可信安装验证、授权配置和受控 API 客户端。
+
+## V0.3 第二批：GitHub 只读仓库与分支观察
+证据 SHA af1cd53da3311cd83dce4aac428e1e5c6c476d86，PR CI https://github.com/trade3403/browseai/actions/runs/45963975601 与 push CI https://github.com/trade3403/browseai/actions/runs/45963967551 均 completed/success，PR 10 jobs 成功。新增固定 HTTPS 只读 API 客户端，禁止重定向/外部 URL，限制响应 2 MiB，错误不泄露凭据；每次观察获取单仓库短期 token，远程 repo stable ID/名称/禁用/归档校验、准确 branch 和 40 位 head SHA 校验；内部 project observer 从认证 principal 和项目/绑定查询获取目标，网络读取后再次检查本地授权。GET 429、明确限流 403、5xx 产生 Retry-After/限额 reset 的下一次可重试时间，不在请求内循环重试。mock 测试仓库/分支不符、过期 token、非法 ref、响应超限、HTTP 错误和限流。仅内部观察接口，尚未接入真实私钥加载、安装归属验证/绑定操作、轮询调度、分页和 Webhook；token 签发接口限流尚需完善。未修改状态机或启用自动派发。待当前 CI 验证。
+
+## V0.3 第二批验收与窗口交接
+证据 SHA 7aa1bb593231125d4000b881bc70f7698489dac3，PR CI https://github.com/trade3403/browseai/actions/runs/45965865818 和 push CI https://github.com/trade3403/browseai/actions/runs/45965857888 均 success，PR 10 项成功，实际 database job 覆盖率 80.9%，四项 GitHub 相关测试 PASS；visual developmentPassed=true，releasePassed=false。交接详见 docs/HANDOFF-V0.3.md。本文档提交待自身 CI，暂停新增功能，下一窗口从第三批继续。
+
+## V0.3 third batch — initial security primitives
+Previous HEAD 26c0915b186f3ce4b99d0cce824786497c8c5ed4 verified: push https://github.com/trade3403/browseai/actions/runs/45967086759 and PR https://github.com/trade3403/browseai/actions/runs/45967093399 both success. Added internal protected PEM loader and remote App/installation/account/repository verification with synthetic contract tests. New commit CI pending; third batch not yet accepted. Remaining: privileged provisioning, key loader tests, token response compatibility and retry, integration tests. No live App credentials.
+
+Batch 3a CI for 765c15d5867ffca6abbc18d67d64017283b5c8ab: push https://github.com/trade3403/browseai/actions/runs/45971034894 and PR https://github.com/trade3403/browseai/actions/runs/45971041816 failed backend gofmt (github_setup_test.go field alignment); other eight jobs passed; gate failed. Applied exact gofmt log correction. New CI pending; no acceptance claimed.
+
+Batch 3a formatting fix af47a00345f289cfa67f2b50c09d4a5851664270: push https://github.com/trade3403/browseai/actions/runs/45973113150 and PR https://github.com/trade3403/browseai/actions/runs/45973120119 both success (10/10 each). Batch 3b adds protected key tests, explicit Windows fail-closed behavior and token issuance retry classification. New CI pending. Next: privileged binding persistence and cross-tenant integration tests.
+
+Batch 3b 239dcd1db2bff0c750d02daadb9bf8f77e6f9bc5 verified push https://github.com/trade3403/browseai/actions/runs/45975203963 and PR https://github.com/trade3403/browseai/actions/runs/45975215028 both 10/10 success. Batch 3c adds internal trusted provisioning transaction and PostgreSQL negative tests; CI pending. Next: separate least-privilege operator role and entry point, approval audit, response compatibility review. No live App credentials.
+
+Batch 3c 1631dc2b184a564c9e934005d1f44275ca63fe80 verified push https://github.com/trade3403/browseai/actions/runs/45977278136 and PR https://github.com/trade3403/browseai/actions/runs/45977284732 both 10/10 success. Batch 3d adds 0009 dedicated operator function, atomic audit and isolated role integration tests; CI pending. Next: separate CLI, protected operator input and approval workflow. No live credentials.
+
+Batch 3d a045a370d85989965244d86efc7ffc6b90e3a05b verified push https://github.com/trade3403/browseai/actions/runs/45979374753 and PR https://github.com/trade3403/browseai/actions/runs/45979385539 both 10/10 success. Batch 3e adds offline GitHub binding CLI, explicit exact approval, TLS/role checks and negative tests; CI pending. Remaining live token contract compatibility review and webhook development. No real credentials.
+
+Batch 3e 3e6abcdde29b959b0dba0a38061fbd53a4b1d900 verified push https://github.com/trade3403/browseai/actions/runs/45981529982 and PR https://github.com/trade3403/browseai/actions/runs/45981537281 both 10/10 success. Batch 4a adds webhook verification primitives and synthetic negative tests. CI pending. Next persistent deduplication and authorized routing. Live App compatibility remains NEED_HUMAN without credentials.
+
+Batch 4a e419b8709416b69c9cdb5b288de877a4ffe818d1 verified push https://github.com/trade3403/browseai/actions/runs/45983620662 and PR https://github.com/trade3403/browseai/actions/runs/45983628394 both 10/10 success. Batch 4b adds 0010 durable delivery ledger, audited tenant routing, replay deduplication and PostgreSQL tests. New CI pending. Next: protected webhook secret, isolated HTTP receiver and polling hint consumption. Live GitHub App still unconfigured.
+
+Batch 4b 41f2ad9cd6d5fa950fca44360a77d15cda8bf6cc verified push https://github.com/trade3403/browseai/actions/runs/45985717390 and PR https://github.com/trade3403/browseai/actions/runs/45985724418 both 10/10 success. Batch 4c adds isolated loopback webhook receiver, protected secret loading, role checks, concurrency/time limits and HTTP-to-PostgreSQL tests. New CI pending. Next: receiver hardening tests and polling reconciliation. No live webhook configured.
+
+Batch 4c 74728a7d4ac14c8edd5b25a4fb7809be30fbc861 failed push https://github.com/trade3403/browseai/actions/runs/45987808304 and PR https://github.com/trade3403/browseai/actions/runs/45987819231. Backend vet, database build and Compose logs confirm int vs int64 mismatch in readProtectedGitHubFile io.LimitReader. Corrected the conversion without changing the size limit or CI gates. New CI pending; no phase acceptance claimed.
+
+Batch 4c fix 2e1ab33e4d836639e82fce9174cfe0c3d9100ba7 verified PR https://github.com/trade3403/browseai/actions/runs/45989642074 and push attempt 2 https://github.com/trade3403/browseai/actions/runs/45989634636 both 10/10 success. Initial push functional failed on external Microsoft apt 403; rerun succeeded without weakening gates. Batch 4d adds receiver hardening and concurrent ledger tests; CI pending. Next: V0.3 batch 5 CI read/polling. Live GitHub credentials and proxy deployment remain pending.
+
+Batch 4d e2420bfec443a889327d1491c690be37cfdd7c9b verified push https://github.com/trade3403/browseai/actions/runs/45993297217 and PR https://github.com/trade3403/browseai/actions/runs/45993303509 both 10/10 success. Batch 5a adds bounded Actions workflow/run listings and synthetic pagination/identity tests. CI pending. Next: attempt-specific jobs and observation classification, followed by polling persistence. No live App integration claimed.
+
+Batch 5a 0a3b6472e0e4998c6946caa2706f18dae017e8d8 verified push https://github.com/trade3403/browseai/actions/runs/45995088062 and PR https://github.com/trade3403/browseai/actions/runs/45995101308 both 10/10 success. Batch 5b adds attempt-specific jobs and conservative candidate classification. Previous submission failed with transport disconnect; retry now. New CI pending. Next polling/backoff and persistence.
+
+Batch 5b e645826e615a2e9c473fc3896ca08d87dce5fbfb verified push https://github.com/trade3403/browseai/actions/runs/45998758264 and PR https://github.com/trade3403/browseai/actions/runs/45998764179 both 10/10 success. Batch 5c adds bounded cancellable polling worker, rate-limit deadlines, failure budget, conservative candidate selection and deterministic tests. CI pending. Next durable monitoring persistence and webhook reconciliation. No live App or autonomous runtime wiring yet.
+
+Batch 5c bb51a440966cb4afbe0cfcb2d36c2d0888d3de84 verified push https://github.com/trade3403/browseai/actions/runs/46000394969 and PR https://github.com/trade3403/browseai/actions/runs/46000404527 both 10/10 success. Batch 5d-1 adds durable monitor migration 0011, lease recovery and fenced publication SQL tests. New CI pending. Next Go adapter, trusted policy and webhook reconciliation; no live worker enabled.
+
+Batch 5d-1 3e1d4abcdb42dbe95b6a764dfb9201f8351430a7 verified push https://github.com/trade3403/browseai/actions/runs/46002507043 and PR https://github.com/trade3403/browseai/actions/runs/46002514113 both 10/10 success. Batch 5d-2 adds migration 0012 and durable Go single-step worker with concurrent PostgreSQL tests. CI pending. Next installation throttling, webhook compensation and trusted policy. No live process started.
+
+Batch 5d-2 d33dee47ae45e3fe842b0449bb207f03ac9ac40e verified push https://github.com/trade3403/browseai/actions/runs/46004406298 and PR https://github.com/trade3403/browseai/actions/runs/46004413326 both 10/10 success. Batch 5d-3a adds migration 0013 installation coordination and webhook hints with SQL tests. CI pending. Next trusted policy, worker startup, multi-target concurrency tests and evidence verification.
+
+Batch 5d-3a 502a5e856660072e61d56be12074bff395867a95 verified push attempt 2 https://github.com/trade3403/browseai/actions/runs/46006345177 and PR https://github.com/trade3403/browseai/actions/runs/46006354504 both 10/10 success; initial visual setup failed on external Microsoft apt 403. Batch 5d-3b adds opt-in monitor command, trusted policy and lifecycle tests. CI pending. Next multi-target concurrency and evidence gate. No live worker started.
+
+Batch 5d-3b c9296f14a1d8800acbbcffc5b55559efe4e4b9ff verified push https://github.com/trade3403/browseai/actions/runs/46010160794 and PR https://github.com/trade3403/browseai/actions/runs/46010173238 both 10/10 success. Batch 5d-3c adds twelve-session multi-target PostgreSQL coordination, cooldown and revocation tests. CI pending. Next V0.3 batch 6 authoritative evidence verification. Live credentials and deployment remain pending.
+
+Batch 5d-3c e1e2bb9af584468afcce50843ca124eef87efd4a verified push https://github.com/trade3403/browseai/actions/runs/46012272250 and PR https://github.com/trade3403/browseai/actions/runs/46012282719 both 10/10 success. Batch 6a adds strict push evidence snapshot and mismatch tests. New CI pending. Next PR evidence and remote observation tests; no task transition or live deployment.
+
+Batch 6a initial push 46014573683 and PR 46014574910 failed backend gofmt (github_evidence_test.go alignment) and dependent gate. Apply exact gofmt correction without changing test semantics or CI rules; full backend tests still pending.
+
+Batch 6a formatting fix 4e11d0be40e9c36d18128f1d6417b5f0fb0a308b verified push https://github.com/trade3403/browseai/actions/runs/46015960074 and PR https://github.com/trade3403/browseai/actions/runs/46015959128 both 10/10 success. Batch 6b-1 adds PR relationship and ordered merge-parent verification with negative tests. New CI pending. Next PR Actions linkage and workflow source trust; no task transition.
+
+Batch 6b-1 803e2c7894d2020aacd012fae5216d1cf6905d9b verified push https://github.com/trade3403/browseai/actions/runs/46016843179 and PR https://github.com/trade3403/browseai/actions/runs/46016850805 both 10/10 success. Batch 6b-2a adds PR Actions association candidate and mismatch tests; actual repository metadata confirms head_sha is PR head, not merge commit. New CI pending. Next trusted workflow source and merge execution proof. No task transition.
+
+Batch 6b-2a 31dfd8107f7e83b31cec691fd4a8360437a966af push 46019164151 and PR 46019172830 failed database coverage gate at 72.8% (<75%); Go tests passed. Added synthetic HTTP end-to-end tests for push and PR evidence snapshots, re-read changes, missing PR, ambiguous runs, foreign links and read failures. No threshold change. New CI pending.
+
+Batch 6b-2a remote-test fix bb40ae569abbf92b8573287be480bcc549a009f8 verified push https://github.com/trade3403/browseai/actions/runs/46020858069 and PR https://github.com/trade3403/browseai/actions/runs/46020867566 both 10/10 success. Batch 6b-2b adds independently pinned workflow SHA-256 verification at immutable revisions and synthetic remote tests. New CI pending. Next source policy wiring and explicit execution proof; no task transition.
+
+Batch 6b-2b initial push 46021436379 and PR 46021445784 failed backend gofmt (github_workflow_source_test.go multiline function literal) and dependent gate; other eight jobs each passed, including database. Applied exact gofmt correction without changing test semantics or CI rules. New CI pending.
+
+Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified push https://github.com/trade3403/browseai/actions/runs/46022356142 and PR https://github.com/trade3403/browseai/actions/runs/46022362232 both 10/10 success. Batch 6b-2c adds composite verification and independent signed execution statement contract, synthetic tests. New CI pending. External trusted verifier/signing infrastructure not implemented; no autonomous advancement. Next durable evidence policy/consumption.
+
+
+### V0.3 6b-2c CI 已验收；6c-1a 开发提交待验收
+实际 HEAD e41b3b83b42fd13312dce6cabff385059c0b5617，Push 46027678234、PR 46027689998 均 completed/success，20/20 jobs。新增 0014 可信公钥注册/轮换/吊销、独立最小权限角色、授权作用域及 SQL 测试，当前提交 CI 待查询。Go 调用集成及真实签名服务尚未实现，不允许推进任务。
+
+
+### V0.3 6c-1a 已通过；6c-1b 待 CI
+实际提交 dda23ee291d5aebe2b7f90b51510a658ff39925d，Push 46028420091、PR 46028429227 均 completed/success，20/20。新增注册公钥查询与复合验签入口，真实 PostgreSQL 独立角色及 mock GitHub 测试；当前提交尚未验收。独立签名服务、证据持久化及原子消费未完成。
+
+
+### V0.3 6c-1b 已验收；6c-2a 待 CI
+实际提交 ebf354c897a1d97a89e96c7786d146a2a05aba90，Push 46032121952、PR 46032129357 均 completed/success，20/20。新增 0015 封闭证据表、身份/有效期/去重约束与插入保护、迁移重建测试。普通运行角色全部无权访问。待实现任务绑定签名、可信 Go 写入、原子消费；没有生产验证器或任务推进。新提交 CI 待验收。
+
+
+### V0.3 6c-2a 已验收；6c-2b-1 待 CI
+实际提交 39b2375b31b4103b32014dc7fad481540620e681，Push 46035200936、PR 46035208978 均 completed/success，20/20。新增 v2 任务与签名者绑定证据、Push/PR 复合校验、摘要及时间边界、真实 PostgreSQL/mock GitHub 测试。证据表保持封闭；可信写入角色、原子消费、独立真实执行验证器仍待开发。新提交 CI 待验收。
+
+
+### V0.3 6c-2b-1 已验收；6c-2b-2 待 CI
+实际提交 175f98bd9e61d5e0cd5004a777b0530075716130，Push 46038151238、PR 46038158344 均 completed/success，20/20。新增 0016 独立写入角色、Go 复合验签写入与真实数据库测试。SQL 不独立验 Ed25519，专用写入凭据属于可信边界，不开放公共接口；消费、生产签名与策略接入待开发。新 CI 待验收。
+
+
+### V0.3 6c-2b-2 已验收；6c-2c 待 CI
+实际提交 0d09d52173638ce533ac38547625eb5025877ff2，Push 46041191693、PR 46041203393 均 completed/success，20/20。新增 0017 封闭证据原子消费及并发、回滚、权限/有效期测试。无运行时消费授权，无任务状态转换。可信执行验证器与第七批状态机事务接入待完成。新 CI 待验收。
+
+
+### V0.3 6c-2c 已验收；6c-3a 待 CI
+实际提交 1af081207099d694c396cbd9b7e244429553e900，Push 46044080958、PR 46044087576 均 completed/success，20/20。新增双重信任执行回执与独立签名决策原语及测试。真实隔离执行环境、监督器、策略分发、密钥部署和回执传输仍未完成；不允许任务自动推进。新 CI 待验收。
+
+
+### V0.3 6c-3a 已验收；6c-3b-1 待 CI
+实际提交 d86e9df01b9f40e99003ab402fcce38f4211e21e，Push 46046700691、PR 46046709390 均 completed/success，20/20。新增可信监督器编排、执行前后身份核对及模拟适配器测试。真实隔离执行适配器、独立服务与传输未实现，禁止自动推进。新 CI 待验收。
+
+
+### V0.3 6c-3b-1 格式修复
+提交 5bffa96d0e2ec4afa9f948789ca417ae34295054 Push 46049490013、PR 46049497112 各 8/10；backend 在 gofmt 检查发现 github_execution_supervisor_test.go 两处字段对齐错误，gate 随之失败。按两套实际日志修正格式，不修改测试语义或验收门槛。新 CI 待验收。
+
+
+### V0.3 6c-3b-1 已验收；6c-3b-2a 待 CI
+实际提交 0d057f1fdf2b51a95710c37687b94a9cd12c28f4，Push 46052133637、PR 46052140191 均 completed/success，20/20。新增远程执行客户端 TLS 1.3、证书固定、随机请求及节点签名报告核验。真实节点服务、隔离运行及生产凭据仍未完成，禁止自动推进。新 CI 待验收。
+
+
+### V0.3 6c-3b-2a 格式修复
+提交 d26a9d75f5feda0dc6305ca5feaa740aaa755600 Push 46054798856、PR 46054811307 各 8/10；backend 在 gofmt 检查发现 github_remote_executor.go 三处 HTTP Transport 字段对齐错误，gate 随之失败。按实际两套日志修正格式，不修改功能、测试或验收门槛。新 CI 待验收。
+
+
+### V0.3 6c-3b-2a 已验收；6c-3b-2b 待 CI
+实际提交 75a6df426ea728852cf9e2fa4563d80133fb8b47，Push 46057353386、PR 46057361671 均 completed/success，20/20。新增独立节点单次授权 HTTP handler、TLS 客户端验证、并发防重与签名报告测试。授权仅进程内；持久授权、独立服务启动及实际沙箱待完成，禁止生产自动推进。新 CI 待验收。
+
+
+### V0.3 6c-3b-2b 已验收；6c-3b-2c-1 待 CI
+实际提交 98ede011c9b96dd84337e048cda0333402bce2e0，Push 46059974959、PR 46059981244 均 completed/success，20/20。新增 Linux 持久化单次准入日志，真实文件系统并发/重建测试。实际沙箱、独立进程启动及部署尚未完成。新 CI 待验收。
+
+
+### V0.3 6c-3b-2c-1 已验收；6c-3b-2c-2a 待 CI
+实际提交 f5f1ac57eda572641c064459814061073bafd169，Push 46062483942、PR 46062489537 均 completed/success，20/20。新增离线固定镜像沙箱启动适配器与模拟命令测试。实际可信镜像构建、证明、专用隔离环境和独立服务尚未完成，禁止自动推进。新 CI 待验收。
+
+
+### V0.3 6c-3b-2c-2a 已验收；6c-3b-2c-2b-1 待 CI
+实际提交 d628da2f00dd72257a28cb3c3746447d925629b9，Push 46064998412、PR 46065004804 均 completed/success，20/20。新增强制可信构建签名及启动前复核、镜像健康检查禁用、篡改及过期测试。实际可信构建流水线、镜像检查及独立部署未完成，禁止自动推进。新 CI 待验收。
+
+
+### V0.3 6c-3b-2c-2b-1 已验收；6c-3b-2c-2b-2a 待 CI
+实际提交 3ec898284963f5ac766ed65b633a32c87b46d86a，Push 46067395279、PR 46067402580 均 completed/success，20/20。新增 Docker 本地运行时及镜像配置预检、严格资源能力与配置白名单、拒绝危险镜像测试。真实构建流水线及隔离实机测试仍未完成。新 CI 待验收。
+
+
+### V0.3 6c-3b-2c-2b-2a 人工复核通过；6c-3b-2c-2b-2b-1 待 CI
+实际提交 73c6c26ff10ec9193c9dc124cbad80963f403d7a，Push 46069854806、PR 46069863091 总结论均成功，20 项 conclusion success；PR schema job 140743949400 status 异常 in_progress，但 completed_at 2026-11-27T21:22:33Z，全部五步 completed/success、6 个测试 OK，最终 gate 成功。依据实际日志及完成时间人工复核，不改变程序自动证据严格校验。新增固定离线构建上下文及材料摘要验证；真实构建、签名和隔离环境仍待完成。新 CI 待验收。
+
+
+### V0.3 离线构建材料已验收；镜像构建及签发待 CI
+实际提交 f158f6440edce76d9763ed20a2f300e1f5ffc42a，Push 46074590629、PR 46074596980 均 completed/success，20/20。新增固定构建命令、基础镜像预检、实际产物 ID 验证及构建签名编排；CI mock，不代表真实 Docker 构建、隔离或部署验收。新 CI 待验收。
+
+
+### V0.3 镜像构建及签发已验收；镜像归档交接待 CI
+实际提交 163d4a4261b1ae8a1b0eb6842b6ed7ee8259a85a，Push 46076848408、PR 46076856478 均 completed/success，20/20。新增镜像归档签名、安全暂存、导入前完整性及导入后配置复核。实际独立主机部署和传输仍待验证。新 CI 待验收。
+
+
+### V0.3 镜像归档交接已验收；独立执行节点预览启动待 CI
+实际提交 58a3e3799f6015bd49ae18afb113974a4359feac，Push 46079030331、PR 46079034720 均 completed/success，20/20。新增独立节点本地预览启动命令、受保护配置与证书、镜像导入和 TLS 生命周期。实际专用虚拟机部署与隔离验收仍待完成。新 CI 待验收。
+
+
+### V0.3 独立节点预览启动覆盖率修复待 CI
+实际提交 ce60dcd3faf8c3b13c56168bc4eb77532ccb438d，Push 46081201330 与 PR 46081206490 均 completed/failure，各 8/10。两套 database 日志均显示 Go 测试成功但总语句覆盖率 74.9%，未达 75% 硬门槛；gate 随之失败。新增独立节点启动准备的签名构建、归档完整性、受保护目录、TLS 配置及拒绝路径测试，使用临时文件和模拟导入/运行后端；不修改生产代码或验收阈值。新的 CI 尚待验证，真实独立主机联调、独立签名服务和自动推进仍未验收。
+
+
+### V0.3 节点启动准备已验收；回环端到端联调待 CI
+实际提交 c5fd3c4a70f08b8383810cc5727ae89ddd1dbad6，Push 46082261519、PR 46082269564 均 completed/success，20/20，Push database 总覆盖率 76.1%。本批复用启动夹具，新增真实回环 HTTPS/TLS 1.3 双向认证、服务端固定证书、CA 合法但未授权客户端拒绝、任务版本拒绝、实际签名回执验签及重建后持久防重放测试。CI 使用临时证书、模拟镜像导入和执行，不代表真实 Docker/独立主机验收。新 CI 待验证；禁止自动推进。下一步独立签名服务及回执传输。
+
+
+### V0.3 回环联调已验收；独立签名 HTTP 边界待 CI
+实际提交 b619217292918b69b61a89f9c9020a617da7201d，Push 46085279970、PR 46085284537 均 completed/success，20/20。新增单策略签名 handler、TLS 1.3 已验证客户端固定身份、严格 canonical JSON、有限请求体、监督器回执预验签及可信观察回调，返回独立签名 proof。测试包含拒绝路径和控制器验签；仅模拟观察与 TLS handler 状态，未启动独立签名进程或真实传输。下一步独立签名客户端、真实 TLS 联调及可信 GitHub 观察接线。新 CI 待验收，禁止自动推进。
+
+
+### V0.3 签名 HTTP 边界已验收；签名客户端与回执传输待 CI
+实际提交 4ab3381559109da81198748d4690446362ffb218，Push 46087787543、PR 46087792675 均 completed/success，20/20。新增独立签名客户端，TLS 1.3 双向认证、服务端 SPKI 固定、禁重定向及自动重试、限制请求/响应、回执摘要与固定任务证明验签；真实回环 TLS 测试包含错误身份、签名、响应及过期拒绝。仍用模拟 GitHub 观察；未部署独立签名进程。新 CI 待验收。下一步可信 GitHub 观察接线及独立签名进程配置启动；不允许自动推进。
+
+
+### V0.3 签名客户端已验收；可信 GitHub 观察接线待 CI
+实际提交 e879db332367df35b6afc648d39b9283caab0244，Push 46090273167、PR 46090277895 均 completed/success，20/20。新增固定策略可信观察器，调用已有只读 GitHub App Push/PR CI 及不可变工作流源码验证，统一 30 秒新鲜度边界、取消、策略隔离和失败拒绝；测试使用模拟 GitHub HTTP transport。尚未实际部署签名进程或配置真实 App 凭据。新 CI 待验收，下一步受保护签名进程启动及独立服务联调，禁止自动推进。
+
+
+### V0.3 可信观察已验收；独立签名进程预览启动待 CI
+实际提交 e7935bca99244a90dbfaeac3dfd6fc11e0882db8，Push 46092691895、PR 46092696610 均 completed/success，20/20。新增独立 Linux 非 root 签名预览命令、固定策略 canonical JSON、受保护 App/Ed25519/TLS 文件、可信观察器接线、本地 TLS 1.3 监听、单并发及退出。测试使用临时合成密钥与配置，不连接真实 GitHub；实际独立主机部署、严格公钥与综合安全验收仍待完成。新 CI 待验收，禁止自动推进。
+
+
+### V0.3 独立签名进程预览已验收；严格 Ed25519 公钥检查待 CI
+实际提交 51bf6daae1f8c8338ce7e2f5edf1ac3b4da5bdee，Push 46095035997、PR 46095040465 均 completed/success，20/20。本批增加规范编码、非单位元、素数阶子群验证，接入注册公钥读取、执行证明、节点报告、构建证明、监督器回执和签名预览/客户端。固定 filippo.io/edwards25519 v1.1.1（GO-2026-4503 修复版本），更新 controller 及独立 dependency-probe；本地网络不可下载，校验和由公开 go.sum 交叉确认，仍待 CI sumdb 校验与测试。测试覆盖有效公钥、单位元、低阶、混合阶、非规范和负零编码。未完成真实独立主机/容器安全验收或 DB 注册入口曲线校验；下一步综合执行证据安全验收，不启用自动推进。
+
+
+### V0.3 严格公钥已验收；执行证据信任链综合测试待 CI
+实际提交 bd74770456d023baf11332e2e7a4f680b01a5708，Push 46097387634、PR 46097393308 均 completed/success，20/20，依赖探针和严格公钥测试均通过。本批增加执行节点 TLS、监督器回执、独立签名 TLS 及控制器验签的综合测试，拒绝重复执行、变更 attempt、错误任务版本/密钥、过期观察与篡改回执；签名三处统一执行时长上限。使用合成 GitHub 观察和 Docker 后端；真实独立主机隔离、独立进程联调、真实 App 凭据以及数据库注册入口曲线检查仍未验收。不得自动推进；本批 CI 待验收。
+
+
+### V0.3 综合信任链 CI 格式修复待验收
+实际提交 6c29b25bf0aabb8fd6fb94934769d56cedea3fee，Push 46099608290、PR 46099614159 均 completed/failure，每套 8/10；database 均通过。backend 日志 140838822817 / 140838840208 显示 github_independent_signer_test.go 中新增超时回执测试闭包未通过 gofmt，gate 随之失败。依据实际 CI gofmt diff 修复格式，不改变测试语义、覆盖率门槛或工作流，不推进下一阶段。新 CI 待验收。
+
+
+### V0.3 综合信任链 CI 已验收；严格运维公钥注册入口待 CI
+实际提交 f15c3c38ee53cad955d584e4e1d2640b9381b167，Push 46101774359、PR 46101778384 均 completed/success，20/20。新增 github-verifier-register 专用命令，限定 verifier_operator TLS verify-full DSN、显式逐字段审批、严格公钥曲线校验、同 SQL 语句角色权限检查；真实 PostgreSQL 测试验证错误角色、非法公钥及旧 SQL 入口存入非法点后的控制器拒绝。旧 SQL 函数仍为受信任运维边界，不在数据库内部进行完整曲线检查；生产部署和独立主机隔离尚待验收。本批 CI 待验收，未启用自动推进。
+
+
+### V0.3 运维注册已验收；消费前证据复核待 CI
+实际提交 cff39a58ac818ad95ce9f70eb3ffca60dfbf013c，Push 46104056515、PR 46104061875 均 completed/success，20/20。本批新增只读证据消费前复核，固定可信策略、原始证据摘要和有效期、重新观察 Push/PR 与源码、查询实时注册公钥并再次验签，禁止更新原有有效期。PostgreSQL/mock GitHub 集成测试覆盖两事件、篡改后重新计算摘要、过期、错误版本、观察失败及源码变化。无消费权限变更、无任务状态转换；真实独立主机验收仍未完成，禁止生产自动推进。新 CI 待验收。
+
+
+### V0.3 消费前复核已验收；第七批 7a 原子事务基础待 CI
+实际提交 711502f1769fd7734355085a2b8e85ee67bb883d，Push 46106197285、PR 46106201490 均 completed/success，20/20。新增迁移 0018 封闭双事件证据消费和 WAIT_CI→STAGE_PASSED 原子事务，要求同任务版本、固定工作流/源码摘要、启用管理员成员、明确审批 ID；审计、事件和双证据关联同事务保存。PostgreSQL 测试覆盖运行角色拒绝、第二证据失效导致完整回滚、重复调用、审计和回滚；CI 加入迁移正反向测试。仅封闭 owner 原语，不授权运行角色或生产自动推进；可信策略/实时复核接线、实际隔离部署和 CI 失败修复仍待开发。新 CI 待验收。
+
+
+### V0.3 7a 已验收；7b 双证据服务编排待 CI
+实际提交 b179309df6543ffe286fa5d3dc538fb1200ac72b，Push 46108417799、PR 46108421675 均 completed/success，20/20。本批新增双证据验收计划，绑定人工审批身份、任务版本、两个证据 ID/摘要及固定工作流策略，分别重新观察 Push/PR 并验签，不延长原证据有效期，通过受调用方管理的事务连接封闭 0018 原语。PostgreSQL/mock GitHub 测试覆盖错误审批摘要、PR 源码变化、角色拒绝、审批人不可用、过期及重复调用。生产运行角色仍无权限，真实人工审批来源、持久读取角色和部署仍待完成。新 CI 待验收，不启用自动推进。
+
+
+### V0.3 7b 已验收；7c-1 严格 CI 失败候选待 CI
+实际提交 679f6d1d2a17454b2cce355f52132c3e5e2d8391，Push 46110500348、PR 46110503765 均 completed/success，20/20。本批新增严格 CI 失败候选：只接受 completed/failure 且至少一个必需 job 明确 failure，拒绝取消、超时、基础设施异常、运行中、缺失/重复/错 attempt 的任务；重新核对固定工作流源、PR 关联和运行快照，绑定任务版本。模拟 GitHub 与分类单元测试覆盖 Push/PR、错误源码及异常结论。不改变任务状态、不生成/发送修复指令，后续接入封闭事务、修复预算及人工审批。新 CI 待验收；真实独立部署仍未验收。
+
+
+### V0.3 7c-1 已验收；7c-2 失败与修复原子事务待 CI
+实际提交 e2ec2fa07a3b096480138fb7e7ded22e0fd58f9e，Push 46112723803、PR 46112727855 均 completed/success，20/20。新增 0019 封闭失败历史、严格候选写入与 WAIT_CI→CI_FAILED、一次性修复预约、有效租约及完整阶段计划校验、预算耗尽→NEED_HUMAN，未耗尽→AWAIT_APPROVAL。真实 PostgreSQL/mock GitHub 回滚测试覆盖错误角色、过期、防重、错误 fence、预算耗尽和正常预约；无运行角色授权、无发送、无生产自动推进。失败观察只证明 GitHub job 失败而非根因；审计事件接线、运行时可信授权、人工审批及独立部署仍待完成。新 CI 待验收。
+
+
+### V0.3 7c-2 已验收；7d-1 修复审计与人工审批待 CI
+实际提交 6793ea5f67a9f4f7261f790c9d45aefbace404b2，Push 46114718109、PR 46114723237 均 completed/success，20/20。新增迁移 0020：失败和修复预约/预算耗尽的同事务系统审计（数据库 session_user，不虚构用户），禁止修改原失败事实；独立人工修复审批原语绑定管理员、任务版本、阶段、失败记录、有效 fence 及完整指令 SHA-256，同事务审计/事件，审批不改变状态或触发发送。PostgreSQL 回滚测试验证两类审计、普通成员拒绝、错误 fence、空指令、预算耗尽、重复审批。已有历史不伪造回填，原语未授予运行角色，真实认证/指令展示与发送确认及独立部署尚未接线；新 CI 待验收。
+
+
+### V0.3 7d-1 已验收；7d-2a 独立阶段决策待 CI
+实际提交 0d048823919b53d7aad466b3b87a5c290c1d81a1，Push 46116829379、PR 46116834562 均 completed/success，20/20。本批新增迁移 0021 与 Go 封闭阶段决策入口，独立人工管理员确认、绑定已消费双证据的验收记录、任务当前版本、阶段计划、现存授权与未吊销公钥；下一阶段仅进入 QUEUED 并清零修复次数，末阶段明确确认后 COMPLETED，审计/事件和一次性决策同事务。PostgreSQL 测试覆盖两种决策、越级完成、缺失计划、重复调用、错误验收与权限。未开放运行角色，不发送或释放租约；真实认证入口、修复实际发送确认及独立部署仍待完成。新 CI 待验收。
+
+
+### V0.3 7d-2a 已验收；7d-2b 人工修复发送确认待 CI
+实际提交 ef9eaf12111e983b8c891134e80a44569ab96d42，Push 46118966770、PR 46118970436 均 completed/success，20/20。本批新增迁移 0022 与 Go 封闭确认入口，绑定专用审批、同一人工报告身份、任务版本、指令 SHA-256、有效 fence、现存授权和阶段计划，原子记录确认、审计、事件并转入 DEVELOPING，不再扣修复次数；通用确认路径拒绝 repairs>0。测试覆盖未确认、篡改指令、错版本/fence/身份、禁用用户、重复确认与状态。仅为可信人工报告，不证明 ChatGPT 浏览器实际发送，不操作网页，不开放运行角色；真实认证、浏览器节点及部署待完成。新 CI 待验收。
+
+
+### V0.3 7d-2b 已验收；7e-1 并发与旧入口防绕过待 CI
+实际提交 4782e991dc16d971114609d0d3d5f7ad4ac55618，Push 46121148448、PR 46121155018 均 completed/success，20/20。本批关闭旧 taskStore.transition 的 CI pass/fail、repair、next/complete 布尔证据持久入口（纯状态机保留），新增单元测试及真实 PostgreSQL 独立连接四轮 8 路竞争（失败登记、修复预约、人工审批、发送确认），每轮仅允许一个成功，最终验证唯一持久记录、审计、修复次数与版本。CI 尚待验收；真实人工认证入口、最小权限运行时及独立执行部署未完成，V0.3 仍不允许生产自动推进。
+
+
+### V0.3 7e-1 已验收；7e-2 权限矩阵及互斥终态待 CI
+实际提交 662292ff619ae796f8058583eb59137ffa3738c2，Push 46123263113、PR 46123267307 均 completed/success，20/20。本批新增九种运行角色对七张封闭表（含列权限）及七个状态原语的有效权限矩阵、真实 PostgreSQL 8 路通过/失败竞争、审计 ID 冲突回滚验证。并发仅允许一个终态，失败不得部分消费通过证据。使用一次性合成测试数据，测试专用 owner 重置前序单条消费标记。CI 待验收；不是生产授权或实际独立主机测试，真实人工认证、最小权限执行服务和独立部署仍待完成。
+
+
+### V0.3 第七批已通过开发 CI；综合验收增量 8a 待 CI
+实际提交 b11ccc7a293411e8b72ce0369fbf3fbbb7658845，Push 46125432804、PR 46125437562 均 completed/success，20/20。第七批九个子阶段通过开发检查。核查发现监控已持久化但认证任务 API 未提供真实观测读取；新增迁移 0023、GET /api/tasks/{id}/github-ci，绑定认证租户/成员、任务当前版本、SHA、审计绑定，仅返回有限的工作流/event/status/time；60 秒观测时效，过期、重查中或失败预算异常返回 unknown，历史版本不显示。只授予 app 专用函数 EXECUTE，无监控表直读及状态转换权限。真实 PostgreSQL、HTTP 隔离测试待 CI。仍缺可信生产人工确认入口、调度入队及最小权限转换服务、独立执行部署及真实 GitHub App 合约核验，不宣称 V0.3 生产验收完成。
+
+
+### V0.3 8a 已验收；8b 配对监控自动调度待 CI
+实际提交 b1021ec3afe5aa98e2fd9b004d599a8ecfeb1cb0，Push 46127630417、PR 46127635482 均 completed/success，20/20。迁移 0024 增加独立 monitor 角色有限批量入队；受保护策略必须包含同一 tenant/install/repo/workflow 的 Push/PR 双事件且 required jobs 一致，进程每轮按固定顺序调度一个 scope（最多32任务/64目标），数据库锁定 WAIT_CI 任务、派生 SHA/版本、复验审计绑定、原子补齐目标、不刷新24h过期。八路并发测试、错误安装/重复/过期/角色负例已编写。单事件配置现在拒绝启动；监控不授权任务推进。真实 App、最小权限生产转换、可信人工入口及独立部署仍未验收；新 CI 待验收。
+
+
+### V0.3 8b 已验收；8c-1 独立失败观察角色待 CI
+实际提交 a8559fe17d63c24e786697dd8a21e63a00149ba1，Push 46129803613、PR 46129808778 均 completed/success，20/20。新增迁移 0025，专用 browseai_failure_observer 默认 NOLOGIN，仅允许带独立 owner 预置限时授权的失败登记，绑定任务/版本/SHA/项目/仓库/安装/工作流/源码/事件；一次性消费与原失败转换同事务，撤销或过期拒绝。Go adapter 从受信策略直接独立观察后写入；启动权限检查拒绝 owner、继承角色、直接表/列权限及其他函数。并发 fixture 使用真实独立角色，验证错误授权、工作流、直接入口拒绝及一次成功。SQL 不独立验证 GitHub I/O，角色仅在信任范围内使用；未部署、未启用生产登录、授权运维 CLI 和成功验收服务仍待完成。CI 待验收。
+
+
+### V0.3 8c-1 已验收；8c-2 失败观察启动及运维授权待 CI
+证据 SHA c5e0eb4db5bf7ffa379df22d95d2ba28b5b4f00b，Push 46131983860、PR 46131990480 均 completed/success，20/20。迁移 0026 新增独立 NOLOGIN browseai_failure_grant_operator，仅签发/撤销固定 WAIT_CI 任务限时授权，复验审计绑定，记录 session_user，拒绝重复/过期。Linux 非 root 一次性 controller github-failure issue|revoke|observe DIR，受保护 canonical failure.json，签发/撤销需人工输入动作与 SHA256 审批行，observe 使用独立角色与 App 只读 HTTPS、无代理、限时，不监听 HTTP、不发送、不预留修复。CI 测试独立运维角色、配置篡改、拒绝过期/旧版本、撤销及并发消费。新 CI 待验收；真实环境、签发者身份由独立运维凭据管理，不等于用户级认证；成功验收服务和部署仍待完成。
+
+
+### V0.3 8c-2 已验收；8c-3a 独立成功验收授权待 CI
+证据 SHA 01050501a58e1998a0e56b19104e5200b2fcfcfc，Push 46134176241、PR 46134179918 均 completed/success，20/20。迁移 0027 新增独立 NOLOGIN browseai_ci_acceptor / browseai_ci_approval_operator，专用限时双证据审批授权、撤销、原子消费，绑定 task revision/actor/Push PR IDs/digests/workflow/source，授权不得超过原证据有效期或30秒。原 owner 函数仍封闭；Go prepared plan 专用 applyAuthorized 及最小权限检查；测试实际两个独立数据库登录、未签发/摘要不符/重复/撤销、事务回滚和权限矩阵。运维 attestation 非用户会话认证，SQL 不能独立核实 GitHub 观察；成功服务实际启动/可信配置、审批交互和部署仍待完成，新 CI 待验收。
+
+
+### V0.3 8c-3a 已验收；8c-3b 可信成功验收命令待 CI
+证据 SHA c3a937ddd46e32be7d56fea698df9ba0df2972b9，Push 46136372076、PR 46136376228 均 completed/success，20/20。迁移 0028 仅允许独立 acceptor 通过有效授权读取两条原始证据，拒绝跨 actor/撤销/过期/摘要不符。Linux 非 root 一次性 controller github-ci-acceptance issue|revoke|accept DIR，受保护 canonical acceptance.json、独立审批角色、人工 SHA256 确认、独立 verifier reader TLS DSN、GitHub 无代理只读二次验证、原子提交。测试 scoped read/错误 actor/撤销/修改源码及原子预检和回滚。仍未提供自动化证据生产与用户认证审批链路，30 秒证据窗口可能需要交互式编排，实际部署未验收；新 CI 待验收。
+
+
+### V0.3 8c-3b 覆盖率门禁修复（待 CI）
+证据 SHA 8f50d3f98efb50d60724c2732a5aac4030cfde8d，Push 46138550811 / PR 46138554959 均 completed/failure；8/10 各通过，database 及 gate 失败。数据库 Go 测试断言全部 PASS，实际覆盖率两套均 73.8%，低于75%门槛。补真实配置正负例、私有文件/命令启动拒绝、监控读取分支、独立授权签发撤销及新 synthetic attempt 的完整验收提交与重放拒绝。保持30秒证据时效、75%覆盖率和其他门禁不变。新 CI 待验收，不进入8d。
+
+
+### V0.3 8c-3b 已验收；8d-1 历史范围与综合联动待 CI
+证据 SHA 35636785ad44142905e0b3c4bc70d04d6fba176c，Push 46140825092 / PR 46140828600 均 completed/success，20/20；PR database 140966145207 实测覆盖率 76.1%。综合核查发现历史失败表缺独立项目/分支。迁移 0029 将原始项目/分支记录于失败行，预留/审批/确认均重新匹配；历史无法证明原范围的旧行保持 NULL 并拒绝继续修复，不从当前项目回填。补 live binding audit 检查及真实 PG 分支漂移负例，已成功验收任务独立完成决定及防重放测试。未授予 owner-only 修复及阶段决策函数新运行权限。新 CI 待验收；生产审批、证据交接和真实 App/独立主机仍未验收，禁止标记生产完成。
+
+
+### V0.3 8d-1 测试夹具修复（待 CI）
+证据 SHA 8c066433d52dc1b1f4f5b03d888d4d4359ef257a，Push 46142960182 / PR 46142965984 各 8/10，database/gate failure；两套覆盖率75.9%，实际失败为 TestGitHubEvidenceRemoteSnapshots/registered_execution 在 github_evidence_remote_test.go:599 触发成功证据项目复合外键。修复：失败漂移测试独立项目，保留同仓库/分支及所有约束；成功验收测试断言 SQLSTATE 23503 和 github_ci_evidence 表，并在独立回滚事务中验证禁用仓库拒绝阶段决策。迁移0029及75%门禁不改，新 CI 待验收。
+
+
+### V0.3 8d-1 已验收；8d-2a 修复预留角色待 CI
+证据 SHA 54b929653faef17acfd3f1b7d74e92e71f768828，Push 46145285226、PR 46145289907 均 completed/success，20/20，PR database 76.1%。迁移0030增加独立 NOLOGIN browseai_repair_reserver，仅调用已消费独立失败观察授权绑定的修复预留包装函数；重新检查原失败范围、当前任务版本、阶段计划完整性/依赖、租约和期限；不开放原 owner 函数或表权限。Go 最小权限适配，真实 PostgreSQL 角色并发、错误授权/fence、非法计划、重放、审计身份及权限矩阵测试。预留不是审批或发送；人工审批、发送确认和阶段决策仍为 owner-only，运行命令与用户认证仍待完成，新 CI 待验收。
+
+
+### V0.3 8d-2a 已验收；8d-2b-1 会话绑定修复审批与确认（待 CI）
+证据 SHA 8a0b44b7b87f4faad5578befa309a62325beb3e3，Push 46147560876、PR 46147566877 均 completed/success，20/20，PR database 76.1%。迁移0031新增独立 NOLOGIN browseai_repair_human，仅调用会话绑定包装函数；事务内根据 session digest 解析管理员身份、锁定身份和有效会话、核对失败授权/预留身份/计划/租约、绑定指令字节及批准/确认动作，原 owner 函数保持封闭。Go 适配拒绝缺人工发送确认、非法 token/参数。真实 PG 角色并发、普通用户/撤销会话、指令变更、未审批确认、重放及权限测试。未接入 HTTP/UI，真实人工发送证明与生产部署仍未验收；新 CI 待验收。
+
+
+### V0.3 8d-2b-1 已验收；8d-2b-2 HTTP 运行入口待 CI
+证据 SHA d295b05ee638466349d0d6ff822a3e3e7b104aae，Push 46149917480、PR 46149922570 均 completed/success，20/20。新增独立 repair human 连接池及有效权限检查、认证模式显式 BROWSEAI_REPAIR_HUMAN_DSN verify-full 启用、readyz 检查、同源管理员 Cookie POST /api/tasks/{id}/github-repair/approve 与 confirm-sent；输入严格字段/大小/版本/指令字节/人工确认，数据库再次解析会话，重复或冲突409，不自动重试或发送。真实 PG 并发测试通过 HTTP 驱动，补请求安全测试。仍缺前端操作界面及安全的证据/ID交接、生产部署；新 CI 待验收。
+
+
+### V0.3 8d-2b-2 测试编译修复（待 CI）
+证据 SHA 425255550553bd8edc22d58eee2a7049386ec571，Push 46152211875、PR 46152215422 均 completed/failure，6/10 各通过。backend vet、database Go build、Windows Go build 均报告 github_repair_http_test.go:68–69 undefined: w，gate 随之失败。修复 readyz 测试缺失的 httptest.NewRecorder 局部变量，保留全部断言、权限及覆盖率门禁。此前数据库测试因编译未执行，不宣称新覆盖率。新 CI 待验收。
+
+
+### V0.3 8d-2b-2 已验收；8d-2c-1 独立阶段决策数据库入口待 CI
+SHA 3662f03db0a609c3e3ea73a876c3eca17b4470c0 的 Push 46154587558、PR 46154592997 均成功。新增0032独立 NOLOGIN stage_human 角色，会话身份解析、阶段计划校验、历史证据原语复用及过期回滚，Go 默认拒绝适配。迁移往返纳入 CI；真实独立角色正向/并发测试、有效权限矩阵及 HTTP 接线仍待后续增量，不宣称8d-2c完成。
+
+
+### V0.3 8d-2c-1 已验收；8d-2c-2 独立角色并发测试待 CI
+SHA 86596915bedcb97194783a64efb098d87f2e0b0a Push 46158720128 / PR 46158725042 均成功。新增 stage human 有效权限启动检查、CI 独立测试登录、真实 PostgreSQL 已验收证据的会话决策八路竞争、拒绝错误版本/证据/动作/未确认及原语直调、唯一审计与重放验证。HTTP 接线仍待开发，无生产登录或自动发送。
+
+
+### V0.3 8d-2c-2 格式修复（待 CI）
+SHA 6e84040e9179551b1880a11be06e5b5c0cb2b00d Push 46160639194 / PR 46160646033 均失败；PR database 通过，backend gofmt 检查列出两个文件，gate 随之失败。按 CI 输出修复格式，不修改断言、逻辑或门禁。新 CI 待验收。
+
+
+### V0.3 8d-2c-2 已验收；8d-2c-3 HTTP 阶段决策待 CI
+SHA 77660a5f5b30d917446934e1cb8ea4dd46c4c3a8 Push 46162625428 / PR 46162630574 均成功。新增 opt-in 独立 stage human DSN、同源管理员会话 POST next/complete、严格请求校验及 readyz，失败不重试；HTTP 安全负例待 CI。真实数据库并发测试前一批通过，HTTP 正向集成与证据交接仍待验收，不启用自动发送。
+
+
+### V0.3 8d-2c-3 已验收；8d-3a HTTP 与数据库联动待 CI
+SHA 373c80c3b3606121af2cd28c8eed8b21c0ac4439 Push 46164702020 / PR 46164706471 均成功。综合验收第一增量：真实独立认证与阶段角色，已消费的合成双证据，HTTP 同源/会话吊销/未确认/末阶段越级拒绝，八路 HTTP 并发仅一成功、其余冲突，持久化审计与重放拒绝。保留既有直接适配器负例。未实际部署或发送；证据交接读接口仍待开发。
+
+
+### V0.3 8d-3a 已验收；8d-3b-1 历史证据交接待 CI
+SHA 6d415ae362ca130dbfa21c8ace41c107c53ba468 Push 46166729345 / PR 46166734554 均成功。迁移0033新增会话绑定只读历史证据摘要，专用阶段角色仅允许两个精确函数；同源管理员 POST handoff，不返回原始签名、凭据或会话。测试已验收合成双证据、吊销及决策后失效，待 CI。修复证据交接及最终验收仍待完成。
+
+
+### V0.3 8d-3b-1 已验收；8d-3b-2 修复证据交接待 CI
+SHA 736c19cc38b9707bac2cf6d356a0c7e8bc36d22e Push 46168803454 / PR 46168810305 均成功。0034 增加会话绑定修复预留摘要及已有审批摘要读取，要求现存租约与仓库授权，审批后仅同一审批者可读取，不保存或返回原始指令，不发送。真实 PostgreSQL HTTP 测试覆盖预留、审批及确认后失效，待 CI。最终验收和生产部署仍未完成。
+
+
+### V0.3 8d-3b-2 已验收；8d-3c 最终开发综合验收待 CI
+SHA 59a1a9f74a08b37eceac5fa6401e794a4834d95d Push 46170832085 / PR 46170839879 均成功；PR 10/10，database 141058681258 实测 76.1%。最终补充证据交接跨租户/无关任务/普通用户/owner 角色拒绝、审批原始字节 SHA256 一致性与吊销会话拒绝。保持全部门禁，待新 CI。开发验收与生产验收区分：真实 GitHub App、独立部署、前端审批交互、生产证据生成与交接、实际人工发送仍待完成，不声明生产可用。
