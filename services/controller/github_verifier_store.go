@@ -42,7 +42,7 @@ AND has_table_privilege(current_user,c.oid,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE
 THEN browseai.resolve_github_verifier($1,$2,$3,$4,$5,$6) ELSE NULL END
 FROM pg_catalog.pg_roles r WHERE r.rolname=current_user`,
 		b.tenantID, b.installationID, b.repositoryID, proof.verifierID, proof.keyID, time.Unix(proof.proof.issuedUnix, 0).UTC()).Scan(&key)
-	if err != nil || len(key) != ed25519.PublicKeySize || ctx.Err() != nil {
+	if err != nil || !githubStrictEd25519Key(key) || ctx.Err() != nil {
 		return nil, errGitHubAuthorization
 	}
 	return ed25519.PublicKey(key), nil

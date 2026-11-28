@@ -61,7 +61,7 @@ func (c githubSignerPreviewConfig) policy() (githubIndependentPolicy, error) {
 	if c.Domain != githubSignerPreviewDomain || !githubNodePreviewAddressValid(c.Address) ||
 		!githubAppIssuer.MatchString(c.AppIssuer) || !githubWorkflowDigestValid(c.ClientPin) ||
 		c.ClientPin == hex.EncodeToString(make([]byte, 32)) ||
-		len(c.SupervisorKey) != ed25519.PublicKeySize || bytes.Equal(c.SupervisorKey, make([]byte, ed25519.PublicKeySize)) ||
+		!githubStrictEd25519Key(c.SupervisorKey) ||
 		!p.execution.valid() || !p.task.valid() || !resourceUUID.MatchString(p.verifierID) || !resourceUUID.MatchString(p.keyID) ||
 		!githubWorkflowDigestValid(p.sourceDigest) || !githubWorkflowDigestValid(p.harnessDigest) || !githubWorkflowDigestValid(p.imageDigest) {
 		return githubIndependentPolicy{}, errGitHubAuthorization

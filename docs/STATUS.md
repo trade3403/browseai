@@ -296,3 +296,7 @@ Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified pus
 
 ### V0.3 可信观察已验收；独立签名进程预览启动待 CI
 实际提交 e7935bca99244a90dbfaeac3dfd6fc11e0882db8，Push 46092691895、PR 46092696610 均 completed/success，20/20。新增独立 Linux 非 root 签名预览命令、固定策略 canonical JSON、受保护 App/Ed25519/TLS 文件、可信观察器接线、本地 TLS 1.3 监听、单并发及退出。测试使用临时合成密钥与配置，不连接真实 GitHub；实际独立主机部署、严格公钥与综合安全验收仍待完成。新 CI 待验收，禁止自动推进。
+
+
+### V0.3 独立签名进程预览已验收；严格 Ed25519 公钥检查待 CI
+实际提交 51bf6daae1f8c8338ce7e2f5edf1ac3b4da5bdee，Push 46095035997、PR 46095040465 均 completed/success，20/20。本批增加规范编码、非单位元、素数阶子群验证，接入注册公钥读取、执行证明、节点报告、构建证明、监督器回执和签名预览/客户端。固定 filippo.io/edwards25519 v1.1.1（GO-2026-4503 修复版本），更新 controller 及独立 dependency-probe；本地网络不可下载，校验和由公开 go.sum 交叉确认，仍待 CI sumdb 校验与测试。测试覆盖有效公钥、单位元、低阶、混合阶、非规范和负零编码。未完成真实独立主机/容器安全验收或 DB 注册入口曲线校验；下一步综合执行证据安全验收，不启用自动推进。

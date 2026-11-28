@@ -60,7 +60,7 @@ func githubExecutionMessage(p githubEvidencePolicy, e githubCIEvidence, digest s
 
 func validateGitHubExecution(p githubEvidencePolicy, e githubCIEvidence, digest string, pr *githubPRPolicy, rel githubPRRelationship, proof githubExecutionProof, key ed25519.PublicKey, now time.Time) error {
 	if !e.freshFor(p, now) || !githubWorkflowDigestValid(digest) ||
-		len(key) != ed25519.PublicKeySize || len(proof.signature) != ed25519.SignatureSize || proof.issuedUnix <= 0 {
+		!githubStrictEd25519Key(key) || len(proof.signature) != ed25519.SignatureSize || proof.issuedUnix <= 0 {
 		return errGitHubAuthorization
 	}
 	issued := time.Unix(proof.issuedUnix, 0)

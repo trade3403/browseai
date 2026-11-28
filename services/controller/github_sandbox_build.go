@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"crypto/ed25519"
 	"crypto/sha256"
 	"encoding/hex"
@@ -46,8 +45,7 @@ type githubSandboxBuildProof struct {
 // A signed claim is not a substitute for trustworthy builder deployment.
 func verifyGitHubSandboxBuild(plan githubSandboxPlan, policy githubSandboxBuildPolicy, proof githubSandboxBuildProof, now time.Time) error {
 	r := proof.receipt
-	if !resourceUUID.MatchString(policy.builderID) || len(policy.builderKey) != ed25519.PublicKeySize ||
-		bytes.Equal(policy.builderKey, make([]byte, ed25519.PublicKeySize)) ||
+	if !resourceUUID.MatchString(policy.builderID) || !githubStrictEd25519Key(policy.builderKey) ||
 		len(proof.signature) != ed25519.SignatureSize ||
 		!githubWorkflowDigestValid(policy.baseImageDigest) || !githubWorkflowDigestValid(policy.dependencyDigest) ||
 		!githubWorkflowDigestValid(policy.sourceTreeDigest) ||

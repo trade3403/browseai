@@ -41,7 +41,7 @@ type githubSignerService struct {
 }
 
 func newGitHubSignerService(signer githubIndependentSigner, policy githubIndependentPolicy, pin [32]byte, observe githubSupervisorObserve, clock func() time.Time) (*githubSignerService, error) {
-	if len(signer.privateKey) != ed25519.PrivateKeySize || len(signer.supervisorKey) != ed25519.PublicKeySize ||
+	if len(signer.privateKey) != ed25519.PrivateKeySize || !githubStrictEd25519Key(signer.supervisorKey) ||
 		!bytes.Equal(signer.privateKey, ed25519.NewKeyFromSeed(signer.privateKey.Seed())) ||
 		bytes.Equal(signer.privateKey.Public().(ed25519.PublicKey), signer.supervisorKey) ||
 		pin == ([32]byte{}) || observe == nil || clock == nil ||

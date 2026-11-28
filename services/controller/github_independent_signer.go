@@ -48,7 +48,7 @@ type githubIndependentSigner struct {
 // The caller must obtain policy from trusted configuration and fresh
 // observations from GitHub, not from the repository or the receipt.
 func (s githubIndependentSigner) sign(policy githubIndependentPolicy, e githubCIEvidence, rel githubPRRelationship, receipt githubExecutorReceipt, supervisorSignature []byte, now time.Time) (githubRegisteredProof, error) {
-	if len(s.privateKey) != ed25519.PrivateKeySize || len(s.supervisorKey) != ed25519.PublicKeySize ||
+	if len(s.privateKey) != ed25519.PrivateKeySize || !githubStrictEd25519Key(s.supervisorKey) ||
 		len(supervisorSignature) != ed25519.SignatureSize ||
 		!policy.task.valid() || !resourceUUID.MatchString(policy.verifierID) || !resourceUUID.MatchString(policy.keyID) ||
 		!githubWorkflowDigestValid(policy.sourceDigest) || !githubWorkflowDigestValid(policy.harnessDigest) ||

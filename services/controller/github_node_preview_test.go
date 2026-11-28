@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/ed25519"
+	"crypto/rand"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -10,10 +12,14 @@ import (
 )
 
 func TestGitHubNodePreviewConfiguration(t *testing.T) {
+	builder, _, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
 	c := githubNodePreviewConfig{
 		Domain: githubNodePreviewDomain, Address: "127.0.0.1:8443",
 		Request:    githubRemoteExecutionRequest{Domain: githubRemoteExecutorDomain},
-		BuilderKey: make([]byte, 32), ClientPin: strings.Repeat("a", 64),
+		BuilderKey: builder, ClientPin: strings.Repeat("a", 64),
 		Staging: "/staging", Grants: "/grants",
 	}
 	raw, err := json.Marshal(c)
@@ -22,6 +28,15 @@ func TestGitHubNodePreviewConfiguration(t *testing.T) {
 	}
 	if _, err := githubDecodeNodePreview(raw); err != nil {
 		t.Fatal("valid configuration rejected", err)
+	}
+	weak := c
+	weak.BuilderKey = make([]byte, 32)
+	weakRaw, err := json.Marshal(weak)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := githubDecodeNodePreview(weakRaw); err == nil {
+		t.Fatal("weak builder key accepted")
 	}
 	for _, addr := range []string{"0.0.0.0:8443", "[::]:8443", "localhost:8443", "127.0.0.1:0", "127.0.0.1:65536", "127.0.0.1:08443"} {
 		bad := c

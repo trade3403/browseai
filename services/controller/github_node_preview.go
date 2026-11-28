@@ -66,7 +66,7 @@ func githubDecodeNodePreview(raw []byte) (githubNodePreviewConfig, error) {
 	if err != nil || !bytes.Equal(check, raw) || c.Domain != githubNodePreviewDomain ||
 		!githubNodePreviewAddressValid(c.Address) || c.Request.Domain != githubRemoteExecutorDomain ||
 		c.Request.Nonce != "" || c.Staging == c.Grants ||
-		len(c.BuilderKey) != ed25519.PublicKeySize || !githubWorkflowDigestValid(c.ClientPin) {
+		!githubStrictEd25519Key(c.BuilderKey) || !githubWorkflowDigestValid(c.ClientPin) {
 		return githubNodePreviewConfig{}, errGitHubAuthorization
 	}
 	return c, nil

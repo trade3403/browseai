@@ -30,8 +30,7 @@ func newGitHubSignerClient(endpoint string, roots *x509.CertPool, cert tls.Certi
 	if err != nil || u.Scheme != "https" || u.Hostname() == "" || u.User != nil ||
 		u.RawQuery != "" || u.ForceQuery || u.Fragment != "" || u.RawPath != "" || u.Path != "/v1/sign" ||
 		roots == nil || len(cert.Certificate) == 0 || cert.PrivateKey == nil ||
-		pin == ([32]byte{}) || len(key) != ed25519.PublicKeySize ||
-		bytes.Equal(key, make([]byte, ed25519.PublicKeySize)) {
+		pin == ([32]byte{}) || !githubStrictEd25519Key(key) {
 		return nil, errGitHubAuthorization
 	}
 	cfg := &tls.Config{}

@@ -62,7 +62,7 @@ func newGitHubRemoteExecutor(endpoint string, roots *x509.CertPool, clientCert t
 	if err != nil || u.Scheme != "https" || u.Hostname() == "" || u.User != nil || u.RawQuery != "" ||
 		u.Fragment != "" || u.ForceQuery || u.Path != "/v1/execute" || u.RawPath != "" ||
 		roots == nil || len(clientCert.Certificate) == 0 || clientCert.PrivateKey == nil ||
-		serverPin == ([32]byte{}) || len(nodeKey) != ed25519.PublicKeySize {
+		serverPin == ([32]byte{}) || !githubStrictEd25519Key(nodeKey) {
 		return nil, errGitHubAuthorization
 	}
 	transport := &http.Transport{
