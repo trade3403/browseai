@@ -277,3 +277,7 @@ Provision browseai_repair_human NOLOGIN NOSUPERUSER NOBYPASSRLS without membersh
 
 ## Batch 8d-2b-2: opt-in authenticated repair HTTP runtime (CI pending)
 Only authenticated mode with BROWSEAI_REPAIR_HUMAN_DSN (browseai_repair_human, verify-full TLS) mounts POST /api/tasks/{id}/github-repair/approve and /confirm-sent. The distinct pool is checked at startup and readyz. Exact Origin, admin session cookie, bounded JSON and task/tenant scope are required; body fields revision, fence, grant_id, failure_id, approval_id, instruction_base64 (exact UTF-8 bytes), reviewed=true; confirm-sent also requires distinct confirmation_id and manual_sent=true. No actor/tenant override. SQL revalidates the session under lock. 204 means the review or human-reported send was recorded; 409 is a rejection or ambiguous mutation outcome, not a retry/send instruction. No automatic send or browser inspection. Tests use the real auth and repair role pools in HTTP concurrency fixtures plus negative request tests. UI and trusted handoff remain outstanding; no production deployment.
+
+
+### 8d-2b-2 test compilation correction (CI pending)
+Exact SHA 425255550553bd8edc22d58eee2a7049386ec571 failed Push 46152211875 and PR 46152215422: the readiness negative test omitted its local response recorder (`undefined: w`), blocking backend vet, database and Windows Go test compilation. Restore the recorder declaration, retain the readiness assertion and all gates; new CI pending.

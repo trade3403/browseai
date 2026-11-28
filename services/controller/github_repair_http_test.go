@@ -65,6 +65,7 @@ func TestGitHubRepairHTTP(t *testing.T) {
 		t.Fatal("duplicate receipt accepted")
 	}
 	{
+		w := httptest.NewRecorder()
 		h.ServeHTTP(w, httptest.NewRequest("GET", "/readyz", nil))
 		if w.Code != 503 {
 			t.Fatal("missing review database ready")

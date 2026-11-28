@@ -400,3 +400,7 @@ Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified pus
 
 ### V0.3 8d-2b-1 已验收；8d-2b-2 HTTP 运行入口待 CI
 证据 SHA d295b05ee638466349d0d6ff822a3e3e7b104aae，Push 46149917480、PR 46149922570 均 completed/success，20/20。新增独立 repair human 连接池及有效权限检查、认证模式显式 BROWSEAI_REPAIR_HUMAN_DSN verify-full 启用、readyz 检查、同源管理员 Cookie POST /api/tasks/{id}/github-repair/approve 与 confirm-sent；输入严格字段/大小/版本/指令字节/人工确认，数据库再次解析会话，重复或冲突409，不自动重试或发送。真实 PG 并发测试通过 HTTP 驱动，补请求安全测试。仍缺前端操作界面及安全的证据/ID交接、生产部署；新 CI 待验收。
+
+
+### V0.3 8d-2b-2 测试编译修复（待 CI）
+证据 SHA 425255550553bd8edc22d58eee2a7049386ec571，Push 46152211875、PR 46152215422 均 completed/failure，6/10 各通过。backend vet、database Go build、Windows Go build 均报告 github_repair_http_test.go:68–69 undefined: w，gate 随之失败。修复 readyz 测试缺失的 httptest.NewRecorder 局部变量，保留全部断言、权限及覆盖率门禁。此前数据库测试因编译未执行，不宣称新覆盖率。新 CI 待验收。
