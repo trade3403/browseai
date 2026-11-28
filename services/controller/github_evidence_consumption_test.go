@@ -24,6 +24,7 @@ func testGitHubEvidenceConsumption(t *testing.T, ctx context.Context, owner, wri
 		return v
 	}
 	push, pr := load("push"), load("pull_request")
+	testGitHubCITransition(t, ctx, owner, writer, reader, operator, tenant, task, push.id, push.digest, pr.id, pr.digest)
 	const query = "SELECT browseai.consume_github_ci_evidence($1,$2,$3,$4,$5)"
 	check := func(db *sql.DB, tenantID string, revision int64, v item, want bool) {
 		t.Helper()
