@@ -285,3 +285,7 @@ Exact SHA 425255550553bd8edc22d58eee2a7049386ec571 failed Push 46152211875 and P
 
 ### Stage decision HTTP preview
 Authenticated mode may explicitly enable BROWSEAI_STAGE_HUMAN_DSN with verify-full TLS and the dedicated browseai_stage_human login. POST /api/tasks/{id}/github-stage/next or /complete requires same-origin administrator session, revision, acceptance_id, decision_id and reviewed=true. No actor or tenant is accepted from the request. Success is 204; conflicts are not retried. No dispatch, lease release or automatic sending. Production provisioning and evidence presentation remain outstanding.
+
+
+### Historical stage evidence handoff
+POST /api/tasks/{id}/github-stage/handoff uses the same authenticated stage runtime and same-origin administrator session. It returns historical acceptance ID, current task revision, stage scope, SHA, workflow and consumed proof IDs/digests only. It does not renew evidence, authorize acceptance, or expose original proof bytes. A later explicit decision independently rechecks the state and authorization. No automatic dispatch.

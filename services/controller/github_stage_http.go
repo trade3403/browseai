@@ -61,6 +61,7 @@ func githubStageReviewRoutes(a *authHTTP, db *sql.DB, fallback http.Handler) htt
 			w.WriteHeader(http.StatusNoContent)
 		}
 	}
+	mux.HandleFunc("POST /api/tasks/{id}/github-stage/handoff", githubStageHandoffRoute(a, db))
 	mux.HandleFunc("POST /api/tasks/{id}/github-stage/next", review(actionNext))
 	mux.HandleFunc("POST /api/tasks/{id}/github-stage/complete", review(actionComplete))
 	mux.HandleFunc("GET /readyz", func(w http.ResponseWriter, r *http.Request) {

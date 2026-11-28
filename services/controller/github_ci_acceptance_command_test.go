@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -242,6 +243,19 @@ func testGitHubCommittedAcceptance(t *testing.T, ctx context.Context, owner *sql
 		t.Fatal(err)
 	}
 	handler := githubStageReviewRoutes(auth, human, http.NotFoundHandler())
+	handoff := func(tok string) *httptest.ResponseRecorder {
+		return authRequest(handler, "POST", "/api/tasks/"+a.task.taskID+"/github-stage/handoff", testOrigin, "", "192.0.2.1", &http.Cookie{Name: sessionCookie, Value: tok})
+	}
+	w := handoff(token)
+	var summary githubStageHandoff
+	if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &summary) != nil || summary.Acceptance != a.approvalID ||
+		summary.Revision != revision || summary.PushID != a.pushID || summary.PRID != a.prID ||
+		summary.PushDigest != hex.EncodeToString(a.pushDigest[:]) || summary.PRDigest != hex.EncodeToString(a.prDigest[:]) {
+		t.Fatal("historical evidence handoff mismatch", w.Code)
+	}
+	if _, err := readGitHubStageHandoff(ctx, owner, token, a.tenantID, a.task.taskID); err == nil {
+		t.Fatal("owner accepted as handoff role")
+	}
 	in := githubStageReviewRequest{Revision: revision, Acceptance: a.approvalID, Decision: decision, Reviewed: true}
 	request := func(action, tok, origin string, input githubStageReviewRequest) int {
 		body, err := json.Marshal(input)
@@ -264,7 +278,7 @@ func testGitHubCommittedAcceptance(t *testing.T, ctx context.Context, owner *sql
 	if _, err := owner.ExecContext(ctx, "UPDATE browseai.auth_sessions SET revoked_at=clock_timestamp() WHERE token_digest=$1", digest[:]); err != nil {
 		t.Fatal(err)
 	}
-	if request("complete", token, testOrigin, in) != 401 {
+	if handoff(token).Code != 401 || request("complete", token, testOrigin, in) != 401 {
 		t.Fatal("revoked session accepted through stage HTTP")
 	}
 	raw[0] = 94
@@ -301,7 +315,7 @@ func testGitHubCommittedAcceptance(t *testing.T, ctx context.Context, owner *sql
 	if err := reviewAuthorizedGitHubStage(ctx, human, token, a.tenantID, a.task.taskID, a.approvalID, decision, revision, actionComplete, true); err == nil {
 		t.Fatal("committed decision replayed")
 	}
-	if request("complete", token, testOrigin, in) != 409 {
+	if handoff(token).Code != 409 || request("complete", token, testOrigin, in) != 409 {
 		t.Fatal("committed HTTP stage decision replayed")
 	}
 	if err := owner.QueryRowContext(ctx, "SELECT count(*) FROM browseai.github_stage_decisions d JOIN browseai.audit_logs l ON l.id=d.decision_id JOIN browseai.events e ON e.audit_id=l.id WHERE d.decision_id=$1 AND d.acceptance_id=$2 AND l.actor_id=$3 AND e.kind='task.complete'", decision, a.approvalID, a.actorID).Scan(&count); err != nil || count != 1 {
