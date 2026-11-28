@@ -27,4 +27,3 @@ FROM pg_catalog.pg_roles r WHERE r.rolname=current_user`).Scan(&ok)
 	}
 	return nil
 }
-

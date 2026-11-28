@@ -3,15 +3,15 @@ package main
 import (
 	"context"
 	"database/sql"
-	"encoding/hex"
 	"encoding/base64"
-	"sync"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -217,13 +217,13 @@ func testGitHubCommittedAcceptance(t *testing.T, ctx context.Context, owner *sql
 	}
 	for _, bad := range []struct {
 		token, acceptance string
-		revision int64
-		action taskAction
-		confirmed bool
+		revision          int64
+		action            taskAction
+		confirmed         bool
 	}{
 		{"", a.approvalID, revision, actionComplete, true},
 		{token, decision, revision, actionComplete, true},
-		{token, a.approvalID, revision+1, actionComplete, true},
+		{token, a.approvalID, revision + 1, actionComplete, true},
 		{token, a.approvalID, revision, actionNext, true},
 		{token, a.approvalID, revision, actionComplete, false},
 	} {
@@ -244,7 +244,9 @@ func testGitHubCommittedAcceptance(t *testing.T, ctx context.Context, owner *sql
 	close(results)
 	wins := 0
 	for err := range results {
-		if err == nil { wins++ }
+		if err == nil {
+			wins++
+		}
 	}
 	if wins != 1 {
 		t.Fatal("expected one stage decision", wins)
