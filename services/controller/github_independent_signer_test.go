@@ -1,11 +1,17 @@
 package main
 
 import (
+	"bytes"
+	"context"
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -68,6 +74,97 @@ func TestGitHubIndependentSigner(t *testing.T) {
 	if _, err := verifyGitHubTaskExecution(task, p, e, policy.sourceDigest, nil, rel, proof, public, now); err != nil {
 		t.Fatal("signed proof incompatible with controller", err)
 	}
+
+	t.Run("signing-service", func(t *testing.T) {
+		cert := &x509.Certificate{RawSubjectPublicKeyInfo: []byte("synthetic supervisor certificate")}
+		pin := sha256.Sum256(cert.RawSubjectPublicKeyInfo)
+		state := &tls.ConnectionState{}
+		state.Version = tls.VersionTLS13
+		state.PeerCertificates = []*x509.Certificate{cert}
+		state.VerifiedChains = [][]*x509.Certificate{{cert}}
+		calls := 0
+		failObserve := false
+		changed := false
+		observe := func(context.Context) (githubCIEvidence, githubPRRelationship, error) {
+			calls++
+			if failObserve {
+				return githubCIEvidence{}, githubPRRelationship{}, errGitHubAuthorization
+			}
+			current := e
+			if changed {
+				current.attempt++
+			}
+			return current, rel, nil
+		}
+		service, err := newGitHubSignerService(signer, policy, pin, observe, func() time.Time { return now })
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := newGitHubSignerService(signer, policy, [32]byte{}, observe, func() time.Time { return now }); err == nil {
+			t.Fatal("missing client pin accepted")
+		}
+		wire := githubSignerRequest{githubSignerRequestDomain, receipt, sig}
+		raw, err := json.Marshal(wire)
+		if err != nil {
+			t.Fatal(err)
+		}
+		send := func(path string, body []byte, tlsState *tls.ConnectionState) *httptest.ResponseRecorder {
+			r := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(body))
+			r.Header.Set("Content-Type", "application/json")
+			r.TLS = tlsState
+			w := httptest.NewRecorder()
+			service.ServeHTTP(w, r)
+			return w
+		}
+		if w := send("/v1/sign", raw, nil); w.Code != http.StatusForbidden {
+			t.Fatal("plaintext signing accepted")
+		}
+		other := *state
+		other.PeerCertificates = []*x509.Certificate{{RawSubjectPublicKeyInfo: []byte("wrong peer")}}
+		if w := send("/v1/sign", raw, &other); w.Code != http.StatusForbidden {
+			t.Fatal("wrong client accepted")
+		}
+		if w := send("/v1/sign?x=1", raw, state); w.Code != http.StatusBadRequest {
+			t.Fatal("query accepted")
+		}
+		if w := send("/v1/sign", append(append([]byte(nil), raw...), ' '), state); w.Code != http.StatusBadRequest {
+			t.Fatal("noncanonical request accepted")
+		}
+		bad := wire
+		bad.Signature = make([]byte, ed25519.SignatureSize)
+		body, _ := json.Marshal(bad)
+		if w := send("/v1/sign", body, state); w.Code != http.StatusForbidden || calls != 0 {
+			t.Fatal("unauthenticated receipt reached observer")
+		}
+		failObserve = true
+		if w := send("/v1/sign", raw, state); w.Code != http.StatusServiceUnavailable {
+			t.Fatal("failed observation signed")
+		}
+		failObserve = false
+		changed = true
+		if w := send("/v1/sign", raw, state); w.Code != http.StatusForbidden {
+			t.Fatal("changed attempt signed")
+		}
+		changed = false
+		w := send("/v1/sign", raw, state)
+		if w.Code != http.StatusOK || w.Header().Get("Cache-Control") != "no-store" {
+			t.Fatal("valid signing request rejected", w.Code)
+		}
+		var response githubSignerResponse
+		if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+			t.Fatal(err)
+		}
+		if response.Domain != githubSignerResponseDomain || response.VerifierID != policy.verifierID || response.KeyID != policy.keyID {
+			t.Fatal("incorrect proof identity")
+		}
+		got := githubRegisteredProof{response.VerifierID, response.KeyID, githubExecutionProof{response.IssuedUnix, response.Signature}}
+		if _, err := verifyGitHubTaskExecution(task, p, e, policy.sourceDigest, nil, rel, got, public, now); err != nil {
+			t.Fatal("service proof failed controller verification", err)
+		}
+		if replay := send("/v1/sign", raw, state); replay.Code != http.StatusOK || replay.Body.String() != w.Body.String() {
+			t.Fatal("non-deterministic proof")
+		}
+	})
 	for _, mutate := range []func(*githubExecutorReceipt){
 		func(r *githubExecutorReceipt) { r.Domain = "other" },
 		func(r *githubExecutorReceipt) { r.AllPassed = false },

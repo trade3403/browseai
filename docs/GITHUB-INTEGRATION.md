@@ -161,3 +161,7 @@ An explicit `github-execution-node-preview /absolute/protected/config-directory`
 
 ## Node loopback integration (CI pending)
 The integration test uses a real loopback TLS listener and the production remote client/handler with generated CA and distinct server/client certificates. It checks pin mismatches, unauthorized CA-valid clients, revision binding, authenticated signed reports and durable one-shot admission across reconstructed nodes. Only the archive importer and sandbox runner are simulated. This is not separate-host or actual Docker isolation validation. No production dispatch enabled.
+
+
+## Independent signer HTTP boundary (CI pending)
+A single-policy handler accepts only canonical bounded supervisor receipts over a CA-verified TLS 1.3 connection with a pinned client SPKI. Policy, signer keys, clock and fresh GitHub evidence observer are provisioned independently; no request-supplied policy or observation is accepted. Invalid signatures are rejected before observation. The handler returns a task-bound proof, not authorization to advance or consume evidence. Repeated valid receipts yield deterministic proof bytes and still require fresh observation; ledger replay controls remain separate. Tests use synthetic TLS connection states and observer. A dedicated listener, trusted source-verifying observer wiring, client and deployment remain pending. No production dispatch enabled.
