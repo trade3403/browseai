@@ -404,3 +404,7 @@ Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified pus
 
 ### V0.3 8d-2b-2 测试编译修复（待 CI）
 证据 SHA 425255550553bd8edc22d58eee2a7049386ec571，Push 46152211875、PR 46152215422 均 completed/failure，6/10 各通过。backend vet、database Go build、Windows Go build 均报告 github_repair_http_test.go:68–69 undefined: w，gate 随之失败。修复 readyz 测试缺失的 httptest.NewRecorder 局部变量，保留全部断言、权限及覆盖率门禁。此前数据库测试因编译未执行，不宣称新覆盖率。新 CI 待验收。
+
+
+### V0.3 8d-2b-2 已验收；8d-2c-1 独立阶段决策数据库入口待 CI
+SHA 3662f03db0a609c3e3ea73a876c3eca17b4470c0 的 Push 46154587558、PR 46154592997 均成功。新增0032独立 NOLOGIN stage_human 角色，会话身份解析、阶段计划校验、历史证据原语复用及过期回滚，Go 默认拒绝适配。迁移往返纳入 CI；真实独立角色正向/并发测试、有效权限矩阵及 HTTP 接线仍待后续增量，不宣称8d-2c完成。
