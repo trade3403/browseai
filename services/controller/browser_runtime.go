@@ -21,7 +21,7 @@ func newBrowserNodeServer(addr string, db *sql.DB) (*http.Server, error) {
 	}
 	return &http.Server{
 		Addr: addr, Handler: browserDatabaseHeartbeatHandler(db),
-		TLSConfig: &tls.Config{MinVersion: tls.VersionTLS13},
+		TLSConfig:         &tls.Config{MinVersion: tls.VersionTLS13},
 		ReadHeaderTimeout: 3 * time.Second, ReadTimeout: 5 * time.Second,
 		WriteTimeout: 8 * time.Second, IdleTimeout: 15 * time.Second,
 		MaxHeaderBytes: 8192,
