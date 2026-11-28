@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -290,6 +292,15 @@ func testGitHubRepairRace(t *testing.T, ctx context.Context, db *sql.DB, c githu
 		}
 		return out, w.Code
 	}
+	if _, err := readGitHubRepairHandoff(ctx, human, token, "00000000-0000-4000-8000-000000000000", task); err == nil {
+		t.Fatal("repair handoff accepted foreign tenant")
+	}
+	if _, err := readGitHubRepairHandoff(ctx, human, token, tenant, approval); err == nil {
+		t.Fatal("repair handoff accepted unrelated task")
+	}
+	if _, err := readGitHubRepairHandoff(ctx, db, token, tenant, task); err == nil {
+		t.Fatal("owner accepted as repair handoff role")
+	}
 	summary, code := handoff(token)
 	if code != 200 || summary.Grant != grant || summary.Failure != failure || summary.Fence != fence || summary.Revision != c.task.revision+2 || summary.Approval != nil {
 		t.Fatal("repair handoff mismatch", code)
@@ -324,7 +335,8 @@ func testGitHubRepairRace(t *testing.T, ctx context.Context, db *sql.DB, c githu
 		return ok, err
 	})
 	summary, code = handoff(token)
-	if code != 200 || summary.Approval == nil || *summary.Approval != approval || summary.InstructionDigest == nil {
+	reviewedDigest := sha256.Sum256(instruction)
+	if code != 200 || summary.Approval == nil || *summary.Approval != approval || summary.InstructionDigest == nil || *summary.InstructionDigest != hex.EncodeToString(reviewedDigest[:]) {
 		t.Fatal("approved repair handoff mismatch", code)
 	}
 	if err := review(token, "approve", "", false, instruction); err == nil {
@@ -341,6 +353,9 @@ func testGitHubRepairRace(t *testing.T, ctx context.Context, db *sql.DB, c githu
 	}
 	if err := review(token, "confirm_sent", confirmation, true, instruction); err == nil {
 		t.Fatal("revoked session accepted")
+	}
+	if _, code := handoff(token); code != 401 {
+		t.Fatal("revoked session read repair handoff", code)
 	}
 	raw[0] = 72
 	token = base64.RawURLEncoding.EncodeToString(raw)

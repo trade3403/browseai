@@ -246,6 +246,24 @@ func testGitHubCommittedAcceptance(t *testing.T, ctx context.Context, owner *sql
 	handoff := func(tok string) *httptest.ResponseRecorder {
 		return authRequest(handler, "POST", "/api/tasks/"+a.task.taskID+"/github-stage/handoff", testOrigin, "", "192.0.2.1", &http.Cookie{Name: sessionCookie, Value: tok})
 	}
+	if _, err := readGitHubStageHandoff(ctx, human, token, "00000000-0000-4000-8000-000000000000", a.task.taskID); err == nil {
+		t.Fatal("stage handoff accepted foreign tenant")
+	}
+	if _, err := readGitHubStageHandoff(ctx, human, token, a.tenantID, decision); err == nil {
+		t.Fatal("stage handoff accepted unrelated task")
+	}
+	if _, err := owner.ExecContext(ctx, "UPDATE browseai.memberships SET role='user' WHERE user_id=$1 AND tenant_id=$2", a.actorID, a.tenantID); err != nil {
+		t.Fatal(err)
+	}
+	if handoff(token).Code != 403 {
+		t.Fatal("ordinary user read stage handoff")
+	}
+	if _, err := readGitHubStageHandoff(ctx, human, token, a.tenantID, a.task.taskID); err == nil {
+		t.Fatal("database stage handoff accepted ordinary user")
+	}
+	if _, err := owner.ExecContext(ctx, "UPDATE browseai.memberships SET role='platform_admin' WHERE user_id=$1 AND tenant_id=$2", a.actorID, a.tenantID); err != nil {
+		t.Fatal(err)
+	}
 	w := handoff(token)
 	var summary githubStageHandoff
 	if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &summary) != nil || summary.Acceptance != a.approvalID ||
