@@ -448,3 +448,7 @@ SHA 1a9caeff3b605c4b0073ad505362d45ed99d7d7b Push 46174939592 / PR 46174946340 �
 
 ### V0.4-1b-1 吊销测试参数修复（待 CI）
 SHA 9c527ec5ee68e352844773bfa43090d0d756a914 Push 46179044354 / PR 46179048893 均失败；PR database 141084227096 的 TestBrowserIdentityPersistence 在 revoke 返回 false，覆盖率76.2%。推定 lib/pq 将类型化 nil []byte 编码成空 bytea，改用真正 nil interface 传 SQL NULL；补空 bytea 拒绝、拒绝后心跳仍有效、吊销后新序号拒绝。保留迁移的严格 NULL 检查和全部门禁。新 CI 待确认根因及修复效果。
+
+
+### V0.4-1b-1 已验收；1b-2a 凭据及 TLS handler 待 CI
+SHA f5fa9bfd324ae17e26ca2fc6558aafc6a39d9966 Push 46181067645 / PR 46181071829 均成功。新增32字节随机凭据、严格独立前缀与摘要、数据库心跳适配、角色有效权限检查、仅直接TLS的有界HTTP handler及负例。尚未接线监听器或凭据运维命令；真实TLS与数据库并发验收待后续，不开放端口。
