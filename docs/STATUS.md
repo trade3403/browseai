@@ -388,3 +388,7 @@ Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified pus
 
 ### V0.3 8d-1 测试夹具修复（待 CI）
 证据 SHA 8c066433d52dc1b1f4f5b03d888d4d4359ef257a，Push 46142960182 / PR 46142965984 各 8/10，database/gate failure；两套覆盖率75.9%，实际失败为 TestGitHubEvidenceRemoteSnapshots/registered_execution 在 github_evidence_remote_test.go:599 触发成功证据项目复合外键。修复：失败漂移测试独立项目，保留同仓库/分支及所有约束；成功验收测试断言 SQLSTATE 23503 和 github_ci_evidence 表，并在独立回滚事务中验证禁用仓库拒绝阶段决策。迁移0029及75%门禁不改，新 CI 待验收。
+
+
+### V0.3 8d-1 已验收；8d-2a 修复预留角色待 CI
+证据 SHA 54b929653faef17acfd3f1b7d74e92e71f768828，Push 46145285226、PR 46145289907 均 completed/success，20/20，PR database 76.1%。迁移0030增加独立 NOLOGIN browseai_repair_reserver，仅调用已消费独立失败观察授权绑定的修复预留包装函数；重新检查原失败范围、当前任务版本、阶段计划完整性/依赖、租约和期限；不开放原 owner 函数或表权限。Go 最小权限适配，真实 PostgreSQL 角色并发、错误授权/fence、非法计划、重放、审计身份及权限矩阵测试。预留不是审批或发送；人工审批、发送确认和阶段决策仍为 owner-only，运行命令与用户认证仍待完成，新 CI 待验收。

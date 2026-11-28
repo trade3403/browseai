@@ -265,3 +265,7 @@ Migration 0029 records the original project and branch for new failure rows. Res
 
 ### 8d-1 fixture correction (CI pending)
 Exact SHA 8c066433d52dc1b1f4f5b03d888d4d4359ef257a Push 46142960182 / PR 46142965984 failed because the successful evidence composite FK correctly prevents the shared fixture project branch mutation. Coverage was 75.9% in both runs. Separate the failure-only project, assert the successful evidence FK SQLSTATE 23503, and independently test disabled repository denial before the committed stage decision. No migration, security constraint, or gate is relaxed.
+
+
+## Batch 8d-2a: isolated repair reservation (CI pending)
+Provision browseai_repair_reserver NOLOGIN NOSUPERUSER NOBYPASSRLS without memberships before migration 0030. The role may only call reserve_authorized_github_repair with a consumed independent failure grant, exact failure/task revision and lease fence. The wrapper locks the task and plan, checks bounded stage plan shape/dependencies and lease expiry, and invokes the sealed reservation atomically; the original primitive remains inaccessible. The Go adapter checks effective privileges. Tests exercise real distinct login, bad grant/fence, cyclic plan, eight-way reservation race, replay denial and recorded runtime identity. SQL stage text checks use PostgreSQL whitespace semantics; the normal Go stage plan validator remains stricter for Unicode. No production login, approval, confirmation or decision capability is granted here.

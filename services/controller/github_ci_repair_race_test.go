@@ -173,14 +173,50 @@ func testGitHubRepairRace(t *testing.T, ctx context.Context, db *sql.DB, c githu
 		err := tx.QueryRowContext(ctx, "SELECT browseai.reserve_github_ci_repair($1,$2,$3,$4,$5)", tenant, task, c.task.revision+1, failure, fence).Scan(&target)
 		return target.Valid, err
 	})
-	race("reserve repair", func() (bool, error) {
+	reserver, err := sql.Open("postgres", os.Getenv("BROWSEAI_TEST_REPAIR_RESERVER_DSN"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer reserver.Close()
+	if err := githubRepairReserverReady(ctx, reserver); err != nil {
+		t.Fatal("reserver role rejected", err)
+	}
+	if err := githubRepairReserverReady(ctx, db); err == nil {
+		t.Fatal("owner accepted as reserver")
+	}
+	if _, err := reserveAuthorizedGitHubRepair(ctx, reserver, "00000000-0000-4000-8000-000000009999", tenant, task, failure, c.task.revision+1, fence); err == nil {
+		t.Fatal("unrelated grant accepted")
+	}
+	if _, err := reserveAuthorizedGitHubRepair(ctx, reserver, grant, tenant, task, failure, c.task.revision+1, fence+1); err == nil {
+		t.Fatal("wrong fence accepted")
+	}
+	if _, err := reserveAuthorizedGitHubRepair(ctx, reserver, grant, tenant, task, failure, 0, fence); err == nil {
+		t.Fatal("invalid revision accepted")
+	}
+	if _, err := db.ExecContext(ctx, "UPDATE browseai.stages SET dependencies=ARRAY['stage'] WHERE tenant_id=$1 AND task_id=$2", tenant, task); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := reserveAuthorizedGitHubRepair(ctx, reserver, grant, tenant, task, failure, c.task.revision+1, fence); err == nil {
+		t.Fatal("cyclic stage plan accepted")
+	}
+	if _, err := db.ExecContext(ctx, "UPDATE browseai.stages SET dependencies=ARRAY[]::text[] WHERE tenant_id=$1 AND task_id=$2", tenant, task); err != nil {
+		t.Fatal(err)
+	}
+	race("reserve authorized repair", func() (bool, error) {
 		var target sql.NullString
-		err := db.QueryRowContext(ctx, "SELECT browseai.reserve_github_ci_repair($1,$2,$3,$4,$5)", tenant, task, c.task.revision+1, failure, fence).Scan(&target)
+		err := reserver.QueryRowContext(ctx, githubRepairReserverSQL, grant, tenant, task, c.task.revision+1, failure, fence).Scan(&target)
 		if err == nil && target.Valid && target.String != "AWAIT_APPROVAL" {
 			return false, errors.New("unexpected repair target")
 		}
 		return target.Valid, err
 	})
+	if _, err := reserveAuthorizedGitHubRepair(ctx, reserver, grant, tenant, task, failure, c.task.revision+1, fence); err == nil {
+		t.Fatal("reservation replay accepted")
+	}
+	var reservedBy string
+	if err := db.QueryRowContext(ctx, "SELECT observer_role FROM browseai.github_ci_repair_audit WHERE failure_id=$1 AND action='repair_reserved'", failure).Scan(&reservedBy); err != nil || reservedBy != "browseai_repair_reserver" {
+		t.Fatal("reservation identity missing", reservedBy, err)
+	}
 	instruction := []byte("Review and repair race fixture")
 	rejectBranchDrift("approve", func(tx *sql.Tx) (bool, error) {
 		var ok bool
