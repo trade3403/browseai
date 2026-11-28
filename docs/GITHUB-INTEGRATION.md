@@ -261,3 +261,7 @@ Previous exact SHA 8f50d3f98efb50d60724c2732a5aac4030cfde8d Push 46138550811 / P
 
 ## Batch 8d-1: historical scope and committed end-to-end decision (CI pending)
 Migration 0029 records the original project and branch for new failure rows. Reserve, approve and manual confirmation reject changed scope even if the repository, task, SHA and fence are unchanged. Old rows without immutable scope remain NULL and fail closed; do not backfill from mutable current settings. Historical stage decisions additionally require a live audited repository binding. Integration fixtures exercise branch drift in each repair phase and committed acceptance followed by a distinct complete decision, including replay denial. This does not grant the owner-only repair/stage decision primitives to production identities. Actual user-authenticated approval and independent execution deployment remain unverified.
+
+
+### 8d-1 fixture correction (CI pending)
+Exact SHA 8c066433d52dc1b1f4f5b03d888d4d4359ef257a Push 46142960182 / PR 46142965984 failed because the successful evidence composite FK correctly prevents the shared fixture project branch mutation. Coverage was 75.9% in both runs. Separate the failure-only project, assert the successful evidence FK SQLSTATE 23503, and independently test disabled repository denial before the committed stage decision. No migration, security constraint, or gate is relaxed.

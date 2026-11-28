@@ -5,12 +5,15 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 func TestGitHubCIAcceptanceConfiguration(t *testing.T) {
@@ -159,12 +162,29 @@ func testGitHubCommittedAcceptance(t *testing.T, ctx context.Context, owner *sql
 		t.Fatal(err)
 	}
 	defer tx.Rollback()
-	if _, err := tx.ExecContext(ctx, "UPDATE browseai.projects SET code_branch='feat/drift' WHERE id=$1", a.task.projectID); err != nil {
+	// Successful evidence already pins the project/branch through a
+	// composite foreign key. Assert the actual SQLSTATE, not any error.
+	_, driftErr := tx.ExecContext(ctx, "UPDATE browseai.projects SET code_branch='feat/drift' WHERE id=$1", a.task.projectID)
+	var fkErr *pq.Error
+	if !errors.As(driftErr, &fkErr) || fkErr.Code != "23503" || fkErr.Table != "github_ci_evidence" {
+		t.Fatal("expected immutable evidence foreign key", driftErr)
+	}
+	if err := tx.Rollback(); err != nil {
+		t.Fatal(err)
+	}
+	// Independently verify that a live binding revoked after acceptance
+	// prevents the final decision even with unchanged evidence.
+	tx, err = owner.BeginTx(ctx, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tx.Rollback()
+	if _, err := tx.ExecContext(ctx, "UPDATE browseai.github_repositories SET enabled=false WHERE tenant_id=$1 AND repository_id=$2", a.tenantID, policy.execution.binding.repositoryID); err != nil {
 		t.Fatal(err)
 	}
 	var ok bool
 	if err := tx.QueryRowContext(ctx, query, args...).Scan(&ok); err != nil || ok {
-		t.Fatal("historical stage accepted on changed branch", ok, err)
+		t.Fatal("historical decision accepted on disabled repository", ok, err)
 	}
 	if err := tx.Rollback(); err != nil {
 		t.Fatal(err)

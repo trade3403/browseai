@@ -591,6 +591,12 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 		testGitHubOutcomeRace(t, ctx, owner, conflictingFailure)
 		racePolicy := policy
 		racePolicy.task.taskID = "00000000-0000-4000-8000-000000009970"
+		// Isolate branch-drift tests from the successful evidence project:
+		// its immutable composite foreign key intentionally prevents edits.
+		racePolicy.task.projectID = "00000000-0000-4000-8000-000000009969"
+		if _, err := owner.ExecContext(ctx, "INSERT INTO browseai.projects(id,tenant_id,name,repository_id,repository,code_branch) VALUES($1,$2,'failure drift fixture',$3,$4,$5)", racePolicy.task.projectID, b.tenantID, b.repositoryID, b.fullName, p.push.branch); err != nil {
+			t.Fatal(err)
+		}
 		mode = "push-failure"
 		raceFailure, err := a.observeCIFailure(ctx, racePolicy, clock)
 		if err != nil {

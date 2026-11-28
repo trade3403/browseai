@@ -384,3 +384,7 @@ Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified pus
 
 ### V0.3 8c-3b 已验收；8d-1 历史范围与综合联动待 CI
 证据 SHA 35636785ad44142905e0b3c4bc70d04d6fba176c，Push 46140825092 / PR 46140828600 均 completed/success，20/20；PR database 140966145207 实测覆盖率 76.1%。综合核查发现历史失败表缺独立项目/分支。迁移 0029 将原始项目/分支记录于失败行，预留/审批/确认均重新匹配；历史无法证明原范围的旧行保持 NULL 并拒绝继续修复，不从当前项目回填。补 live binding audit 检查及真实 PG 分支漂移负例，已成功验收任务独立完成决定及防重放测试。未授予 owner-only 修复及阶段决策函数新运行权限。新 CI 待验收；生产审批、证据交接和真实 App/独立主机仍未验收，禁止标记生产完成。
+
+
+### V0.3 8d-1 测试夹具修复（待 CI）
+证据 SHA 8c066433d52dc1b1f4f5b03d888d4d4359ef257a，Push 46142960182 / PR 46142965984 各 8/10，database/gate failure；两套覆盖率75.9%，实际失败为 TestGitHubEvidenceRemoteSnapshots/registered_execution 在 github_evidence_remote_test.go:599 触发成功证据项目复合外键。修复：失败漂移测试独立项目，保留同仓库/分支及所有约束；成功验收测试断言 SQLSTATE 23503 和 github_ci_evidence 表，并在独立回滚事务中验证禁用仓库拒绝阶段决策。迁移0029及75%门禁不改，新 CI 待验收。
