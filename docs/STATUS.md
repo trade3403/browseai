@@ -396,3 +396,7 @@ Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified pus
 
 ### V0.3 8d-2a 已验收；8d-2b-1 会话绑定修复审批与确认（待 CI）
 证据 SHA 8a0b44b7b87f4faad5578befa309a62325beb3e3，Push 46147560876、PR 46147566877 均 completed/success，20/20，PR database 76.1%。迁移0031新增独立 NOLOGIN browseai_repair_human，仅调用会话绑定包装函数；事务内根据 session digest 解析管理员身份、锁定身份和有效会话、核对失败授权/预留身份/计划/租约、绑定指令字节及批准/确认动作，原 owner 函数保持封闭。Go 适配拒绝缺人工发送确认、非法 token/参数。真实 PG 角色并发、普通用户/撤销会话、指令变更、未审批确认、重放及权限测试。未接入 HTTP/UI，真实人工发送证明与生产部署仍未验收；新 CI 待验收。
+
+
+### V0.3 8d-2b-1 已验收；8d-2b-2 HTTP 运行入口待 CI
+证据 SHA d295b05ee638466349d0d6ff822a3e3e7b104aae，Push 46149917480、PR 46149922570 均 completed/success，20/20。新增独立 repair human 连接池及有效权限检查、认证模式显式 BROWSEAI_REPAIR_HUMAN_DSN verify-full 启用、readyz 检查、同源管理员 Cookie POST /api/tasks/{id}/github-repair/approve 与 confirm-sent；输入严格字段/大小/版本/指令字节/人工确认，数据库再次解析会话，重复或冲突409，不自动重试或发送。真实 PG 并发测试通过 HTTP 驱动，补请求安全测试。仍缺前端操作界面及安全的证据/ID交接、生产部署；新 CI 待验收。

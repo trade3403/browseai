@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
+	"net/http"
 	"os"
 	"sync"
 	"testing"
@@ -263,10 +265,45 @@ func testGitHubRepairRace(t *testing.T, ctx context.Context, db *sql.DB, c githu
 	if _, err := db.ExecContext(ctx, "UPDATE browseai.memberships SET role='platform_admin' WHERE user_id=$1 AND tenant_id=$2", actor, tenant); err != nil {
 		t.Fatal(err)
 	}
+	// Use the real authentication database identity for HTTP requests.
+	authDB, err := sql.Open("postgres", os.Getenv("BROWSEAI_TEST_AUTH_DSN"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer authDB.Close()
+	if err := githubRepairHumanReady(ctx, human); err != nil {
+		t.Fatal("review role rejected", err)
+	}
+	if err := githubRepairHumanReady(ctx, db); err == nil {
+		t.Fatal("owner accepted as review runtime")
+	}
+	auth, err := newAuthHTTP(testOrigin, sqlCredentialVerifier{authDB}, sessionService{store: sqlSessionStore{authDB}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler := githubRepairReviewRoutes(auth, human, http.NotFoundHandler())
+	in := githubRepairReviewRequest{Revision: c.task.revision + 2, Fence: fence, Grant: grant, Failure: failure, Approval: approval, Instruction: instruction, Reviewed: true}
+	request := func(action, tok, origin string, input githubRepairReviewRequest) int {
+		body, err := json.Marshal(input)
+		if err != nil {
+			return 0
+		}
+		return authRequest(handler, "POST", "/api/tasks/"+task+"/github-repair/"+action, origin, string(body), "192.0.2.1", &http.Cookie{Name: sessionCookie, Value: tok}).Code
+	}
+	if request("approve", token, "https://foreign.example", in) != 403 || request("approve", "invalid", testOrigin, in) != 401 {
+		t.Fatal("HTTP origin or session bypass")
+	}
+	unreviewed := in
+	unreviewed.Reviewed = false
+	if request("approve", token, testOrigin, unreviewed) != 400 {
+		t.Fatal("unreviewed HTTP approval accepted")
+	}
 	race("approve repair", func() (bool, error) {
-		var ok bool
-		err := human.QueryRowContext(ctx, githubRepairHumanSQL, digest[:], tenant, task, c.task.revision+2, grant, failure, approval, nil, fence, instruction, "approve").Scan(&ok)
-		return ok, err
+		code := request("approve", token, testOrigin, in)
+		if code != 204 && code != 409 {
+			return false, errors.New("unexpected HTTP approval status")
+		}
+		return code == 204, nil
 	})
 	rejectBranchDrift("confirm", func(tx *sql.Tx) (bool, error) {
 		var ok bool
@@ -297,10 +334,14 @@ func testGitHubRepairRace(t *testing.T, ctx context.Context, db *sql.DB, c githu
 	if err := db.QueryRowContext(ctx, "SELECT browseai.issue_session($1,$2,$3)", actor, tenant, digest[:]).Scan(&issued); err != nil || !issued {
 		t.Fatal("replacement session fixture", issued, err)
 	}
+	in.Confirmation = confirmation
+	in.ManualSent = true
 	race("confirm repair", func() (bool, error) {
-		var ok bool
-		err := human.QueryRowContext(ctx, githubRepairHumanSQL, digest[:], tenant, task, c.task.revision+2, grant, failure, approval, confirmation, fence, instruction, "confirm_sent").Scan(&ok)
-		return ok, err
+		code := request("confirm-sent", token, testOrigin, in)
+		if code != 204 && code != 409 {
+			return false, errors.New("unexpected HTTP confirmation status")
+		}
+		return code == 204, nil
 	})
 	var state string
 	var revision int64

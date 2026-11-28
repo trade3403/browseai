@@ -209,6 +209,13 @@ func main() {
 			log.Fatal("project startup failed: ", err)
 		}
 		defer appDB.Close()
+		if dsn := os.Getenv("BROWSEAI_REPAIR_HUMAN_DSN"); dsn != "" {
+			reviewDB, err := openGitHubRepairReviewRuntime(context.Background(), server, db, dsn, os.Getenv("BROWSEAI_ORIGIN"))
+			if err != nil {
+				log.Fatal("repair review startup failed")
+			}
+			defer reviewDB.Close()
+		}
 	default:
 		log.Fatal("invalid BROWSEAI_MODE")
 	}
