@@ -71,6 +71,12 @@ func newServer(addr string) *http.Server {
 
 func main() {
 	if len(os.Args) > 1 {
+		if os.Args[1] == "github-signer-preview" {
+			if len(os.Args) != 3 || githubSignerPreviewCommand(os.Args[2]) != nil {
+				log.Fatal("GitHub signer preview unavailable")
+			}
+			return
+		}
 		if os.Args[1] == "github-execution-node-preview" {
 			if len(os.Args) != 3 || githubExecutionNodePreviewCommand(os.Args[2]) != nil {
 				log.Fatal("GitHub execution node preview unavailable")

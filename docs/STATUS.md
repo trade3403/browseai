@@ -292,3 +292,7 @@ Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified pus
 
 ### V0.3 签名客户端已验收；可信 GitHub 观察接线待 CI
 实际提交 e879db332367df35b6afc648d39b9283caab0244，Push 46090273167、PR 46090277895 均 completed/success，20/20。新增固定策略可信观察器，调用已有只读 GitHub App Push/PR CI 及不可变工作流源码验证，统一 30 秒新鲜度边界、取消、策略隔离和失败拒绝；测试使用模拟 GitHub HTTP transport。尚未实际部署签名进程或配置真实 App 凭据。新 CI 待验收，下一步受保护签名进程启动及独立服务联调，禁止自动推进。
+
+
+### V0.3 可信观察已验收；独立签名进程预览启动待 CI
+实际提交 e7935bca99244a90dbfaeac3dfd6fc11e0882db8，Push 46092691895、PR 46092696610 均 completed/success，20/20。新增独立 Linux 非 root 签名预览命令、固定策略 canonical JSON、受保护 App/Ed25519/TLS 文件、可信观察器接线、本地 TLS 1.3 监听、单并发及退出。测试使用临时合成密钥与配置，不连接真实 GitHub；实际独立主机部署、严格公钥与综合安全验收仍待完成。新 CI 待验收，禁止自动推进。
