@@ -68,6 +68,7 @@ func testGitHubCIRepair(t *testing.T, ctx context.Context, owner, writer *sql.DB
 		if err := tx.QueryRowContext(ctx, "SELECT state,repairs,revision FROM browseai.tasks WHERE id=$1", task).Scan(&state, &repairs, &current); err != nil || state != string(want) || repairs != max || current != candidate.task.revision+2 {
 			t.Fatal("unexpected repair state", state, repairs, current, err)
 		}
+		testGitHubRepairApproval(t, ctx, tx, tenant, task, id, current, fence, want, repairs)
 		if err := tx.Rollback(); err != nil {
 			t.Fatal(err)
 		}
