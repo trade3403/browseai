@@ -364,3 +364,7 @@ Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified pus
 
 ### V0.3 8b 已验收；8c-1 独立失败观察角色待 CI
 实际提交 a8559fe17d63c24e786697dd8a21e63a00149ba1，Push 46129803613、PR 46129808778 均 completed/success，20/20。新增迁移 0025，专用 browseai_failure_observer 默认 NOLOGIN，仅允许带独立 owner 预置限时授权的失败登记，绑定任务/版本/SHA/项目/仓库/安装/工作流/源码/事件；一次性消费与原失败转换同事务，撤销或过期拒绝。Go adapter 从受信策略直接独立观察后写入；启动权限检查拒绝 owner、继承角色、直接表/列权限及其他函数。并发 fixture 使用真实独立角色，验证错误授权、工作流、直接入口拒绝及一次成功。SQL 不独立验证 GitHub I/O，角色仅在信任范围内使用；未部署、未启用生产登录、授权运维 CLI 和成功验收服务仍待完成。CI 待验收。
+
+
+### V0.3 8c-1 已验收；8c-2 失败观察启动及运维授权待 CI
+证据 SHA c5e0eb4db5bf7ffa379df22d95d2ba28b5b4f00b，Push 46131983860、PR 46131990480 均 completed/success，20/20。迁移 0026 新增独立 NOLOGIN browseai_failure_grant_operator，仅签发/撤销固定 WAIT_CI 任务限时授权，复验审计绑定，记录 session_user，拒绝重复/过期。Linux 非 root 一次性 controller github-failure issue|revoke|observe DIR，受保护 canonical failure.json，签发/撤销需人工输入动作与 SHA256 审批行，observe 使用独立角色与 App 只读 HTTPS、无代理、限时，不监听 HTTP、不发送、不预留修复。CI 测试独立运维角色、配置篡改、拒绝过期/旧版本、撤销及并发消费。新 CI 待验收；真实环境、签发者身份由独立运维凭据管理，不等于用户级认证；成功验收服务和部署仍待完成。

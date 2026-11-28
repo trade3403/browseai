@@ -71,6 +71,13 @@ func newServer(addr string) *http.Server {
 
 func main() {
 	if len(os.Args) > 1 {
+		if os.Args[1] == "github-failure" {
+			if githubFailureCommand(os.Args[2:], os.Stdin) != nil {
+				log.Fatal("GitHub failure operation rejected")
+			}
+			log.Print("GitHub failure operation recorded")
+			return
+		}
 		if os.Args[1] == "github-verifier-register" {
 			dsn := os.Getenv("BROWSEAI_VERIFIER_OPERATOR_DSN")
 			if !githubRoleDSNValid(dsn, "browseai_verifier_operator") {

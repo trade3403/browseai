@@ -53,13 +53,10 @@ func testGitHubRepairRace(t *testing.T, ctx context.Context, db *sql.DB, c githu
 	if err := tx.QueryRowContext(ctx, "INSERT INTO browseai.leases(repository_id,code_branch,tenant_id,task_id,project_id,expires_at) VALUES($1,$2,$3,$4,$5,clock_timestamp()+interval '60 seconds') RETURNING fence", c.policy.binding.repositoryID, c.policy.branch, tenant, task, c.task.projectID).Scan(&fence); err != nil {
 		t.Fatal(err)
 	}
-	var grant string
-	if err := tx.QueryRowContext(ctx, "INSERT INTO browseai.github_failure_observer_grants(tenant_id,task_id,project_id,task_revision,installation_id,repository_id,code_branch,head_sha,workflow_id,source_digest,event_type,expires_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,clock_timestamp()+interval '5 minutes') RETURNING id::text", tenant, task, c.task.projectID, c.task.revision, c.policy.binding.installationID, c.policy.binding.repositoryID, c.policy.branch, c.policy.sha, c.policy.workflowID, c.source, c.event).Scan(&grant); err != nil {
-		t.Fatal(err)
-	}
 	if err := tx.Commit(); err != nil {
 		t.Fatal(err)
 	}
+	grant := testGitHubFailureGrantOperator(t, ctx, db, c)
 	observerDSN := os.Getenv("BROWSEAI_TEST_FAILURE_OBSERVER_DSN")
 	if observerDSN == "" {
 		t.Fatal("missing observer fixture")
