@@ -282,6 +282,19 @@ func testGitHubRepairRace(t *testing.T, ctx context.Context, db *sql.DB, c githu
 		t.Fatal(err)
 	}
 	handler := githubRepairReviewRoutes(auth, human, http.NotFoundHandler())
+	handoff := func(tok string) (githubRepairHandoff, int) {
+		w := authRequest(handler, "POST", "/api/tasks/"+task+"/github-repair/handoff", testOrigin, "", "192.0.2.1", &http.Cookie{Name: sessionCookie, Value: tok})
+		var out githubRepairHandoff
+		if w.Code == 200 && json.Unmarshal(w.Body.Bytes(), &out) != nil {
+			return out, 0
+		}
+		return out, w.Code
+	}
+	summary, code := handoff(token)
+	if code != 200 || summary.Grant != grant || summary.Failure != failure || summary.Fence != fence || summary.Revision != c.task.revision+2 || summary.Approval != nil {
+		t.Fatal("repair handoff mismatch", code)
+	}
+
 	in := githubRepairReviewRequest{Revision: c.task.revision + 2, Fence: fence, Grant: grant, Failure: failure, Approval: approval, Instruction: instruction, Reviewed: true}
 	request := func(action, tok, origin string, input githubRepairReviewRequest) int {
 		body, err := json.Marshal(input)
@@ -310,6 +323,10 @@ func testGitHubRepairRace(t *testing.T, ctx context.Context, db *sql.DB, c githu
 		err := tx.QueryRowContext(ctx, "SELECT browseai.confirm_github_ci_repair($1,$2,$3,$4,$5,$6,$7,$8)", tenant, task, c.task.revision+2, approval, actor, confirmation, fence, instruction).Scan(&ok)
 		return ok, err
 	})
+	summary, code = handoff(token)
+	if code != 200 || summary.Approval == nil || *summary.Approval != approval || summary.InstructionDigest == nil {
+		t.Fatal("approved repair handoff mismatch", code)
+	}
 	if err := review(token, "approve", "", false, instruction); err == nil {
 		t.Fatal("approval replay accepted")
 	}
@@ -343,6 +360,9 @@ func testGitHubRepairRace(t *testing.T, ctx context.Context, db *sql.DB, c githu
 		}
 		return code == 204, nil
 	})
+	if _, code := handoff(token); code != 409 {
+		t.Fatal("completed repair still available", code)
+	}
 	var state string
 	var revision int64
 	var repairs, audit, approvals, confirmations int
