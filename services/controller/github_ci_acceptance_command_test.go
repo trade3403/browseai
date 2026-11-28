@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"encoding/hex"
+	"encoding/base64"
+	"sync"
 	"encoding/json"
 	"errors"
 	"os"
@@ -189,11 +191,69 @@ func testGitHubCommittedAcceptance(t *testing.T, ctx context.Context, owner *sql
 	if err := tx.Rollback(); err != nil {
 		t.Fatal(err)
 	}
-	if err := owner.QueryRowContext(ctx, query, args...).Scan(&ok); err != nil || !ok {
-		t.Fatal("committed stage decision failed", ok, err)
+	human, err := sql.Open("postgres", os.Getenv("BROWSEAI_TEST_STAGE_HUMAN_DSN"))
+	if err != nil {
+		t.Fatal(err)
 	}
-	if err := owner.QueryRowContext(ctx, query, args...).Scan(&ok); err != nil || ok {
-		t.Fatal("committed decision replayed", ok, err)
+	defer human.Close()
+	if err := githubStageHumanReady(ctx, human); err != nil {
+		t.Fatal("stage role unavailable", err)
+	}
+	if err := githubStageHumanReady(ctx, owner); err == nil {
+		t.Fatal("owner accepted as stage runtime")
+	}
+	if err := human.QueryRowContext(ctx, query, args...).Scan(&ok); err == nil {
+		t.Fatal("stage role can invoke sealed primitive")
+	}
+	raw := make([]byte, 32)
+	raw[0] = 93
+	token := base64.RawURLEncoding.EncodeToString(raw)
+	digest, err := digestSession(token)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := owner.QueryRowContext(ctx, "SELECT browseai.issue_session($1,$2,$3)", a.actorID, a.tenantID, digest[:]).Scan(&ok); err != nil || !ok {
+		t.Fatal("stage session fixture", ok, err)
+	}
+	for _, bad := range []struct {
+		token, acceptance string
+		revision int64
+		action taskAction
+		confirmed bool
+	}{
+		{"", a.approvalID, revision, actionComplete, true},
+		{token, decision, revision, actionComplete, true},
+		{token, a.approvalID, revision+1, actionComplete, true},
+		{token, a.approvalID, revision, actionNext, true},
+		{token, a.approvalID, revision, actionComplete, false},
+	} {
+		if err := reviewAuthorizedGitHubStage(ctx, human, bad.token, a.tenantID, a.task.taskID, bad.acceptance, decision, bad.revision, bad.action, bad.confirmed); err == nil {
+			t.Fatal("invalid stage decision accepted")
+		}
+	}
+	var wg sync.WaitGroup
+	results := make(chan error, 8)
+	for i := 0; i < 8; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			results <- reviewAuthorizedGitHubStage(ctx, human, token, a.tenantID, a.task.taskID, a.approvalID, decision, revision, actionComplete, true)
+		}()
+	}
+	wg.Wait()
+	close(results)
+	wins := 0
+	for err := range results {
+		if err == nil { wins++ }
+	}
+	if wins != 1 {
+		t.Fatal("expected one stage decision", wins)
+	}
+	if err := reviewAuthorizedGitHubStage(ctx, human, token, a.tenantID, a.task.taskID, a.approvalID, decision, revision, actionComplete, true); err == nil {
+		t.Fatal("committed decision replayed")
+	}
+	if err := owner.QueryRowContext(ctx, "SELECT count(*) FROM browseai.github_stage_decisions d JOIN browseai.audit_logs l ON l.id=d.decision_id JOIN browseai.events e ON e.audit_id=l.id WHERE d.decision_id=$1 AND d.acceptance_id=$2 AND l.actor_id=$3 AND e.kind='task.complete'", decision, a.approvalID, a.actorID).Scan(&count); err != nil || count != 1 {
+		t.Fatal("missing or duplicate decision audit", count, err)
 	}
 	if err := owner.QueryRowContext(ctx, "SELECT state,revision FROM browseai.tasks WHERE id=$1", a.task.taskID).Scan(&state, &revision); err != nil || state != "COMPLETED" || revision != a.task.revision+2 {
 		t.Fatal("complete decision not durable", state, revision, err)

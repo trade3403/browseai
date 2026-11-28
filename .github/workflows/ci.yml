@@ -233,7 +233,9 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_repair_reserver LOGIN PASSWORD 'ci-repair-reserver-only'"
           export BROWSEAI_TEST_REPAIR_RESERVER_DSN="postgres://browseai_repair_reserver:ci-repair-reserver-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_repair_human LOGIN PASSWORD 'ci-repair-human-only'"
+          psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_stage_human LOGIN PASSWORD 'ci-stage-human-only'"
           export BROWSEAI_TEST_REPAIR_HUMAN_DSN="postgres://browseai_repair_human:ci-repair-human-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
+          export BROWSEAI_TEST_STAGE_HUMAN_DSN="postgres://browseai_stage_human:ci-stage-human-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           cd services/controller
           go test -mod=readonly -race -coverprofile=coverage.out -count=1 -v ./...
           go tool cover -func=coverage.out | tee coverage-summary.txt
