@@ -416,3 +416,7 @@ SHA 86596915bedcb97194783a64efb098d87f2e0b0a Push 46158720128 / PR 46158725042 �
 
 ### V0.3 8d-2c-2 格式修复（待 CI）
 SHA 6e84040e9179551b1880a11be06e5b5c0cb2b00d Push 46160639194 / PR 46160646033 均失败；PR database 通过，backend gofmt 检查列出两个文件，gate 随之失败。按 CI 输出修复格式，不修改断言、逻辑或门禁。新 CI 待验收。
+
+
+### V0.3 8d-2c-2 已验收；8d-2c-3 HTTP 阶段决策待 CI
+SHA 77660a5f5b30d917446934e1cb8ea4dd46c4c3a8 Push 46162625428 / PR 46162630574 均成功。新增 opt-in 独立 stage human DSN、同源管理员会话 POST next/complete、严格请求校验及 readyz，失败不重试；HTTP 安全负例待 CI。真实数据库并发测试前一批通过，HTTP 正向集成与证据交接仍待验收，不启用自动发送。

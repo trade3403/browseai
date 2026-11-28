@@ -281,3 +281,7 @@ Only authenticated mode with BROWSEAI_REPAIR_HUMAN_DSN (browseai_repair_human, v
 
 ### 8d-2b-2 test compilation correction (CI pending)
 Exact SHA 425255550553bd8edc22d58eee2a7049386ec571 failed Push 46152211875 and PR 46152215422: the readiness negative test omitted its local response recorder (`undefined: w`), blocking backend vet, database and Windows Go test compilation. Restore the recorder declaration, retain the readiness assertion and all gates; new CI pending.
+
+
+### Stage decision HTTP preview
+Authenticated mode may explicitly enable BROWSEAI_STAGE_HUMAN_DSN with verify-full TLS and the dedicated browseai_stage_human login. POST /api/tasks/{id}/github-stage/next or /complete requires same-origin administrator session, revision, acceptance_id, decision_id and reviewed=true. No actor or tenant is accepted from the request. Success is 204; conflicts are not retried. No dispatch, lease release or automatic sending. Production provisioning and evidence presentation remain outstanding.

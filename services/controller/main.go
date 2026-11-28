@@ -216,6 +216,13 @@ func main() {
 			}
 			defer reviewDB.Close()
 		}
+		if dsn := os.Getenv("BROWSEAI_STAGE_HUMAN_DSN"); dsn != "" {
+			stageDB, err := openGitHubStageReviewRuntime(context.Background(), server, db, dsn, os.Getenv("BROWSEAI_ORIGIN"))
+			if err != nil {
+				log.Fatal("stage review startup failed")
+			}
+			defer stageDB.Close()
+		}
 	default:
 		log.Fatal("invalid BROWSEAI_MODE")
 	}
