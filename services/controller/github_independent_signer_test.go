@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -163,6 +164,113 @@ func TestGitHubIndependentSigner(t *testing.T) {
 		}
 		if replay := send("/v1/sign", raw, state); replay.Code != http.StatusOK || replay.Body.String() != w.Body.String() {
 			t.Fatal("non-deterministic proof")
+		}
+	})
+
+	t.Run("signing-client", func(t *testing.T) {
+		roots, serverCert, clientCert, otherCert, serverPin, clientPin := githubPreviewTestPKI(t)
+		service, err := newGitHubSignerService(signer, policy, clientPin, func(context.Context) (githubCIEvidence, githubPRRelationship, error) {
+			return e, rel, nil
+		}, func() time.Time { return now })
+		if err != nil {
+			t.Fatal(err)
+		}
+		var mode atomic.Int32
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			switch mode.Load() {
+			case 1:
+				http.Redirect(w, r, "/other", http.StatusTemporaryRedirect)
+				return
+			case 2:
+				w.WriteHeader(http.StatusServiceUnavailable)
+				return
+			case 3:
+				w.Header().Set("Content-Type", "application/json")
+				w.Write([]byte(strings.Repeat("x", githubSignerBodyLimit+1)))
+				return
+			case 4, 5, 6, 7:
+				response := githubSignerResponse{githubSignerResponseDomain, policy.verifierID, policy.keyID, proof.proof.issuedUnix, append([]byte(nil), proof.proof.signature...)}
+				switch mode.Load() {
+				case 4:
+					response.Signature[0] ^= 1
+				case 5:
+					response.KeyID = policy.verifierID
+				case 6:
+					response.IssuedUnix--
+				}
+				raw, _ := json.Marshal(response)
+				if mode.Load() == 7 {
+					raw = append(raw, ' ')
+				}
+				w.Header().Set("Content-Type", "application/json")
+				w.Write(raw)
+				return
+			default:
+				service.ServeHTTP(w, r)
+			}
+		})
+		server := httptest.NewUnstartedServer(handler)
+		server.TLS = &tls.Config{}
+		server.TLS.MinVersion = tls.VersionTLS13
+		server.TLS.Certificates = []tls.Certificate{serverCert}
+		server.TLS.ClientAuth = tls.RequireAndVerifyClientCert
+		server.TLS.ClientCAs = roots
+		server.StartTLS()
+		defer server.Close()
+		endpoint := server.URL + "/v1/sign"
+		client, err := newGitHubSignerClient(endpoint, roots, clientCert, serverPin, public)
+		if err != nil {
+			t.Fatal(err)
+		}
+		ctx := context.Background()
+		clock := func() time.Time { return now }
+		got, err := client.sign(ctx, policy, e, rel, receipt, sig, clock)
+		if err != nil || !bytes.Equal(got.proof.signature, proof.proof.signature) {
+			t.Fatal("authenticated signing failed", err)
+		}
+		for i := int32(1); i <= 7; i++ {
+			mode.Store(i)
+			if _, err := client.sign(ctx, policy, e, rel, receipt, sig, clock); err == nil {
+				t.Fatal("invalid response accepted", i)
+			}
+		}
+		mode.Store(0)
+		wrongPin := serverPin
+		wrongPin[0] ^= 1
+		for _, tc := range []struct {
+			cert tls.Certificate
+			pin  [32]byte
+			key  ed25519.PublicKey
+		}{
+			{clientCert, wrongPin, public},
+			{otherCert, serverPin, public},
+			{clientCert, serverPin, supervisor},
+		} {
+			wrong, err := newGitHubSignerClient(endpoint, roots, tc.cert, tc.pin, tc.key)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := wrong.sign(ctx, policy, e, rel, receipt, sig, clock); err == nil {
+				t.Fatal("wrong identity accepted")
+			}
+		}
+		for _, bad := range []string{"http://localhost/v1/sign", server.URL + "/other", endpoint + "?x=1", endpoint + "#x"} {
+			if _, err := newGitHubSignerClient(bad, roots, clientCert, serverPin, public); err == nil {
+				t.Fatal("unsafe endpoint accepted", bad)
+			}
+		}
+		bad := receipt
+		bad.StatementDigest = strings.Repeat("a", 64)
+		if _, err := client.sign(ctx, policy, e, rel, bad, signReceipt(bad), clock); err == nil {
+			t.Fatal("changed receipt accepted")
+		}
+		if _, err := client.sign(ctx, policy, e, rel, receipt, sig, func() time.Time { return now.Add(githubExecutorReceiptMaxAge) }); err == nil {
+			t.Fatal("expired receipt accepted")
+		}
+		cancelled, cancel := context.WithCancel(ctx)
+		cancel()
+		if _, err := client.sign(cancelled, policy, e, rel, receipt, sig, clock); err == nil {
+			t.Fatal("cancelled request accepted")
 		}
 	})
 	for _, mutate := range []func(*githubExecutorReceipt){

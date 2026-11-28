@@ -165,3 +165,7 @@ The integration test uses a real loopback TLS listener and the production remote
 
 ## Independent signer HTTP boundary (CI pending)
 A single-policy handler accepts only canonical bounded supervisor receipts over a CA-verified TLS 1.3 connection with a pinned client SPKI. Policy, signer keys, clock and fresh GitHub evidence observer are provisioned independently; no request-supplied policy or observation is accepted. Invalid signatures are rejected before observation. The handler returns a task-bound proof, not authorization to advance or consume evidence. Repeated valid receipts yield deterministic proof bytes and still require fresh observation; ledger replay controls remain separate. Tests use synthetic TLS connection states and observer. A dedicated listener, trusted source-verifying observer wiring, client and deployment remain pending. No production dispatch enabled.
+
+
+## Signing client and receipt transfer (CI pending)
+The protected client posts only the supervisor receipt and signature to a configured HTTPS signing endpoint, verifies TLS 1.3 CA and server SPKI, disables redirects and request replay, and bounds the response. It reconstructs the exact task/attempt statement from independently observed evidence and verifies the returned proof against the pinned signing key and receipt digest/time. The loopback tests use generated CA/client/server certificates and simulated evidence observation. This is not a deployed independent signing process or ledger authorization; downstream registered-key and freshness verification remain mandatory.
