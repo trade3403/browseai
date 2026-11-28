@@ -546,6 +546,13 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 		testGitHubCIRepair(t, ctx, owner, writerDB, failure, clock)
 		mode = ""
 		testGitHubEvidenceConsumption(t, ctx, owner, writerDB, reader, operator, b.tenantID, task)
+		testGitHubSealedPrivileges(t, ctx, owner)
+		mode = "pr-failure"
+		conflictingFailure, err := a.observeCIFailure(ctx, prPolicy, clock)
+		if err != nil {
+			t.Fatal("conflicting PR fixture rejected", err)
+		}
+		testGitHubOutcomeRace(t, ctx, owner, conflictingFailure)
 		racePolicy := policy
 		racePolicy.task.taskID = "00000000-0000-4000-8000-000000009970"
 		mode = "push-failure"

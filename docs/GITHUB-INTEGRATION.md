@@ -225,3 +225,7 @@ Migration 0022 and its owner-side Go adapter record a trusted human report of ma
 
 ## Batch 7e-1: concurrency and legacy transition hardening (CI pending)
 The generic task persistence adapter now rejects CI pass/fail, repair, next-stage and complete actions; the pure domain model remains available for sealed adapters. A real PostgreSQL integration test races eight concurrent calls in each of four committed rounds (failure record, repair reservation, approval and manual confirmation), requires exactly one successful call per round and checks final revision, state, one budget charge and unique audit/approval/confirmation linkage. Uses disposable synthetic fixture data; no actual ChatGPT send, production credentials, runtime grants or external endpoint. CI verification pending.
+
+
+## Batch 7e-2: effective privilege matrix and mutually exclusive outcomes (CI pending)
+Check all nine provisioned runtime roles for effective table, column and sealed-transition function privileges. Test an eight-connection race between dual-evidence acceptance and PR failure recording against a single revision, asserting one durable outcome and no partial consumption. The disposable fixture resets a synthetic single-consumption mark from the previous test as migration owner only. A conflicting audit ID also exercises rollback of both marks. These tests are not a production database isolation claim: ordinary task CRUD still trusts the authenticated service, and dedicated runtime approval/observer authorization and real independent deployment remain outstanding.

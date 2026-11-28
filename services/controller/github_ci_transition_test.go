@@ -60,6 +60,17 @@ func testGitHubCITransition(t *testing.T, ctx context.Context, owner, writer, re
 	if _, err := tx.ExecContext(ctx, "UPDATE browseai.github_ci_evidence SET observed_at=observed_at+interval '1 hour',issued_at=issued_at+interval '1 hour',expires_at=expires_at+interval '1 hour' WHERE id=$1", pr); err != nil {
 		t.Fatal(err)
 	}
+	// A conflicting audit ID must roll back both evidence marks and state.
+	if _, err := tx.ExecContext(ctx, "INSERT INTO browseai.audit_logs(id,tenant_id,actor_id,action,resource_id,revision) VALUES($1,$2,$3,'fixture.conflict',$4,$5)", approval, tenant, actor, task.taskID, task.revision); err != nil {
+		t.Fatal(err)
+	}
+	check(false, args)
+	if err := tx.QueryRowContext(ctx, "SELECT count(*) FROM browseai.github_ci_evidence WHERE id IN($1,$2) AND consumed_at IS NOT NULL", push, pr).Scan(&consumed); err != nil || consumed != 0 {
+		t.Fatal("audit conflict partially consumed evidence", consumed, err)
+	}
+	if _, err := tx.ExecContext(ctx, "DELETE FROM browseai.audit_logs WHERE id=$1", approval); err != nil {
+		t.Fatal(err)
+	}
 	check(true, args)
 	check(false, args)
 	var state string
