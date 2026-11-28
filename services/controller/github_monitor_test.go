@@ -123,4 +123,5 @@ func TestPostgresGitHubMonitorStep(t *testing.T) {
 		t.Fatal("direct monitor read granted")
 	}
 	testGitHubMonitorStatus(t, ctx, owner, worker, tenant, task, id)
+	testGitHubMonitorScheduling(t, ctx, owner, worker, tenant, task)
 }

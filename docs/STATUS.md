@@ -356,3 +356,7 @@ Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified pus
 
 ### V0.3 第七批已通过开发 CI；综合验收增量 8a 待 CI
 实际提交 b11ccc7a293411e8b72ce0369fbf3fbbb7658845，Push 46125432804、PR 46125437562 均 completed/success，20/20。第七批九个子阶段通过开发检查。核查发现监控已持久化但认证任务 API 未提供真实观测读取；新增迁移 0023、GET /api/tasks/{id}/github-ci，绑定认证租户/成员、任务当前版本、SHA、审计绑定，仅返回有限的工作流/event/status/time；60 秒观测时效，过期、重查中或失败预算异常返回 unknown，历史版本不显示。只授予 app 专用函数 EXECUTE，无监控表直读及状态转换权限。真实 PostgreSQL、HTTP 隔离测试待 CI。仍缺可信生产人工确认入口、调度入队及最小权限转换服务、独立执行部署及真实 GitHub App 合约核验，不宣称 V0.3 生产验收完成。
+
+
+### V0.3 8a 已验收；8b 配对监控自动调度待 CI
+实际提交 b1021ec3afe5aa98e2fd9b004d599a8ecfeb1cb0，Push 46127630417、PR 46127635482 均 completed/success，20/20。迁移 0024 增加独立 monitor 角色有限批量入队；受保护策略必须包含同一 tenant/install/repo/workflow 的 Push/PR 双事件且 required jobs 一致，进程每轮按固定顺序调度一个 scope（最多32任务/64目标），数据库锁定 WAIT_CI 任务、派生 SHA/版本、复验审计绑定、原子补齐目标、不刷新24h过期。八路并发测试、错误安装/重复/过期/角色负例已编写。单事件配置现在拒绝启动；监控不授权任务推进。真实 App、最小权限生产转换、可信人工入口及独立部署仍未验收；新 CI 待验收。

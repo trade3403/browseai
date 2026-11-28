@@ -81,6 +81,7 @@ func githubMonitorReady(ctx context.Context, db *sql.DB) error {
 AND session_user=current_user AND NOT r.rolsuper AND NOT r.rolbypassrls
 AND NOT r.rolcreaterole AND NOT r.rolcreatedb AND NOT r.rolreplication
 AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_auth_members WHERE member=r.oid)
+AND has_function_privilege(current_user,'browseai.schedule_github_monitor_pair(uuid,bigint,bigint,bigint)','EXECUTE')
 AND has_function_privilege(current_user,'browseai.claim_github_monitor()','EXECUTE')
 AND has_function_privilege(current_user,'browseai.github_monitor_repository(uuid,uuid)','EXECUTE')
 AND has_function_privilege(current_user,'browseai.publish_github_monitor(uuid,uuid,text,integer,timestamptz)','EXECUTE')
@@ -149,6 +150,10 @@ func githubMonitorCommand() error {
 	if err != nil {
 		return err
 	}
+	schedule, err := githubMonitorSchedulePolicies(policies)
+	if err != nil {
+		return err
+	}
 	key, err := loadGitHubAppKey(os.Getenv("BROWSEAI_GITHUB_KEY_FILE"))
 	if err != nil {
 		return err
@@ -174,7 +179,13 @@ func githubMonitorCommand() error {
 	}
 	store := githubMonitorStore{db}
 	read := githubMonitorPolicyReader(policies, app.pollActions)
+	next := 0
 	err = runGitHubMonitorService(ctx, func(ctx context.Context) (bool, error) {
+		// One bounded scope per iteration avoids starving the polling worker.
+		if _, err := store.schedulePair(ctx, schedule[next]); err != nil {
+			return false, err
+		}
+		next = (next + 1) % len(schedule)
 		return store.step(ctx, read)
 	}, waitGitHubPoll)
 	if errors.Is(err, context.Canceled) && ctx.Err() != nil {
