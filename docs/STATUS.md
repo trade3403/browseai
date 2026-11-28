@@ -392,3 +392,7 @@ Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified pus
 
 ### V0.3 8d-1 已验收；8d-2a 修复预留角色待 CI
 证据 SHA 54b929653faef17acfd3f1b7d74e92e71f768828，Push 46145285226、PR 46145289907 均 completed/success，20/20，PR database 76.1%。迁移0030增加独立 NOLOGIN browseai_repair_reserver，仅调用已消费独立失败观察授权绑定的修复预留包装函数；重新检查原失败范围、当前任务版本、阶段计划完整性/依赖、租约和期限；不开放原 owner 函数或表权限。Go 最小权限适配，真实 PostgreSQL 角色并发、错误授权/fence、非法计划、重放、审计身份及权限矩阵测试。预留不是审批或发送；人工审批、发送确认和阶段决策仍为 owner-only，运行命令与用户认证仍待完成，新 CI 待验收。
+
+
+### V0.3 8d-2a 已验收；8d-2b-1 会话绑定修复审批与确认（待 CI）
+证据 SHA 8a0b44b7b87f4faad5578befa309a62325beb3e3，Push 46147560876、PR 46147566877 均 completed/success，20/20，PR database 76.1%。迁移0031新增独立 NOLOGIN browseai_repair_human，仅调用会话绑定包装函数；事务内根据 session digest 解析管理员身份、锁定身份和有效会话、核对失败授权/预留身份/计划/租约、绑定指令字节及批准/确认动作，原 owner 函数保持封闭。Go 适配拒绝缺人工发送确认、非法 token/参数。真实 PG 角色并发、普通用户/撤销会话、指令变更、未审批确认、重放及权限测试。未接入 HTTP/UI，真实人工发送证明与生产部署仍未验收；新 CI 待验收。

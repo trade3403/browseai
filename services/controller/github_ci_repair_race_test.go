@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"errors"
 	"os"
 	"sync"
@@ -223,10 +224,48 @@ func testGitHubRepairRace(t *testing.T, ctx context.Context, db *sql.DB, c githu
 		err := tx.QueryRowContext(ctx, "SELECT browseai.approve_github_ci_repair($1,$2,$3,$4,$5,$6,$7,$8)", tenant, task, c.task.revision+2, failure, actor, approval, fence, instruction).Scan(&ok)
 		return ok, err
 	})
+	human, err := sql.Open("postgres", os.Getenv("BROWSEAI_TEST_REPAIR_HUMAN_DSN"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer human.Close()
+	// Use synthetic sessions issued by the same database authentication
+	// primitive used by the application. The runtime never receives actor IDs.
+	raw := make([]byte, 32)
+	raw[0] = 71
+	token := base64.RawURLEncoding.EncodeToString(raw)
+	digest, err := digestSession(token)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var issued bool
+	if err := db.QueryRowContext(ctx, "SELECT browseai.issue_session($1,$2,$3)", actor, tenant, digest[:]).Scan(&issued); err != nil || !issued {
+		t.Fatal("session fixture", issued, err)
+	}
+	review := func(tok, action, receipt string, sent bool, bytes []byte) error {
+		return reviewAuthorizedGitHubRepair(ctx, human, tok, tenant, task, grant, failure, approval, receipt, c.task.revision+2, fence, bytes, action, sent)
+	}
+	if err := review("invalid", "approve", "", false, instruction); err == nil {
+		t.Fatal("invalid session accepted")
+	}
+	if err := review(token, "confirm_sent", confirmation, true, instruction); err == nil {
+		t.Fatal("confirmation before approval accepted")
+	}
+	if err := review(token, "approve", "", true, instruction); err == nil {
+		t.Fatal("approval conflated with send")
+	}
+	if _, err := db.ExecContext(ctx, "UPDATE browseai.memberships SET role='user' WHERE user_id=$1 AND tenant_id=$2", actor, tenant); err != nil {
+		t.Fatal(err)
+	}
+	if err := review(token, "approve", "", false, instruction); err == nil {
+		t.Fatal("ordinary user approved")
+	}
+	if _, err := db.ExecContext(ctx, "UPDATE browseai.memberships SET role='platform_admin' WHERE user_id=$1 AND tenant_id=$2", actor, tenant); err != nil {
+		t.Fatal(err)
+	}
 	race("approve repair", func() (bool, error) {
 		var ok bool
-		err := db.QueryRowContext(ctx, "SELECT browseai.approve_github_ci_repair($1,$2,$3,$4,$5,$6,$7,$8)",
-			tenant, task, c.task.revision+2, failure, actor, approval, fence, instruction).Scan(&ok)
+		err := human.QueryRowContext(ctx, githubRepairHumanSQL, digest[:], tenant, task, c.task.revision+2, grant, failure, approval, nil, fence, instruction, "approve").Scan(&ok)
 		return ok, err
 	})
 	rejectBranchDrift("confirm", func(tx *sql.Tx) (bool, error) {
@@ -234,10 +273,33 @@ func testGitHubRepairRace(t *testing.T, ctx context.Context, db *sql.DB, c githu
 		err := tx.QueryRowContext(ctx, "SELECT browseai.confirm_github_ci_repair($1,$2,$3,$4,$5,$6,$7,$8)", tenant, task, c.task.revision+2, approval, actor, confirmation, fence, instruction).Scan(&ok)
 		return ok, err
 	})
+	if err := review(token, "approve", "", false, instruction); err == nil {
+		t.Fatal("approval replay accepted")
+	}
+	if err := review(token, "confirm_sent", confirmation, false, instruction); err == nil {
+		t.Fatal("unconfirmed send accepted")
+	}
+	if err := review(token, "confirm_sent", confirmation, true, []byte("changed")); err == nil {
+		t.Fatal("changed instruction accepted")
+	}
+	if _, err := db.ExecContext(ctx, "UPDATE browseai.auth_sessions SET revoked_at=clock_timestamp() WHERE token_digest=$1", digest[:]); err != nil {
+		t.Fatal(err)
+	}
+	if err := review(token, "confirm_sent", confirmation, true, instruction); err == nil {
+		t.Fatal("revoked session accepted")
+	}
+	raw[0] = 72
+	token = base64.RawURLEncoding.EncodeToString(raw)
+	digest, err = digestSession(token)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.QueryRowContext(ctx, "SELECT browseai.issue_session($1,$2,$3)", actor, tenant, digest[:]).Scan(&issued); err != nil || !issued {
+		t.Fatal("replacement session fixture", issued, err)
+	}
 	race("confirm repair", func() (bool, error) {
 		var ok bool
-		err := db.QueryRowContext(ctx, "SELECT browseai.confirm_github_ci_repair($1,$2,$3,$4,$5,$6,$7,$8)",
-			tenant, task, c.task.revision+2, approval, actor, confirmation, fence, instruction).Scan(&ok)
+		err := human.QueryRowContext(ctx, githubRepairHumanSQL, digest[:], tenant, task, c.task.revision+2, grant, failure, approval, confirmation, fence, instruction, "confirm_sent").Scan(&ok)
 		return ok, err
 	})
 	var state string

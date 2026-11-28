@@ -13,7 +13,7 @@ import (
 // No runtime identity may directly touch these sealed tables or functions.
 func testGitHubSealedPrivileges(t *testing.T, ctx context.Context, db *sql.DB) {
 	t.Helper()
-	roles := []string{"browseai_app", "browseai_auth", "browseai_admin", "browseai_github_operator", "browseai_webhook", "browseai_monitor", "browseai_verifier_operator", "browseai_verifier_reader", "browseai_evidence_writer", "browseai_failure_observer", "browseai_failure_grant_operator", "browseai_ci_acceptor", "browseai_ci_approval_operator", "browseai_repair_reserver"}
+	roles := []string{"browseai_app", "browseai_auth", "browseai_admin", "browseai_github_operator", "browseai_webhook", "browseai_monitor", "browseai_verifier_operator", "browseai_verifier_reader", "browseai_evidence_writer", "browseai_failure_observer", "browseai_failure_grant_operator", "browseai_ci_acceptor", "browseai_ci_approval_operator", "browseai_repair_reserver", "browseai_repair_human"}
 	tables := []string{"github_ci_evidence", "github_ci_acceptance", "github_ci_failures", "github_ci_repair_audit", "github_ci_repair_approvals", "github_stage_decisions", "github_ci_repair_confirmations", "github_failure_observer_grants", "github_ci_acceptance_grants"}
 	functions := []string{
 		"consume_github_ci_evidence(uuid,uuid,bigint,uuid,bytea)",
@@ -35,6 +35,10 @@ func testGitHubSealedPrivileges(t *testing.T, ctx context.Context, db *sql.DB) {
 		var reservationAllowed bool
 		if err := db.QueryRowContext(ctx, "SELECT has_function_privilege($1,'browseai.reserve_authorized_github_repair(uuid,uuid,uuid,bigint,uuid,bigint)','EXECUTE')", role).Scan(&reservationAllowed); err != nil || reservationAllowed != (role == "browseai_repair_reserver") {
 			t.Fatal("reservation privilege", role, reservationAllowed, err)
+		}
+		var reviewAllowed bool
+		if err := db.QueryRowContext(ctx, "SELECT has_function_privilege($1,'browseai.review_authorized_github_repair(bytea,uuid,uuid,bigint,uuid,uuid,uuid,uuid,bigint,bytea,text)','EXECUTE')", role).Scan(&reviewAllowed); err != nil || reviewAllowed != (role == "browseai_repair_human") {
+			t.Fatal("human review privilege", role, reviewAllowed, err)
 		}
 		for _, function := range functions {
 			var allowed bool
