@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"os"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/lib/pq"
 )
@@ -51,8 +53,31 @@ func testGitHubRepairRace(t *testing.T, ctx context.Context, db *sql.DB, c githu
 	if err := tx.QueryRowContext(ctx, "INSERT INTO browseai.leases(repository_id,code_branch,tenant_id,task_id,project_id,expires_at) VALUES($1,$2,$3,$4,$5,clock_timestamp()+interval '60 seconds') RETURNING fence", c.policy.binding.repositoryID, c.policy.branch, tenant, task, c.task.projectID).Scan(&fence); err != nil {
 		t.Fatal(err)
 	}
+	var grant string
+	if err := tx.QueryRowContext(ctx, "INSERT INTO browseai.github_failure_observer_grants(tenant_id,task_id,project_id,task_revision,installation_id,repository_id,code_branch,head_sha,workflow_id,source_digest,event_type,expires_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,clock_timestamp()+interval '5 minutes') RETURNING id::text", tenant, task, c.task.projectID, c.task.revision, c.policy.binding.installationID, c.policy.binding.repositoryID, c.policy.branch, c.policy.sha, c.policy.workflowID, c.source, c.event).Scan(&grant); err != nil {
+		t.Fatal(err)
+	}
 	if err := tx.Commit(); err != nil {
 		t.Fatal(err)
+	}
+	observerDSN := os.Getenv("BROWSEAI_TEST_FAILURE_OBSERVER_DSN")
+	if observerDSN == "" {
+		t.Fatal("missing observer fixture")
+	}
+	observer, err := sql.Open("postgres", observerDSN)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer observer.Close()
+	if err := githubFailureObserverReady(ctx, observer); err != nil {
+		t.Fatal("observer role rejected", err)
+	}
+	if err := githubFailureObserverReady(ctx, db); err == nil {
+		t.Fatal("owner accepted as observer")
+	}
+	var denied sql.NullString
+	if err := observer.QueryRowContext(ctx, "SELECT browseai.record_github_ci_failure($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::bigint[],$15)::text", tenant, task, c.task.revision, c.task.projectID, c.policy.binding.installationID, c.policy.binding.repositoryID, c.policy.branch, c.policy.sha, c.policy.workflowID, c.source, c.event, c.runID, c.attempt, "{1}", c.observedAt).Scan(&denied); err == nil {
+		t.Fatal("observer can bypass grant")
 	}
 	defer func() {
 		if _, err := db.ExecContext(ctx, "DELETE FROM browseai.leases WHERE tenant_id=$1 AND task_id=$2 AND fence=$3", tenant, task, fence); err != nil {
@@ -93,16 +118,29 @@ func testGitHubRepairRace(t *testing.T, ctx context.Context, db *sql.DB, c githu
 			t.Fatal(name, "expected exactly one winner", winners)
 		}
 	}
-	race("record failure", func() (bool, error) {
+	// Reject a wrong grant and a different pinned workflow before racing.
+	if _, err := recordAuthorizedGitHubFailure(ctx, observer, c, "00000000-0000-4000-8000-000000009999", func() time.Time { return c.observedAt }); err == nil {
+		t.Fatal("unknown grant accepted")
+	}
+	changed := c
+	changed.policy.workflowID++
+	if _, err := recordAuthorizedGitHubFailure(ctx, observer, changed, grant, func() time.Time { return c.observedAt }); err == nil {
+		t.Fatal("changed workflow accepted")
+	}
+	race("record authorized failure", func() (bool, error) {
 		var id sql.NullString
-		err := db.QueryRowContext(ctx, "SELECT browseai.record_github_ci_failure($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)::text",
-			tenant, task, c.task.revision, c.task.projectID, c.policy.binding.installationID, c.policy.binding.repositoryID, c.policy.branch, c.policy.sha,
+		err := observer.QueryRowContext(ctx, githubAuthorizedFailureSQL, grant, tenant, task, c.task.revision, c.task.projectID,
+			c.policy.binding.installationID, c.policy.binding.repositoryID, c.policy.branch, c.policy.sha,
 			c.policy.workflowID, c.source, c.event, c.runID, c.attempt, pq.Array(c.failedIDs), c.observedAt).Scan(&id)
 		return id.Valid, err
 	})
 	var failure string
 	if err := db.QueryRowContext(ctx, "SELECT id::text FROM browseai.github_ci_failures WHERE tenant_id=$1 AND task_id=$2", tenant, task).Scan(&failure); err != nil {
 		t.Fatal(err)
+	}
+	var linked bool
+	if err := db.QueryRowContext(ctx, "SELECT failure_id=$2 FROM browseai.github_failure_observer_grants WHERE id=$1", grant, failure).Scan(&linked); err != nil || !linked {
+		t.Fatal("grant consumption missing", linked, err)
 	}
 	race("reserve repair", func() (bool, error) {
 		var target sql.NullString

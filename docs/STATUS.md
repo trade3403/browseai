@@ -360,3 +360,7 @@ Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified pus
 
 ### V0.3 8a 已验收；8b 配对监控自动调度待 CI
 实际提交 b1021ec3afe5aa98e2fd9b004d599a8ecfeb1cb0，Push 46127630417、PR 46127635482 均 completed/success，20/20。迁移 0024 增加独立 monitor 角色有限批量入队；受保护策略必须包含同一 tenant/install/repo/workflow 的 Push/PR 双事件且 required jobs 一致，进程每轮按固定顺序调度一个 scope（最多32任务/64目标），数据库锁定 WAIT_CI 任务、派生 SHA/版本、复验审计绑定、原子补齐目标、不刷新24h过期。八路并发测试、错误安装/重复/过期/角色负例已编写。单事件配置现在拒绝启动；监控不授权任务推进。真实 App、最小权限生产转换、可信人工入口及独立部署仍未验收；新 CI 待验收。
+
+
+### V0.3 8b 已验收；8c-1 独立失败观察角色待 CI
+实际提交 a8559fe17d63c24e786697dd8a21e63a00149ba1，Push 46129803613、PR 46129808778 均 completed/success，20/20。新增迁移 0025，专用 browseai_failure_observer 默认 NOLOGIN，仅允许带独立 owner 预置限时授权的失败登记，绑定任务/版本/SHA/项目/仓库/安装/工作流/源码/事件；一次性消费与原失败转换同事务，撤销或过期拒绝。Go adapter 从受信策略直接独立观察后写入；启动权限检查拒绝 owner、继承角色、直接表/列权限及其他函数。并发 fixture 使用真实独立角色，验证错误授权、工作流、直接入口拒绝及一次成功。SQL 不独立验证 GitHub I/O，角色仅在信任范围内使用；未部署、未启用生产登录、授权运维 CLI 和成功验收服务仍待完成。CI 待验收。
