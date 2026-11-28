@@ -38,6 +38,13 @@ type githubExecutorReceipt struct {
 	AllPassed       bool   `json:"all_passed"`
 }
 
+// Unix seconds may round a valid sub-second execution to the limit, but
+// a signed receipt cannot assert an execution longer than that limit.
+func githubReceiptDurationValid(r githubExecutorReceipt) bool {
+	return r.StartedUnix > 0 && r.FinishedUnix >= r.StartedUnix &&
+		r.FinishedUnix-r.StartedUnix <= int64(githubSupervisorTimeout/time.Second)
+}
+
 type githubIndependentSigner struct {
 	privateKey    ed25519.PrivateKey
 	supervisorKey ed25519.PublicKey
@@ -63,7 +70,7 @@ func (s githubIndependentSigner) sign(policy githubIndependentPolicy, e githubCI
 	}
 	if receipt.Domain != githubExecutorReceiptDomain || !receipt.AllPassed ||
 		receipt.HarnessDigest != policy.harnessDigest || receipt.ImageDigest != policy.imageDigest ||
-		receipt.StartedUnix <= 0 || receipt.FinishedUnix < receipt.StartedUnix {
+		!githubReceiptDurationValid(receipt) {
 		return githubRegisteredProof{}, errGitHubAuthorization
 	}
 	finished := time.Unix(receipt.FinishedUnix, 0)

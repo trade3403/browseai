@@ -283,6 +283,7 @@ func TestGitHubIndependentSigner(t *testing.T) {
 		func(r *githubExecutorReceipt) { r.FinishedUnix++ },
 		func(r *githubExecutorReceipt) { r.FinishedUnix -= 301; r.StartedUnix -= 301 },
 		func(r *githubExecutorReceipt) { r.StartedUnix = r.FinishedUnix + 1 },
+		func(r *githubExecutorReceipt) { r.StartedUnix = r.FinishedUnix - int64(githubSupervisorTimeout/time.Second) - 1 },
 	} {
 		bad := receipt
 		mutate(&bad)

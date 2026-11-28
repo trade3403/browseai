@@ -181,3 +181,7 @@ Run the explicit Linux non-root command `github-signer-preview /absolute/protect
 
 ## Strict Ed25519 public-key validation (CI pending)
 Require canonical point encoding, a nonidentity point and prime-order subgroup membership at the Go verification/provisioning boundaries. This rejects weak low-order and mixed-order keys, not just incorrect lengths. Use pinned filippo.io/edwards25519 v1.1.1 (GO-2026-4503 fixed); independent dependency probe uses Go checksum database. Database registration remains a separate operator boundary: invalid stored keys are refused on resolution by the Go reader, not yet rejected by the SQL registration function itself. Real host isolation and complete security acceptance remain pending.
+
+
+## Combined execution trust-chain test (CI pending)
+A combined Linux test connects the prepared execution node and independent signer over separate loopback mTLS listeners, creates a real supervisor receipt and verifies the independent proof at the controller. Rejects repeat workload admission, superseded attempt, incorrect task revision or signing identity, stale observations and tampered receipts before GitHub observation. The signer, service and client also bound the signed execution duration to the supervisor timeout (Unix-second precision). GitHub observation and Docker are simulated; no actual VM/container or production service acceptance and no task movement. Database registration validation remains outstanding.

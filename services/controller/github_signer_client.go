@@ -65,7 +65,7 @@ func (c *githubSignerClient) sign(ctx context.Context, policy githubIndependentP
 	fail := func() (githubRegisteredProof, error) { return githubRegisteredProof{}, errGitHubAuthorization }
 	if c == nil || c.client == nil || clock == nil || ctx.Err() != nil ||
 		len(signature) != ed25519.SignatureSize || receipt.Domain != githubExecutorReceiptDomain ||
-		!receipt.AllPassed || receipt.StartedUnix <= 0 || receipt.FinishedUnix < receipt.StartedUnix ||
+		!receipt.AllPassed || !githubReceiptDurationValid(receipt) ||
 		receipt.HarnessDigest != policy.harnessDigest || receipt.ImageDigest != policy.imageDigest {
 		return fail()
 	}

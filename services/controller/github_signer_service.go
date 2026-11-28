@@ -96,7 +96,7 @@ func (s *githubSignerService) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	if err != nil || len(req.Signature) != ed25519.SignatureSize ||
 		!ed25519.Verify(s.signer.supervisorKey, receipt, req.Signature) ||
 		req.Receipt.Domain != githubExecutorReceiptDomain || !req.Receipt.AllPassed ||
-		req.Receipt.StartedUnix <= 0 || req.Receipt.FinishedUnix < req.Receipt.StartedUnix ||
+		!githubReceiptDurationValid(req.Receipt) ||
 		finished.After(now) || now.Sub(finished) >= githubExecutorReceiptMaxAge || r.Context().Err() != nil {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
