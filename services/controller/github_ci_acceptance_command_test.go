@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -231,21 +232,67 @@ func testGitHubCommittedAcceptance(t *testing.T, ctx context.Context, owner *sql
 			t.Fatal("invalid stage decision accepted")
 		}
 	}
+	authDB, err := sql.Open("postgres", os.Getenv("BROWSEAI_TEST_AUTH_DSN"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer authDB.Close()
+	auth, err := newAuthHTTP(testOrigin, sqlCredentialVerifier{authDB}, sessionService{store: sqlSessionStore{authDB}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler := githubStageReviewRoutes(auth, human, http.NotFoundHandler())
+	in := githubStageReviewRequest{Revision: revision, Acceptance: a.approvalID, Decision: decision, Reviewed: true}
+	request := func(action, tok, origin string, input githubStageReviewRequest) int {
+		body, err := json.Marshal(input)
+		if err != nil {
+			return 0
+		}
+		return authRequest(handler, "POST", "/api/tasks/"+a.task.taskID+"/github-stage/"+action, origin, string(body), "192.0.2.1", &http.Cookie{Name: sessionCookie, Value: tok}).Code
+	}
+	if request("complete", token, "https://foreign.example", in) != 403 || request("complete", "invalid", testOrigin, in) != 401 {
+		t.Fatal("stage HTTP origin or session bypass")
+	}
+	if request("next", token, testOrigin, in) != 409 {
+		t.Fatal("final stage advanced through HTTP")
+	}
+	unreviewed := in
+	unreviewed.Reviewed = false
+	if request("complete", token, testOrigin, unreviewed) != 400 {
+		t.Fatal("unreviewed stage decision accepted")
+	}
+	if _, err := owner.ExecContext(ctx, "UPDATE browseai.auth_sessions SET revoked_at=clock_timestamp() WHERE token_digest=$1", digest[:]); err != nil {
+		t.Fatal(err)
+	}
+	if request("complete", token, testOrigin, in) != 401 {
+		t.Fatal("revoked session accepted through stage HTTP")
+	}
+	raw[0] = 94
+	token = base64.RawURLEncoding.EncodeToString(raw)
+	digest, err = digestSession(token)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := owner.QueryRowContext(ctx, "SELECT browseai.issue_session($1,$2,$3)", a.actorID, a.tenantID, digest[:]).Scan(&ok); err != nil || !ok {
+		t.Fatal("replacement stage session fixture", ok, err)
+	}
 	var wg sync.WaitGroup
-	results := make(chan error, 8)
+	results := make(chan int, 8)
 	for i := 0; i < 8; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			results <- reviewAuthorizedGitHubStage(ctx, human, token, a.tenantID, a.task.taskID, a.approvalID, decision, revision, actionComplete, true)
+			results <- request("complete", token, testOrigin, in)
 		}()
 	}
 	wg.Wait()
 	close(results)
 	wins := 0
-	for err := range results {
-		if err == nil {
+	for code := range results {
+		if code == 204 {
 			wins++
+		} else if code != 409 {
+			t.Fatal("unexpected stage HTTP race status", code)
 		}
 	}
 	if wins != 1 {
@@ -253,6 +300,9 @@ func testGitHubCommittedAcceptance(t *testing.T, ctx context.Context, owner *sql
 	}
 	if err := reviewAuthorizedGitHubStage(ctx, human, token, a.tenantID, a.task.taskID, a.approvalID, decision, revision, actionComplete, true); err == nil {
 		t.Fatal("committed decision replayed")
+	}
+	if request("complete", token, testOrigin, in) != 409 {
+		t.Fatal("committed HTTP stage decision replayed")
 	}
 	if err := owner.QueryRowContext(ctx, "SELECT count(*) FROM browseai.github_stage_decisions d JOIN browseai.audit_logs l ON l.id=d.decision_id JOIN browseai.events e ON e.audit_id=l.id WHERE d.decision_id=$1 AND d.acceptance_id=$2 AND l.actor_id=$3 AND e.kind='task.complete'", decision, a.approvalID, a.actorID).Scan(&count); err != nil || count != 1 {
 		t.Fatal("missing or duplicate decision audit", count, err)
