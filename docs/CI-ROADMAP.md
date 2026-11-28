@@ -1,6 +1,6 @@
 # BrowseAI 分阶段开发与 CI 验收
 
-V0.1、V0.2 开发验收已通过（见 [V0.2 综合验收](V0.2-ACCEPTANCE.md)）；V0.3 开发中，V0.4 及以后尚未开始。以下是必须实施的 CI 计划，非已运行工作流。默认 Ubuntu GitHub-hosted runner；可选专用隔离自建 runner 做 Docker/远程显示验收。不得将真实 ChatGPT 登录 profile、账号、私有仓库令牌传给 CI。
+V0.1、V0.2 开发验收已通过（见 [V0.2 综合验收](V0.2-ACCEPTANCE.md)）；V0.3 开发验收已通过，V0.4 开发中；生产专项验收仍待完成。以下是必须实施的 CI 计划，非已运行工作流。默认 Ubuntu GitHub-hosted runner；可选专用隔离自建 runner 做 Docker/远程显示验收。不得将真实 ChatGPT 登录 profile、账号、私有仓库令牌传给 CI。
 
 ## 1. 阶段顺序（每阶段独立 PR、当前 SHA 验收后才进入下一阶段）
 

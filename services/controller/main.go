@@ -71,6 +71,47 @@ func newServer(addr string) *http.Server {
 
 func main() {
 	if len(os.Args) > 1 {
+		if os.Args[1] == "browser-heartbeat" {
+			dsn := os.Getenv("BROWSEAI_BROWSER_NODE_DSN")
+			if len(os.Args) != 2 || !githubRoleDSNValid(dsn, "browseai_browser_node") {
+				log.Fatal("invalid browser node configuration")
+			}
+			db, err := sql.Open("postgres", dsn)
+			if err != nil {
+				log.Fatal("browser database unavailable")
+			}
+			defer db.Close()
+			db.SetMaxOpenConns(8)
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			err = browserNodeReady(ctx, db)
+			cancel()
+			server, serverErr := newBrowserNodeServer(os.Getenv("BROWSEAI_BROWSER_ADDR"), db)
+			if err != nil || serverErr != nil {
+				log.Fatal("browser heartbeat startup rejected")
+			}
+			if server.ListenAndServeTLS(os.Getenv("BROWSEAI_BROWSER_CERT"), os.Getenv("BROWSEAI_BROWSER_KEY")) != nil {
+				log.Fatal("browser TLS listener stopped")
+			}
+			return
+		}
+		if os.Args[1] == "browser-identity" {
+			dsn := os.Getenv("BROWSEAI_BROWSER_OPERATOR_DSN")
+			if !githubRoleDSNValid(dsn, "browseai_browser_operator") {
+				log.Fatal("invalid browser operator configuration")
+			}
+			db, err := sql.Open("postgres", dsn)
+			if err != nil {
+				log.Fatal("browser operator database unavailable")
+			}
+			defer db.Close()
+			ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+			defer cancel()
+			if browserIdentityCommand(ctx, db, os.Args[2:], os.Stdin) != nil {
+				log.Fatal("browser identity operation rejected; reconcile before retry")
+			}
+			log.Print("browser identity operation recorded")
+			return
+		}
 		if os.Args[1] == "github-ci-acceptance" {
 			if githubCIAcceptanceCommand(os.Args[2:], os.Stdin) != nil {
 				log.Fatal("GitHub CI acceptance operation rejected")
