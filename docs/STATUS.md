@@ -308,3 +308,7 @@ Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified pus
 
 ### V0.3 综合信任链 CI 格式修复待验收
 实际提交 6c29b25bf0aabb8fd6fb94934769d56cedea3fee，Push 46099608290、PR 46099614159 均 completed/failure，每套 8/10；database 均通过。backend 日志 140838822817 / 140838840208 显示 github_independent_signer_test.go 中新增超时回执测试闭包未通过 gofmt，gate 随之失败。依据实际 CI gofmt diff 修复格式，不改变测试语义、覆盖率门槛或工作流，不推进下一阶段。新 CI 待验收。
+
+
+### V0.3 综合信任链 CI 已验收；严格运维公钥注册入口待 CI
+实际提交 f15c3c38ee53cad955d584e4e1d2640b9381b167，Push 46101774359、PR 46101778384 均 completed/success，20/20。新增 github-verifier-register 专用命令，限定 verifier_operator TLS verify-full DSN、显式逐字段审批、严格公钥曲线校验、同 SQL 语句角色权限检查；真实 PostgreSQL 测试验证错误角色、非法公钥及旧 SQL 入口存入非法点后的控制器拒绝。旧 SQL 函数仍为受信任运维边界，不在数据库内部进行完整曲线检查；生产部署和独立主机隔离尚待验收。本批 CI 待验收，未启用自动推进。

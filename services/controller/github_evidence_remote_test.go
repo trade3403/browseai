@@ -293,11 +293,33 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 		const verifierID = "00000000-0000-4000-8000-000000009951"
 		const keyID = "00000000-0000-4000-8000-000000009952"
 		const approvalID = "00000000-0000-4000-8000-000000009953"
-		if _, err := operator.ExecContext(ctx, "SELECT browseai.register_github_verifier($1,$2,$3,$4,$5,$6,$7,$8,$9)",
-			b.tenantID, b.installationID, b.repositoryID, verifierID, keyID, []byte(public), now.Add(-time.Minute), now.Add(time.Hour), approvalID); err != nil {
+		registration := githubVerifierRegistration{b, verifierID, keyID, public, now.Add(-time.Minute), now.Add(time.Hour), approvalID}
+		for _, wrong := range []*sql.DB{nil, owner, reader} {
+			if err := registerGitHubVerifier(ctx, wrong, registration); err == nil {
+				t.Fatal("wrong registration role accepted")
+			}
+		}
+		weak := registration
+		weak.keyID = "00000000-0000-4000-8000-000000009961"
+		weak.approvalID = "00000000-0000-4000-8000-000000009962"
+		weak.publicKey = make([]byte, 32)
+		weak.publicKey[0], weak.publicKey[31] = 1, 128
+		if err := registerGitHubVerifier(ctx, operator, weak); err == nil {
+			t.Fatal("noncanonical key registered by operator wrapper")
+		}
+		if err := registerGitHubVerifier(ctx, operator, registration); err != nil {
 			t.Fatal(err)
 		}
+		// Simulate legacy operator SQL provisioning of a malformed point.
+		// It may be stored but the controller must never resolve it.
+		if _, err := operator.ExecContext(ctx, "SELECT browseai.register_github_verifier($1,$2,$3,$4,$5,$6,$7,$8,$9)",
+			b.tenantID, b.installationID, b.repositoryID, verifierID, weak.keyID, weak.publicKey, weak.from, weak.until, weak.approvalID); err != nil {
+			t.Fatal("legacy fixture registration failed", err)
+		}
 		s := githubVerifierStore{reader}
+		if _, err := s.key(ctx, b, githubRegisteredProof{verifierID, weak.keyID, pushProof}); err == nil {
+			t.Fatal("legacy invalid key resolved")
+		}
 		registeredPR := githubRegisteredProof{verifierID, keyID, prProof}
 		registeredPush := githubRegisteredProof{verifierID, keyID, pushProof}
 		mode = ""

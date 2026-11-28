@@ -71,6 +71,26 @@ func newServer(addr string) *http.Server {
 
 func main() {
 	if len(os.Args) > 1 {
+		if os.Args[1] == "github-verifier-register" {
+			dsn := os.Getenv("BROWSEAI_VERIFIER_OPERATOR_DSN")
+			if !githubRoleDSNValid(dsn, "browseai_verifier_operator") {
+				log.Fatal("invalid verifier operator TLS DSN")
+			}
+			v, err := githubVerifierRegistrationInput(os.Args[2:], os.Stdin)
+			if err != nil {
+				log.Fatal("verifier approval rejected")
+			}
+			db, err := sql.Open("postgres", dsn)
+			if err != nil {
+				log.Fatal("verifier database unavailable")
+			}
+			defer db.Close()
+			if err := registerGitHubVerifier(context.Background(), db, v); err != nil {
+				log.Fatal("verifier registration rejected")
+			}
+			log.Print("GitHub verifier registered")
+			return
+		}
 		if os.Args[1] == "github-signer-preview" {
 			if len(os.Args) != 3 || githubSignerPreviewCommand(os.Args[2]) != nil {
 				log.Fatal("GitHub signer preview unavailable")
