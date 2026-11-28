@@ -74,6 +74,7 @@ func testGitHubCITransition(t *testing.T, ctx context.Context, owner, writer, re
 	if err := tx.QueryRowContext(ctx, "SELECT count(*) FROM browseai.github_ci_acceptance c JOIN browseai.audit_logs a ON a.id=c.approval_id JOIN browseai.events e ON e.audit_id=a.id WHERE c.approval_id=$1 AND a.actor_id=$2 AND c.push_id=$3 AND c.pr_id=$4 AND a.action='task.ci_pass' AND e.kind=a.action AND e.revision=a.revision", approval, actor, push, pr).Scan(&audit); err != nil || audit != 1 {
 		t.Fatal("missing acceptance audit", audit, err)
 	}
+	testGitHubStageDecision(t, ctx, tx, writer, tenant, task.taskID, approval, actor, uint64(revision))
 	if err := tx.Rollback(); err != nil {
 		t.Fatal(err)
 	}
