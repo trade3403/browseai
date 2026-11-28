@@ -456,3 +456,7 @@ SHA f5fa9bfd324ae17e26ca2fc6558aafc6a39d9966 Push 46181067645 / PR 46181071829 �
 
 ### V0.4-1b-2a 编译修复（待 CI）
 SHA b219de2bb3c2f398ebac974fe375ecf5c5d6d122 Push 46183064741 / PR 46183069442 均失败；PR 6/10 通过，backend/database/Windows 因 browser_heartbeat_http_test.go:6:2 未使用 net/http 导入失败，gate 随之失败。移除无用导入，保留全部测试断言、TLS 与权限逻辑及覆盖率门禁。数据库测试未执行，不声明覆盖率。新 CI 待验收。
+
+
+### V0.4-1b-2a 已验收；1b-2b-1 TLS 监听与身份运维入口待 CI
+SHA c6165956feeca4773124ca7574d3f2344508bd52 Push 46185036909 / PR 46185041584 均成功。新增显式 TLS1.3 心跳监听命令、独立 operator 权限检查、人工确认身份命令和独占0600凭据文件；失败保留文件待核对，不输出密钥。真实 TLS 握手/数据库并发、受保护目录及跨平台文件权限专项仍待验证，不宣称生产部署完成。
