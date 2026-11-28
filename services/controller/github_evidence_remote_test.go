@@ -44,11 +44,16 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 	sum := sha256.Sum256([]byte(source))
 	digest := hex.EncodeToString(sum[:])
 	mode := ""
+	newAttempt := false
 	prReads, listReads, detailReads := 0, 0, 0
 	a, err := newGitHubApp("mock-app", key, githubTestTransport(func(r *http.Request) (*http.Response, error) {
 		var body string
 		status := 200
-		switch r.URL.Path {
+		path := r.URL.Path
+		if newAttempt && path == "/repos/owner/repo/actions/runs/81/attempts/3/jobs" {
+			path = "/repos/owner/repo/actions/runs/81/attempts/2/jobs"
+		}
+		switch path {
 		case "/app/installations/99532/access_tokens":
 			status = 201
 			body = `{"token":"synthetic","expires_at":"` + now.Add(time.Hour).Format(time.RFC3339) + `","repositories":[{"id":99533}],"permissions":{"actions":"read","checks":"read","contents":"read","pull_requests":"read","metadata":"read"}}`
@@ -125,6 +130,9 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 		default:
 			t.Fatal("unexpected endpoint", r.URL.Path)
 		}
+		if newAttempt {
+			body = strings.ReplaceAll(body, `"run_attempt":2`, `"run_attempt":3`)
+		}
 		return &http.Response{StatusCode: status, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body)), Request: r}, nil
 	}))
 	if err != nil {
@@ -188,6 +196,34 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 	if _, err := a.observePushEvidence(ctx, p.push, nil); err == nil {
 		t.Fatal("nil push clock accepted")
 	}
+
+	t.Run("monitor observation contract", func(t *testing.T) {
+		for _, tc := range []struct {
+			mode  string
+			event string
+			id    int64
+			jobs  []string
+			want  githubCIState
+			fail  bool
+		}{
+			{"push", "push", 2, []string{"gate"}, githubCIPassed, false},
+			{"", "pull_request", 2, []string{"gate"}, githubCIPassed, false},
+			{"push-failure", "push", 2, []string{"gate"}, githubCIFailed, false},
+			{"", "push", 2, []string{"gate"}, githubCIPending, false},
+			{"ambiguous", "pull_request", 2, []string{"gate"}, githubCIUnknown, true},
+			{"jobs-error", "pull_request", 2, []string{"gate"}, githubCIUnknown, true},
+			{"push", "push", 3, []string{"gate"}, githubCIUnknown, true},
+			{"push", "other", 2, []string{"gate"}, githubCIUnknown, true},
+			{"push", "push", 2, nil, githubCIUnknown, true},
+		} {
+			mode = tc.mode
+			got, err := a.pollActions(ctx, p.push.binding, p.push.branch, p.push.sha, tc.id, tc.event, tc.jobs, now)
+			if got != tc.want || (err != nil) != tc.fail {
+				t.Fatal("unexpected poll result", tc.mode, tc.event, got, err)
+			}
+		}
+		mode = "push"
+	})
 
 	t.Run("trusted signer observer", func(t *testing.T) {
 		policy := githubIndependentPolicy{}
@@ -568,6 +604,51 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 		if _, err := w.insert(ctx, verified, now); err == nil {
 			t.Fatal("stale task proof persisted")
 		}
+		// A distinct synthetic attempt permits a real committed acceptance
+		// without resetting earlier evidence or weakening its replay guard.
+		newAttempt = true
+		freshTask := task
+		freshTask.taskID = "00000000-0000-4000-8000-000000009978"
+		if _, err := owner.ExecContext(ctx, "INSERT INTO browseai.tasks(id,tenant_id,project_id,name,state,stage_count,code_sha,revision) VALUES($1,$2,$3,'committed acceptance fixture','WAIT_CI',1,$4,$5)", freshTask.taskID, b.tenantID, freshTask.projectID, p.push.sha, freshTask.revision); err != nil {
+			t.Fatal(err)
+		}
+		freshPolicy := prPolicy
+		freshPolicy.task = freshTask
+		freshPush := freshPolicy
+		freshPush.pr = nil
+		freshClock := func() time.Time { return time.Now().UTC() }
+		makeProof := func(policy githubIndependentPolicy, app *githubApp) githubRegisteredProof {
+			t.Helper()
+			observe, err := newGitHubTrustedSignerObserver(app, policy, freshClock)
+			if err != nil {
+				t.Fatal(err)
+			}
+			ev, rel, err := observe(ctx)
+			if err != nil {
+				t.Fatal("fresh fixture observation", err)
+			}
+			proof := githubRegisteredProof{verifierID, keyID, githubExecutionProof{issuedUnix: freshClock().Unix()}}
+			raw, err := json.Marshal(githubTaskExecutionMessage(freshTask, policy.execution, ev, digest, policy.pr, rel, proof))
+			if err != nil {
+				t.Fatal(err)
+			}
+			proof.proof.signature = ed25519.Sign(private, raw)
+			return proof
+		}
+		pushApp, prApp := eventApp("push"), eventApp("")
+		pushSigned := makeProof(freshPush, pushApp)
+		prSigned := makeProof(freshPolicy, prApp)
+		pushID, err := w.writePush(ctx, pushApp, freshTask, p.push, digest, pushSigned, freshClock)
+		if err != nil {
+			t.Fatal("fresh push persistence", err)
+		}
+		prID, err := w.writePR(ctx, prApp, freshTask, p, digest, prSigned, freshClock)
+		if err != nil {
+			t.Fatal("fresh PR persistence", err)
+		}
+		testGitHubCommittedAcceptance(t, ctx, owner, s, pushApp, prApp, freshPolicy, pushID, prID, freshClock)
+		newAttempt = false
+		mode = "push"
 		if _, err := operator.ExecContext(ctx, "SELECT browseai.revoke_github_verifier($1,$2,$3,$4,gen_random_uuid())", b.tenantID, b.installationID, b.repositoryID, keyID); err != nil {
 			t.Fatal(err)
 		}

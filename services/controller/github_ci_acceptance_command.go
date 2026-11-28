@@ -181,18 +181,7 @@ func githubCIAcceptanceCommand(args []string, input io.Reader) error {
 		return errGitHubAuthorization
 	}
 	if action != "accept" {
-		query := githubCIGrantSQL
-		plan := githubCIAcceptancePlan{approval: a, workflow: p.execution.workflowID, source: p.sourceDigest}
-		values := plan.authorizedArgs()
-		if action == "revoke" {
-			query = "SELECT browseai.revoke_github_ci_acceptance_grant($1,$2)"
-			values = []any{a.approvalID, a.tenantID}
-		}
-		var ok bool
-		if err := db.QueryRowContext(ctx, query, values...).Scan(&ok); err != nil || !ok {
-			return errGitHubAuthorization
-		}
-		return nil
+		return changeGitHubCIAcceptanceGrant(ctx, db, p, a, action)
 	}
 	_, expires, err := c.Policy.policy()
 	if err != nil || !time.Now().Before(expires) {
@@ -224,4 +213,22 @@ func githubCIAcceptanceCommand(args []string, input io.Reader) error {
 		return err
 	}
 	return runGitHubCIAuthorizedAcceptance(ctx, db, githubVerifierStore{reader}, app, app, p, a, time.Now)
+}
+
+func changeGitHubCIAcceptanceGrant(ctx context.Context, db *sql.DB, p githubIndependentPolicy, a githubCIAcceptanceApproval, action string) error {
+	if db == nil || (action != "issue" && action != "revoke") {
+		return errGitHubAuthorization
+	}
+	query := githubCIGrantSQL
+	plan := githubCIAcceptancePlan{approval: a, workflow: p.execution.workflowID, source: p.sourceDigest}
+	values := plan.authorizedArgs()
+	if action == "revoke" {
+		query = "SELECT browseai.revoke_github_ci_acceptance_grant($1,$2)"
+		values = []any{a.approvalID, a.tenantID}
+	}
+	var ok bool
+	if err := db.QueryRowContext(ctx, query, values...).Scan(&ok); err != nil || !ok {
+		return errGitHubAuthorization
+	}
+	return nil
 }

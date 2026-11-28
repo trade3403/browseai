@@ -376,3 +376,7 @@ Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified pus
 
 ### V0.3 8c-3a 已验收；8c-3b 可信成功验收命令待 CI
 证据 SHA c3a937ddd46e32be7d56fea698df9ba0df2972b9，Push 46136372076、PR 46136376228 均 completed/success，20/20。迁移 0028 仅允许独立 acceptor 通过有效授权读取两条原始证据，拒绝跨 actor/撤销/过期/摘要不符。Linux 非 root 一次性 controller github-ci-acceptance issue|revoke|accept DIR，受保护 canonical acceptance.json、独立审批角色、人工 SHA256 确认、独立 verifier reader TLS DSN、GitHub 无代理只读二次验证、原子提交。测试 scoped read/错误 actor/撤销/修改源码及原子预检和回滚。仍未提供自动化证据生产与用户认证审批链路，30 秒证据窗口可能需要交互式编排，实际部署未验收；新 CI 待验收。
+
+
+### V0.3 8c-3b 覆盖率门禁修复（待 CI）
+证据 SHA 8f50d3f98efb50d60724c2732a5aac4030cfde8d，Push 46138550811 / PR 46138554959 均 completed/failure；8/10 各通过，database 及 gate 失败。数据库 Go 测试断言全部 PASS，实际覆盖率两套均 73.8%，低于75%门槛。补真实配置正负例、私有文件/命令启动拒绝、监控读取分支、独立授权签发撤销及新 synthetic attempt 的完整验收提交与重放拒绝。保持30秒证据时效、75%覆盖率和其他门禁不变。新 CI 待验收，不进入8d。

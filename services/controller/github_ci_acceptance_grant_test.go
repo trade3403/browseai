@@ -50,7 +50,9 @@ func testGitHubCIAcceptanceGrant(t *testing.T, ctx context.Context, owner *sql.D
 	bad := append([]any(nil), args...)
 	bad[8] = make([]byte, 32)
 	check(operator, githubCIGrantSQL, false, bad)
-	check(operator, githubCIGrantSQL, true, args)
+	if err := changeGitHubCIAcceptanceGrant(ctx, operator, policy, a, "issue"); err != nil {
+		t.Fatal("operator issue failed", err)
+	}
 	if _, _, err := loadGitHubCIAcceptanceEvidence(ctx, operator, a, clock); err == nil {
 		t.Fatal("operator could read evidence")
 	}
@@ -96,7 +98,15 @@ func testGitHubCIAcceptanceGrant(t *testing.T, ctx context.Context, owner *sql.D
 	if err := owner.QueryRowContext(ctx, "SELECT acceptance_id IS NULL FROM browseai.github_ci_acceptance_grants WHERE id=$1", a.approvalID).Scan(&unused); err != nil || !unused {
 		t.Fatal("grant not rolled back", unused, err)
 	}
-	check(operator, "SELECT browseai.revoke_github_ci_acceptance_grant($1,$2)", true, []any{a.approvalID, a.tenantID})
+	if err := changeGitHubCIAcceptanceGrant(ctx, operator, policy, a, "revoke"); err != nil {
+		t.Fatal("operator revoke failed", err)
+	}
+	if err := changeGitHubCIAcceptanceGrant(ctx, operator, policy, a, "revoke"); err == nil {
+		t.Fatal("duplicate revoke accepted")
+	}
+	if err := changeGitHubCIAcceptanceGrant(ctx, operator, policy, a, "accept"); err == nil {
+		t.Fatal("operator accept action available")
+	}
 	check(acceptor, githubCIAuthorizedSQL, false, args)
 	if _, _, err := loadGitHubCIAcceptanceEvidence(ctx, acceptor, a, clock); err == nil {
 		t.Fatal("revoked grant could read evidence")
