@@ -452,3 +452,7 @@ SHA 9c527ec5ee68e352844773bfa43090d0d756a914 Push 46179044354 / PR 46179048893 �
 
 ### V0.4-1b-1 已验收；1b-2a 凭据及 TLS handler 待 CI
 SHA f5fa9bfd324ae17e26ca2fc6558aafc6a39d9966 Push 46181067645 / PR 46181071829 均成功。新增32字节随机凭据、严格独立前缀与摘要、数据库心跳适配、角色有效权限检查、仅直接TLS的有界HTTP handler及负例。尚未接线监听器或凭据运维命令；真实TLS与数据库并发验收待后续，不开放端口。
+
+
+### V0.4-1b-2a 编译修复（待 CI）
+SHA b219de2bb3c2f398ebac974fe375ecf5c5d6d122 Push 46183064741 / PR 46183069442 均失败；PR 6/10 通过，backend/database/Windows 因 browser_heartbeat_http_test.go:6:2 未使用 net/http 导入失败，gate 随之失败。移除无用导入，保留全部测试断言、TLS 与权限逻辑及覆盖率门禁。数据库测试未执行，不声明覆盖率。新 CI 待验收。

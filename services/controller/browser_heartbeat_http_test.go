@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
