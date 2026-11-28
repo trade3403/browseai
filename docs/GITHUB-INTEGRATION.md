@@ -221,3 +221,7 @@ Migration 0021 and the internal Go adapter require a separate trusted human deci
 
 ## Batch 7d-2b: explicit repair send confirmation (CI pending)
 Migration 0022 and its owner-side Go adapter record a trusted human report of manual sending, not browser telemetry. They bind the same approver, exact reviewed bytes, live membership, task revision, stage plan, repository binding and lease fence. One confirmation atomically moves AWAIT_APPROVAL to DEVELOPING, records an audit/event and does not charge the repair budget again. The generic task confirmation path now fails closed for tasks with repairs > 0; further recovery/handoff paths must be reconciled separately. No external endpoint or runtime role is enabled; authenticated presentation, actual human confirmation and browser node integration remain outstanding. No automatic send or resend is performed.
+
+
+## Batch 7e-1: concurrency and legacy transition hardening (CI pending)
+The generic task persistence adapter now rejects CI pass/fail, repair, next-stage and complete actions; the pure domain model remains available for sealed adapters. A real PostgreSQL integration test races eight concurrent calls in each of four committed rounds (failure record, repair reservation, approval and manual confirmation), requires exactly one successful call per round and checks final revision, state, one budget charge and unique audit/approval/confirmation linkage. Uses disposable synthetic fixture data; no actual ChatGPT send, production credentials, runtime grants or external endpoint. CI verification pending.

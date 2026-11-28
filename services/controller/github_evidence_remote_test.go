@@ -546,6 +546,14 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 		testGitHubCIRepair(t, ctx, owner, writerDB, failure, clock)
 		mode = ""
 		testGitHubEvidenceConsumption(t, ctx, owner, writerDB, reader, operator, b.tenantID, task)
+		racePolicy := policy
+		racePolicy.task.taskID = "00000000-0000-4000-8000-000000009970"
+		mode = "push-failure"
+		raceFailure, err := a.observeCIFailure(ctx, racePolicy, clock)
+		if err != nil {
+			t.Fatal("race failure fixture rejected", err)
+		}
+		testGitHubRepairRace(t, ctx, owner, raceFailure)
 		if _, err := owner.ExecContext(ctx, "UPDATE browseai.tasks SET revision=revision+1 WHERE id=$1", task.taskID); err != nil {
 			t.Fatal(err)
 		}
