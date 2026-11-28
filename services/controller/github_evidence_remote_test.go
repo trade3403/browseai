@@ -491,6 +491,20 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 		if err := owner.QueryRowContext(ctx, "SELECT count(*) FROM browseai.github_ci_evidence WHERE task_id=$1 AND task_revision=$2 AND head_sha=$3 AND evidence_digest=sha256(statement||signature)", task.taskID, task.revision, p.push.sha).Scan(&count); err != nil || count != 2 {
 			t.Fatal("unexpected persisted evidence", count, err)
 		}
+		// Separate synthetic transports select the matching event without
+		// changing the production observation implementation.
+		eventApp := func(eventMode string) *githubApp {
+			copyApp := *a
+			copyClient := *a.client
+			copyClient.Transport = githubTestTransport(func(r *http.Request) (*http.Response, error) {
+				mode = eventMode
+				return a.client.Transport.RoundTrip(r)
+			})
+			copyApp.client = &copyClient
+			return &copyApp
+		}
+		testGitHubCIService(t, ctx, owner, writerDB, s, eventApp("push"), eventApp(""), eventApp("source-changed"), prPolicy, clock)
+		mode = ""
 		testGitHubEvidenceConsumption(t, ctx, owner, writerDB, reader, operator, b.tenantID, task)
 		if _, err := owner.ExecContext(ctx, "UPDATE browseai.tasks SET revision=revision+1 WHERE id=$1", task.taskID); err != nil {
 			t.Fatal(err)
