@@ -444,3 +444,7 @@ SHA 59a1a9f74a08b37eceac5fa6401e794a4834d95d Push 46170832085 / PR 46170839879 �
 
 ### V0.4-1a 已验收；1b-1 节点身份持久化待 CI
 SHA 1a9caeff3b605c4b0073ad505362d45ed99d7d7b Push 46174939592 / PR 46174946340 均成功。0035 独立 operator/node 角色、摘要身份、代际轮换、吊销、单调心跳、事务审计、迁移往返与真实 PostgreSQL 测试。默认排空且没有浏览器分配能力；凭据安全生成、TLS HTTP 接线、有效权限检查和并发专项仍待开发。未开放网络。
+
+
+### V0.4-1b-1 吊销测试参数修复（待 CI）
+SHA 9c527ec5ee68e352844773bfa43090d0d756a914 Push 46179044354 / PR 46179048893 均失败；PR database 141084227096 的 TestBrowserIdentityPersistence 在 revoke 返回 false，覆盖率76.2%。推定 lib/pq 将类型化 nil []byte 编码成空 bytea，改用真正 nil interface 传 SQL NULL；补空 bytea 拒绝、拒绝后心跳仍有效、吊销后新序号拒绝。保留迁移的严格 NULL 检查和全部门禁。新 CI 待确认根因及修复效果。

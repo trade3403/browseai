@@ -39,7 +39,13 @@ func TestBrowserIdentityPersistence(t *testing.T) {
 	manage := func(generation int64, digest []byte, op, action string, want bool) {
 		t.Helper()
 		var ok bool
-		err := operator.QueryRowContext(ctx, "SELECT browseai.manage_browser_identity($1,$2,$3,$4,$5)", id, generation, digest, op, action).Scan(&ok)
+		// A typed nil []byte can be encoded as an empty bytea by lib/pq.
+		// Revocation explicitly requires SQL NULL, not an empty credential.
+		var credential any
+		if digest != nil {
+			credential = digest
+		}
+		err := operator.QueryRowContext(ctx, "SELECT browseai.manage_browser_identity($1,$2,$3,$4,$5)", id, generation, credential, op, action).Scan(&ok)
 		if err != nil || ok != want {
 			t.Fatal("identity operation", action, ok, err)
 		}
@@ -62,8 +68,10 @@ func TestBrowserIdentityPersistence(t *testing.T) {
 	heartbeat(1, 3, first[:], false)
 	heartbeat(2, 1, first[:], false)
 	heartbeat(2, 1, second[:], true)
+	manage(2, []byte{}, op3, "revoke", false)
+	heartbeat(2, 2, second[:], true)
 	manage(2, nil, op3, "revoke", true)
-	heartbeat(2, 2, second[:], false)
+	heartbeat(2, 3, second[:], false)
 	var count int
 	if err := node.QueryRowContext(ctx, "SELECT count(*) FROM browseai.browser_nodes").Scan(&count); err == nil {
 		t.Fatal("node can read identity table")
