@@ -89,6 +89,8 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_repair_reserver NOLOGIN NOSUPERUSER NOBYPASSRLS'
           psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_repair_human NOLOGIN NOSUPERUSER NOBYPASSRLS'
           psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_stage_human NOLOGIN NOSUPERUSER NOBYPASSRLS'
+          psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_browser_operator NOLOGIN NOSUPERUSER NOBYPASSRLS'
+          psql -X -v ON_ERROR_STOP=1 -c 'CREATE ROLE browseai_browser_node NOLOGIN NOSUPERUSER NOBYPASSRLS'
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0001_initial.up.sql
           psql -X -v ON_ERROR_STOP=1 -f tests/database/fixtures.sql
           psql -X -v ON_ERROR_STOP=1 -f tests/database/isolation.sql
@@ -131,6 +133,8 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0032_github_stage_human.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0033_github_stage_handoff.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0034_github_repair_handoff.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0035_browser_identity.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0035_browser_identity.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0034_github_repair_handoff.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0033_github_stage_handoff.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0032_github_stage_human.down.sql
@@ -209,6 +213,7 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0032_github_stage_human.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0033_github_stage_handoff.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0034_github_repair_handoff.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0035_browser_identity.up.sql
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_admin LOGIN PASSWORD 'ci-admin-only'"
           export BROWSEAI_TEST_ADMIN_DSN="postgres://browseai_admin:ci-admin-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_auth LOGIN PASSWORD 'ci-auth-only'"
@@ -242,6 +247,10 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_stage_human LOGIN PASSWORD 'ci-stage-human-only'"
           export BROWSEAI_TEST_REPAIR_HUMAN_DSN="postgres://browseai_repair_human:ci-repair-human-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           export BROWSEAI_TEST_STAGE_HUMAN_DSN="postgres://browseai_stage_human:ci-stage-human-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
+          psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_browser_operator LOGIN PASSWORD 'ci-browser-operator-only'"
+          psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_browser_node LOGIN PASSWORD 'ci-browser-node-only'"
+          export BROWSEAI_TEST_BROWSER_OPERATOR_DSN="postgres://browseai_browser_operator:ci-browser-operator-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
+          export BROWSEAI_TEST_BROWSER_NODE_DSN="postgres://browseai_browser_node:ci-browser-node-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           cd services/controller
           go test -mod=readonly -race -coverprofile=coverage.out -count=1 -v ./...
           go tool cover -func=coverage.out | tee coverage-summary.txt
