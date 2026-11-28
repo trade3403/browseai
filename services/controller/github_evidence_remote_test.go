@@ -376,6 +376,51 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 			!verified.expires.Equal(now.Add(githubEvidenceLifetime)) || !verified.issued.Equal(now) {
 			t.Fatal("task push proof rejected", err)
 		}
+		policy := githubIndependentPolicy{}
+		policy.task, policy.execution, policy.sourceDigest = task, p.push, digest
+		policy.verifierID, policy.keyID = verifierID, keyID
+		if err := s.recheckTaskEvidence(ctx, a, policy, verified, clock); err != nil {
+			t.Fatal("valid persisted push evidence rejected", err)
+		}
+		stale := verified
+		stale.observed = now.Add(-githubEvidenceLifetime)
+		stale.expires = now
+		if err := s.recheckTaskEvidence(ctx, a, policy, stale, clock); err == nil {
+			t.Fatal("expired evidence renewed by observation")
+		}
+		bad := verified
+		bad.signature = append([]byte(nil), bad.signature...)
+		bad.signature[0] ^= 1
+		bad.digest = sha256.Sum256(append(append([]byte(nil), bad.statement...), bad.signature...))
+		if err := s.recheckTaskEvidence(ctx, a, policy, bad, clock); err == nil {
+			t.Fatal("tampered evidence accepted after digest recomputation")
+		}
+		wrongPolicy := policy
+		wrongPolicy.task.revision++
+		if err := s.recheckTaskEvidence(ctx, a, wrongPolicy, verified, clock); err == nil {
+			t.Fatal("wrong task revision accepted")
+		}
+		mode = "jobs-error"
+		if err := s.recheckTaskEvidence(ctx, a, policy, verified, clock); err == nil {
+			t.Fatal("unavailable observation accepted")
+		}
+		mode = ""
+		prVerified, err := s.verifyTaskPR(ctx, a, task, p, digest, taskPR, clock)
+		if err != nil {
+			t.Fatal("PR evidence verification failed", err)
+		}
+		prPolicy := policy
+		prPolicy.pr = &p
+		if err := s.recheckTaskEvidence(ctx, a, prPolicy, prVerified, clock); err != nil {
+			t.Fatal("valid persisted PR evidence rejected", err)
+		}
+		if err := s.recheckTaskEvidence(ctx, a, prPolicy, verified, clock); err == nil {
+			t.Fatal("push proof accepted under PR policy")
+		}
+		mode = "source-changed"
+		if err := s.recheckTaskEvidence(ctx, a, prPolicy, prVerified, clock); err == nil {
+			t.Fatal("changed source accepted at consumption preflight")
+		}
 		mode = ""
 		if _, err := s.verifyTaskPR(ctx, a, task, p, digest, taskPR, clock); err != nil {
 			t.Fatal("task PR proof rejected", err)
