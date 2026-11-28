@@ -538,6 +538,12 @@ func TestGitHubEvidenceRemoteSnapshots(t *testing.T) {
 			return &copyApp
 		}
 		testGitHubCIService(t, ctx, owner, writerDB, s, eventApp("push"), eventApp(""), eventApp("source-changed"), prPolicy, clock)
+		mode = "push-failure"
+		failure, err := a.observeCIFailure(ctx, policy, clock)
+		if err != nil {
+			t.Fatal("failure fixture rejected", err)
+		}
+		testGitHubCIRepair(t, ctx, owner, writerDB, failure, clock)
 		mode = ""
 		testGitHubEvidenceConsumption(t, ctx, owner, writerDB, reader, operator, b.tenantID, task)
 		if _, err := owner.ExecContext(ctx, "UPDATE browseai.tasks SET revision=revision+1 WHERE id=$1", task.taskID); err != nil {

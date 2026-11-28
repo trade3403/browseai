@@ -328,3 +328,7 @@ Batch 6b-2b formatting fix 675385a03a8585d4d3c657a53d30c2869ceff6db verified pus
 
 ### V0.3 7b 已验收；7c-1 严格 CI 失败候选待 CI
 实际提交 679f6d1d2a17454b2cce355f52132c3e5e2d8391，Push 46110500348、PR 46110503765 均 completed/success，20/20。本批新增严格 CI 失败候选：只接受 completed/failure 且至少一个必需 job 明确 failure，拒绝取消、超时、基础设施异常、运行中、缺失/重复/错 attempt 的任务；重新核对固定工作流源、PR 关联和运行快照，绑定任务版本。模拟 GitHub 与分类单元测试覆盖 Push/PR、错误源码及异常结论。不改变任务状态、不生成/发送修复指令，后续接入封闭事务、修复预算及人工审批。新 CI 待验收；真实独立部署仍未验收。
+
+
+### V0.3 7c-1 已验收；7c-2 失败与修复原子事务待 CI
+实际提交 e2ec2fa07a3b096480138fb7e7ded22e0fd58f9e，Push 46112723803、PR 46112727855 均 completed/success，20/20。新增 0019 封闭失败历史、严格候选写入与 WAIT_CI→CI_FAILED、一次性修复预约、有效租约及完整阶段计划校验、预算耗尽→NEED_HUMAN，未耗尽→AWAIT_APPROVAL。真实 PostgreSQL/mock GitHub 回滚测试覆盖错误角色、过期、防重、错误 fence、预算耗尽和正常预约；无运行角色授权、无发送、无生产自动推进。失败观察只证明 GitHub job 失败而非根因；审计事件接线、运行时可信授权、人工审批及独立部署仍待完成。新 CI 待验收。

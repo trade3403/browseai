@@ -205,3 +205,7 @@ The internal Go service binds the exact human approval reference, actor, task re
 
 ## Batch 7c-1: strict CI failure candidate (CI pending)
 Distinguish a completed failure with at least one explicitly failed required job from cancelled, timed-out, incomplete, infrastructure or ambiguous results. The read-only adapter checks a fixed workflow, exact attempt jobs, immutable source, PR association when needed and re-reads the run listing under a freshness bound. It binds a task revision but is not a signed execution attestation, persisted failure authorization or repair dispatch. Only synthetic HTTP and unit tests in this increment; no runtime grants or task movement.
+
+
+## Batch 7c-2: sealed failure and repair reservation (CI pending)
+Migration 0019 records one fresh trusted failure per task revision and unique workflow/event/run/attempt, checks current repository binding and atomically marks WAIT_CI as CI_FAILED. A separate single-use reservation requires a live branch lease, same failure and revision, with Go stage-plan validation, and advances to AWAIT_APPROVAL with one budget charge or NEED_HUMAN when exhausted. No instructions are sent. These are owner-only preview primitives, not runtime grants; actual root-cause diagnosis, audit event integration, human approval and trusted production wiring remain pending.

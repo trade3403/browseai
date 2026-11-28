@@ -18,6 +18,7 @@ type githubCIFailureCandidate struct {
 	attempt    int64
 	failedIDs  []int64
 	observedAt time.Time
+	source     string
 }
 
 // Require an actual failed required job, not just a failed workflow or
@@ -164,5 +165,5 @@ func (a *githubApp) observeCIFailure(ctx context.Context, policy githubIndepende
 		now.Before(start) || now.Sub(start) >= githubEvidenceLifetime || ctx.Err() != nil {
 		return fail()
 	}
-	return githubCIFailureCandidate{policy.task, p, event, r.ID, r.Attempt, failed, start}, nil
+	return githubCIFailureCandidate{policy.task, p, event, r.ID, r.Attempt, failed, start, policy.sourceDigest}, nil
 }
