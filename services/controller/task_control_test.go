@@ -56,6 +56,21 @@ func TestPostgresTaskControlIntegration(t *testing.T) {
 		t.Fatal(err)
 	}
 	path := "/api/tasks/" + r.ID
+	for _, tc := range []struct {
+		cookie *http.Cookie
+		want   int
+	}{{nil, 401}, {cb, 404}, {ca, 200}} {
+		w := authRequest(h, "GET", path+"/github-ci", testOrigin, "", "192.0.2.9", tc.cookie)
+		if w.Code != tc.want {
+			t.Fatal("CI status HTTP", w.Code, w.Body.String())
+		}
+		if tc.want == 200 {
+			var out githubMonitorStatusResponse
+			if err := json.Unmarshal(w.Body.Bytes(), &out); err != nil || !out.ObservationOnly || out.TaskID != r.ID || len(out.Targets) != 0 {
+				t.Fatal("invalid empty CI observation", out, err)
+			}
+		}
+	}
 	req := func(action, body string, cookie *http.Cookie, want int) taskRecord {
 		t.Helper()
 		w := authRequest(h, "POST", path+"/"+action, testOrigin, body, "192.0.2.9", cookie)

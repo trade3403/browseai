@@ -112,6 +112,8 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0020_github_repair_approval.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0021_github_stage_decision.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0022_github_repair_confirmation.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0023_github_monitor_status.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0023_github_monitor_status.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0022_github_repair_confirmation.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0021_github_stage_decision.down.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0020_github_repair_approval.down.sql
@@ -166,6 +168,7 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0020_github_repair_approval.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0021_github_stage_decision.up.sql
           psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0022_github_repair_confirmation.up.sql
+          psql -X -v ON_ERROR_STOP=1 -f services/controller/migrations/0023_github_monitor_status.up.sql
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_admin LOGIN PASSWORD 'ci-admin-only'"
           export BROWSEAI_TEST_ADMIN_DSN="postgres://browseai_admin:ci-admin-only@127.0.0.1:$PGPORT/browseai_test?sslmode=disable"
           psql -X -v ON_ERROR_STOP=1 -c "ALTER ROLE browseai_auth LOGIN PASSWORD 'ci-auth-only'"

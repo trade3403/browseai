@@ -15,3 +15,7 @@ V0.3 第二批 7aa1bb593231125d4000b881bc70f7698489dac3：github_read.go 固定 
 产品：用户本人独立 ChatGPT 账号/profile/订阅、独立 GitHub 授权；只用官方网页的人工操作，不用 OpenAI API，不抓聊天、OCR、私有接口、凭证、绕限制；默认人工确认并手动发送，无明确平台授权不得无人值守；所有 CI mock。公开仓库不得含秘密、私人会话地址或聊天内容。无真实发送/生产部署/真实 GitHub App 授权。
 ## GitHub 操作
 通过可用 GitHub connector fetch branch /branches/feat/v0.3-github-integration，/actions/runs?head_sha=当前SHA，/actions/runs/{id}/jobs；失败查 job logs。读取当前文件后基于现有 tree atomic create_tree/create_commit/update_ref(expected_sha,force=false)。每次修改后验证 head，检查 CI。JS replace 使用 callback 防止特殊美元符号展开，Go import 按 gofmt 字典序。上阶段曾出现 apt 微软源 HTTP403，确认是安装失败后 rerun_failed_workflow_run_jobs 成功，不改视觉阈值。文档记录证据 SHA 与文档 SHA 区分。当前交接后停止开发。
+
+
+## 最新补充（2026-11-28）
+第七批 7a–7e-2 已完成开发 CI，证据 SHA b11ccc7a293411e8b72ce0369fbf3fbbb7658845，Push 46125432804 / PR 46125437562 均 10/10。后续 8a 为认证只读 CI 状态接口及迁移 0023，新提交 CI 待验收。当前 head 以 GitHub PR #3 查询为准。真实 GitHub App、独立执行节点与可信人工操作入口仍未验收，禁止生产自动推进。优先完成 V0.3 综合剩余功能及安全验收，不合并分支。此补充覆盖上方旧交接的进度与下一批说明。

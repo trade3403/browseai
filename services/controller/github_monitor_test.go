@@ -122,4 +122,5 @@ func TestPostgresGitHubMonitorStep(t *testing.T) {
 	if _, err := worker.Exec("SELECT * FROM browseai.github_monitors"); err == nil {
 		t.Fatal("direct monitor read granted")
 	}
+	testGitHubMonitorStatus(t, ctx, owner, worker, tenant, task, id)
 }
